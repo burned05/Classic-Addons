@@ -1,0 +1,15 @@
+VER 3 0000000001000003 "COA" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/petattack [@mouseover, exists][@target, exists]
+/cast [@mouseover, exists] Curse of Agony; Curse of Agony
+END
+VER 3 0000000001000001 "corruption" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/petattack [@mouseover, exists][@target, exists]
+/cast [@mouseover, exists] Corruption; Corruption
+END
+VER 3 0000000001000002 "siphon life" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/petattack [@mouseover, exists][@target, exists]
+/cast [@mouseover, exists] Siphon Life; Siphon Life
+END

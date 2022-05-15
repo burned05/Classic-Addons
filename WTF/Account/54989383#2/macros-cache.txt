@@ -1,0 +1,27 @@
+VER 3 0000000000000001 "attack" "INV_MISC_QUESTIONMARK"
+/cleartarget
+/target Colossal A
+/cast Fire Blast(Rank 1)
+END
+VER 3 0000000000000002 "chickn" "132089"
+/chicken
+END
+VER 3 0000000000000006 "jed target" "132193"
+/target jed
+END
+VER 3 0000000000000007 "rajaxx" "135807"
+/cleartarget
+/target General R
+/cast Fire Blast(Rank 1)
+END
+VER 3 0000000000000003 "target" "132212"
+/target krom'gul
+END
+VER 3 0000000000000004 "trink1" "INV_MISC_QUESTIONMARK"
+#showtooltip 13
+/use 13
+END
+VER 3 0000000000000005 "trink2" "INV_MISC_QUESTIONMARK"
+#showtooltip 14
+/use 14
+END

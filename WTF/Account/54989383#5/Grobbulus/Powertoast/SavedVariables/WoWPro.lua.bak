@@ -1,0 +1,302 @@
+
+WoWProCharDB = {
+	["EnableGrailQuestline"] = false,
+	["EnableGrailQuestLevel"] = false,
+	["AutoHideInsideInstances"] = true,
+	["EnableGrailCheckPrereq"] = false,
+	["QID2Guide"] = {
+	},
+	["Trades"] = {
+		[2658] = true,
+		[2659] = true,
+		[3304] = true,
+		[10097] = true,
+		[10098] = true,
+		[3307] = true,
+		[3308] = true,
+		[3569] = true,
+	},
+	["GuideStack"] = {
+		"CLASSIC_BC_Eastern_Kingdom", -- [1]
+		"CLASSIC_BC_Hellfire", -- [2]
+	},
+	["EnableFlight"] = true,
+	["EnableRares"] = true,
+	["EnableGrailQuestName"] = false,
+	["EnablePetBattles"] = true,
+	["EnableGrailQuestObsolete"] = false,
+	["EnableGrailBreadcrumbs"] = false,
+	["Tradeskills"] = {
+		[186] = {
+			["skillLvl"] = 245,
+			["skillMax"] = 300,
+			["name"] = "Mining",
+			["skillMod"] = 0,
+		},
+		[182] = {
+			["skillLvl"] = 241,
+			["skillMax"] = 300,
+			["name"] = "Herbalism",
+			["skillMod"] = 0,
+		},
+		[356] = {
+			["skillLvl"] = 1,
+			["skillMax"] = 75,
+			["name"] = "Fishing",
+			["skillMod"] = 0,
+		},
+	},
+	["DebugLevel"] = 0,
+	["Taxi"] = {
+		["Marshal's Refuge"] = true,
+		["Morgan's Vigil"] = true,
+		["Ratchet"] = true,
+		["Hellfire Peninsula"] = true,
+		["Talrendis Point"] = true,
+		["Chillwind Camp"] = true,
+		["Nijel's Point"] = true,
+		["Gadgetzan"] = true,
+		["Thelsamar"] = true,
+		["Astranaar"] = true,
+		["Feathermoon"] = true,
+		["Southshore"] = true,
+		["Refuge Pointe"] = true,
+		["Temple of Telhamat"] = true,
+		["Thorium Point"] = true,
+		["Theramore"] = true,
+		["Aerie Peak"] = true,
+		["Lakeshire"] = true,
+		["Stonetalon Peak"] = true,
+		["Booty Bay"] = true,
+		["Mudsprocket"] = true,
+		["Rut'theran Village"] = true,
+		["Thalanaar"] = true,
+		["Ironforge"] = true,
+		["Everlook"] = true,
+		["Darkshire"] = true,
+		["Nethergarde Keep"] = true,
+		["Moonglade"] = true,
+		["Auberdine"] = true,
+		["Forest Song"] = true,
+		["Emerald Sanctuary"] = true,
+		["Stormwind"] = true,
+		["Menethil Harbor"] = true,
+		["Sentinel Hill"] = true,
+		["Talonbranch Glade"] = true,
+		["Rebel Camp"] = true,
+		["Honor Hold"] = true,
+		["Light's Hope Chapel"] = true,
+	},
+	["BuildingLocations"] = {
+	},
+	["EnableTreasures"] = true,
+	["completedQIDs"] = {
+		[353] = false,
+		[10344] = false,
+		[6285] = false,
+		[10099] = true,
+		[9] = false,
+		[10482] = true,
+		[10483] = true,
+		[10484] = true,
+		[10485] = false,
+		[39] = false,
+		[9349] = true,
+		[9351] = false,
+		[9355] = true,
+		[9356] = false,
+		[10119] = true,
+		[46] = false,
+		[9361] = true,
+		[10254] = true,
+		[10382] = false,
+		[267] = false,
+		[1338] = false,
+		[10895] = true,
+		[414] = false,
+		[418] = false,
+		[1339] = false,
+		[10394] = false,
+		[10903] = false,
+		[10396] = false,
+		[10397] = false,
+		[10144] = true,
+		[10399] = false,
+		[10400] = false,
+		[59] = false,
+		[63448] = true,
+		[9390] = false,
+		[246] = false,
+		[10916] = false,
+		[64] = false,
+		[65] = false,
+		[10160] = true,
+		[10288] = true,
+		[399] = false,
+		[10163] = false,
+		[147] = false,
+		[151] = false,
+		[6261] = false,
+		[10935] = false,
+		[10047] = false,
+		[10937] = false,
+		[10050] = false,
+		[1598] = false,
+		[10055] = true,
+		[10057] = false,
+		[9558] = false,
+		[416] = false,
+		[10146] = true,
+		[10936] = false,
+		[10142] = true,
+		[9563] = false,
+		[10143] = true,
+		[10140] = true,
+		[10141] = true,
+		[224] = false,
+		[10161] = true,
+		[10395] = false,
+		[10078] = true,
+		[10079] = true,
+		[244] = false,
+		[36] = false,
+		[10909] = false,
+		[10210] = true,
+		[307] = false,
+		[9373] = false,
+		[10340] = false,
+		[9417] = false,
+	},
+	["AutoHideInsideInstancesNotify"] = true,
+	["AutoHideInCombat"] = false,
+	["Guide"] = {
+		["CLASSIC_BC_Hellfire"] = {
+			["total"] = 265,
+			["Version"] = "2.5.4-A1",
+			["skipped"] = {
+			},
+			["done"] = false,
+			["progress"] = 86,
+			["completion"] = {
+				"Player level exceeds step limit", -- [1]
+				"NextStep(): Skipping step, available quest is currently complete or active", -- [2]
+				"AutoCompleteLoot", -- [3]
+				10119, -- [4]
+				"NextStep(): Skipping step, available quest is currently complete or active", -- [5]
+				10119, -- [6]
+				10288, -- [7]
+				10288, -- [8]
+				10140, -- [9]
+				10140, -- [10]
+				10140, -- [11]
+				10254, -- [12]
+				nil, -- [13]
+				10254, -- [14]
+				10141, -- [15]
+				10160, -- [16]
+				10055, -- [17]
+				10160, -- [18]
+				10482, -- [19]
+				10055, -- [20]
+				10482, -- [21]
+				10055, -- [22]
+				10055, -- [23]
+				10078, -- [24]
+				10482, -- [25]
+				10483, -- [26]
+				10141, -- [27]
+				10142, -- [28]
+				10142, -- [29]
+				10078, -- [30]
+				10078, -- [31]
+				10078, -- [32]
+				10078, -- [33]
+				"AutoCompleteZone:Temple of Telhamat", -- [34]
+				"AutoCompleteGetFP(AutoCompleteGetFP(New flight path discovered!): Step f/35 [Temple of Telhamat]?)", -- [35]
+				10142, -- [36]
+				10142, -- [37]
+				10143, -- [38]
+				10078, -- [39]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [40]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [41]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [42]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [43]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [44]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [45]
+				"AutoCompleteLoot", -- [46]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [47]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [48]
+				"AutoCompleteQuestUpdate: Accept", -- [49]
+				10483, -- [50]
+				10483, -- [51]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [52]
+				nil, -- [53]
+				10143, -- [54]
+				10144, -- [55]
+				10895, -- [56]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [57]
+				10895, -- [58]
+				10895, -- [59]
+				10895, -- [60]
+				10895, -- [61]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [62]
+				"AutoCompleteQuestUpdate: AutoComplete", -- [63]
+				"AutoCompleteQuestUpdate: Accept", -- [64]
+				10895, -- [65]
+				nil, -- [66]
+				nil, -- [67]
+				nil, -- [68]
+				nil, -- [69]
+				10144, -- [70]
+				10144, -- [71]
+				10144, -- [72]
+				10144, -- [73]
+				10144, -- [74]
+				10146, -- [75]
+				10146, -- [76]
+				10146, -- [77]
+				"Quest in QuestLog", -- [78]
+				[114] = 9355,
+				[116] = 9355,
+				[118] = "Quest in QuestLog",
+				[143] = "AutoCompleteQuestUpdate: AutoComplete",
+				[122] = "AutoCompleteQuestUpdate: AutoComplete",
+				[279] = false,
+				[140] = 10079,
+				[111] = "Quest in QuestLog",
+				[113] = "Quest in QuestLog",
+				[115] = 10079,
+				[141] = "AutoCompleteQuestUpdate: AutoComplete",
+				[121] = "AutoCompleteQuestUpdate: AutoComplete",
+				[123] = "AutoCompleteQuestUpdate: Accept",
+				[138] = 9355,
+				[142] = "AutoCompleteQuestUpdate: AutoComplete",
+				[102] = "AutoCompleteQuestUpdate: Accept",
+				[119] = 9355,
+				[139] = 10079,
+				[133] = "AutoCompleteQuestUpdate: Accept",
+			},
+		},
+		["hearth"] = "Shattrath City",
+		["CLASSIC_BC_Eastern_Kingdom"] = {
+			["total"] = 226,
+			["Version"] = "2.5.4-A1",
+			["skipped"] = {
+			},
+			["done"] = false,
+			["completion"] = {
+				"Player level exceeds step limit", -- [1]
+				[249] = false,
+				[46] = "Taxi point known",
+			},
+			["progress"] = 2,
+		},
+	},
+	["GuideVersion"] = {
+	},
+	["Enabled"] = true,
+	["skippedQIDs"] = {
+	},
+	["Rank"] = {
+	},
+}

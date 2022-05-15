@@ -1,0 +1,18 @@
+
+AAPC1 = {
+	["Grobbulus"] = {
+		["Powertoast"] = {
+			["Elite"] = {
+			},
+			["Zones"] = {
+				["1-5Human-Warlock"] = 1,
+			},
+			["Completed"] = {
+			},
+		},
+	},
+}
+AAPC2 = nil
+AAPC3 = nil
+AAPCQuestNames = nil
+AAPC_HoldZoneVar = nil
