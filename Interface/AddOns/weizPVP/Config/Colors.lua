@@ -3,7 +3,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local pairs = pairs
 local tonumber = tonumber
 
@@ -77,7 +77,11 @@ end
 --> Create Color From Hex String <-----------------------------------
 local function CreateColorFromHexString(hexColor)
   if #hexColor == 8 then
-    local a, r, g, b = ExtractColorValueFromHex(hexColor, 1), ExtractColorValueFromHex(hexColor, 3), ExtractColorValueFromHex(hexColor, 5), ExtractColorValueFromHex(hexColor, 7)
+    local a, r, g, b =
+      ExtractColorValueFromHex(hexColor, 1),
+      ExtractColorValueFromHex(hexColor, 3),
+      ExtractColorValueFromHex(hexColor, 5),
+      ExtractColorValueFromHex(hexColor, 7)
     return CreateColor(r, g, b, a)
   else
     GMError("weizPVP: CreateColorFromHexString input must be hexadecimal digits")

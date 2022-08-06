@@ -16,6 +16,7 @@ Options.Addon = {
   EnabledInBattlegrounds = true,
   EnabledInArena = false,
   DisabledWhenWarmodeOff = false,
+  DisabledWhenWarmodeOffSanctuaries = true,
   DisabledInSanctuary = false,
   Debug = false
 }
@@ -24,7 +25,7 @@ Options.Addon = {
 ---------------------------------------
 Options.Region = {
   ConvertRussianNames = true,
-  ConvertRussianGuilds = true,
+  ConvertRussianGuilds = true
 }
 
 --: Lab

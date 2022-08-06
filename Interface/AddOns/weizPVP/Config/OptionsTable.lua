@@ -3,7 +3,7 @@
 ---------------------------------------------------------------------------------------------------
 local ADDON_NAME, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local GetCVarDefault = GetCVarDefault
 local SecondsToTime = SecondsToTime
 local SetCVar = SetCVar
@@ -100,7 +100,8 @@ local generalGroup = {
     },
     EnableBGs = {
       name = " |TInterface/Addons/weizPVP/Media/Icons/battlegrounds.tga:16|t  Enable in Battlegrounds",
-      desc = "Enable weizPVP in Battlegrounds\n" .. NS.ColorsLUT["info"]:WrapTextInColorCode("(Not designed for BGs, but still can be useful)"),
+      desc = "Enable weizPVP in Battlegrounds\n" ..
+        NS.ColorsLUT["info"]:WrapTextInColorCode("(Not designed for BGs, but still can be useful)"),
       type = "toggle",
       order = 11,
       width = "full",
@@ -115,7 +116,8 @@ local generalGroup = {
     },
     EnableArenas = {
       name = " |TInterface/Addons/weizPVP/Media/Icons/arena.tga:16|t  Enable in Arenas",
-      desc = "Enable weizPVP in Arenas\n" .. NS.ColorsLUT["info"]:WrapTextInColorCode("(Not designed for arenas, but can be useable)"),
+      desc = "Enable weizPVP in Arenas\n" ..
+        NS.ColorsLUT["info"]:WrapTextInColorCode("(Not designed for arenas, but can be useable)"),
       type = "toggle",
       order = 12,
       width = "full",
@@ -134,29 +136,12 @@ local generalGroup = {
       order = 20,
       width = "full"
     },
-    DisabledWhenWarmodeOff = {
-      name = " |TInterface/Addons/weizPVP/Media/Icons/warmode.tga:16|t  Disabled when War Mode is turned off",
-      desc = "Disables the addon's main functions when you have War Mode off",
-      type = "toggle",
-      order = 21,
-      width = "full",
-      get = function()
-        return NS.Options.Addon.DisabledWhenWarmodeOff
-      end,
-      set = function(_, value)
-        NS.Options.Addon.DisabledWhenWarmodeOff = value
-        NS.GetPVPZone()
-      end,
-      hidden = function()
-        return not NS.WOW_RETAIL
-      end
-    },
     DisabledInSanctuary = {
       name = " |TInterface/Addons/weizPVP/Media/Icons/sanctuary.tga:16|t  Disabled when in Sanctuary zones",
       desc = "Disables the addon's main functions while in a Sanctuary zone",
       type = "toggle",
       width = "full",
-      order = 22,
+      order = 30,
       get = function()
         return NS.Options.Addon.DisabledInSanctuary
       end,
@@ -164,6 +149,52 @@ local generalGroup = {
         NS.Options.Addon.DisabledInSanctuary = value
         NS.GetPVPZone()
       end
+    },
+    spacer3 = {
+      name = "",
+      type = "description",
+      order = 35,
+      width = "full"
+    },
+    DisabledWhenWarmodeOff = {
+      name = " |TInterface/Addons/weizPVP/Media/Icons/warmode.tga:16|t  Disable addon when War Mode is turned off",
+      desc = "Disables the addon's main functions when you have War Mode off",
+      type = "toggle",
+      order = 40,
+      width = "full",
+      get = function()
+        return NS.Options.Addon.DisabledWhenWarmodeOff
+      end,
+      set = function(_, value)
+        NS.Options.Addon.DisabledWhenWarmodeOff = value
+        NS.GetPVPZone()
+      end
+    },
+    WarModeSpecifics = {
+      name = "War Mode Specifics",
+      type = "group",
+      inline = true,
+      order = 50,
+      args = {
+        -- Disable in Sanctuaries
+        DisabledWhenWarmodeOffSanctuaries = {
+          name = " Remain disabled in Sanctuaries while WM of off",
+          desc = "Disables the addon's main functions when you have War Mode off in Sanctuaries as well as PVP World Zones",
+          type = "toggle",
+          order = 1,
+          width = "full",
+          get = function()
+            return NS.Options.Addon.DisabledWhenWarmodeOffSanctuaries
+          end,
+          set = function(_, value)
+            NS.Options.Addon.DisabledWhenWarmodeOffSanctuaries = value
+            NS.GetPVPZone()
+          end,
+          disabled = function()
+            return not NS.Options.Addon.DisabledWhenWarmodeOff
+          end
+        }
+      }
     }
   }
 }
@@ -503,7 +534,11 @@ local customizeGroup = {
               ["b"] = b,
               ["a"] = a
             }
-            weizPVP_CoreBar.BG:SetVertexColor(NS.Options.Frames.Header.BackgroundColor.r, NS.Options.Frames.Header.BackgroundColor.g, NS.Options.Frames.Header.BackgroundColor.b)
+            weizPVP_CoreBar.BG:SetVertexColor(
+              NS.Options.Frames.Header.BackgroundColor.r,
+              NS.Options.Frames.Header.BackgroundColor.g,
+              NS.Options.Frames.Header.BackgroundColor.b
+            )
             weizPVP_CoreBar.BG:SetAlpha(NS.Options.Frames.Header.BackgroundColor.a)
           end
         },
@@ -524,7 +559,11 @@ local customizeGroup = {
               ["b"] = b,
               ["a"] = a
             }
-            weizPVP_CoreFrame.ScrollFrame.BG:SetVertexColor(NS.Options.Frames.BackgroundColor.r, NS.Options.Frames.BackgroundColor.g, NS.Options.Frames.BackgroundColor.b)
+            weizPVP_CoreFrame.ScrollFrame.BG:SetVertexColor(
+              NS.Options.Frames.BackgroundColor.r,
+              NS.Options.Frames.BackgroundColor.g,
+              NS.Options.Frames.BackgroundColor.b
+            )
             weizPVP_CoreFrame.ScrollFrame.BG:SetAlpha(NS.Options.Frames.BackgroundColor.a)
           end
         }
@@ -660,7 +699,8 @@ local alertsGroup = {
         },
         AlertDetectedBGDisabled = {
           name = "Disable while in instanced PVP",
-          desc = "Disables the new player audio alert while in instanced PVP.\n" .. "|cffcccccc(BGs, Arenas, Brawls, etc.)|r",
+          desc = "Disables the new player audio alert while in instanced PVP.\n" ..
+            "|cffcccccc(BGs, Arenas, Brawls, etc.)|r",
           type = "toggle",
           width = "full",
           order = 4,
@@ -880,7 +920,8 @@ local databaseGroup = {
       args = {
         maintenance = {
           name = "Remove players from the database that have not been seen for:",
-          desc = "Removes older players who have not been detected in the given amount of time.\n" .. "|cffbbbbbb(Runs no more than once every 24 hours on login)|r",
+          desc = "Removes older players who have not been detected in the given amount of time.\n" ..
+            "|cffbbbbbb(Runs no more than once every 24 hours on login)|r",
           type = "select",
           values = dbCleanTimesTable,
           width = "full",
@@ -928,7 +969,8 @@ local databaseGroup = {
               numPlayers = numPlayers + 1
             end
 
-            statsText = "\n" .. "Last maintenance:  " .. NS.ColorsLUT["lightBlue"]:WrapTextInColorCode(lastUpdated) .. " ago"
+            statsText =
+              "\n" .. "Last maintenance:  " .. NS.ColorsLUT["lightBlue"]:WrapTextInColorCode(lastUpdated) .. " ago"
             return statsText
           end,
           type = "description",
@@ -960,7 +1002,9 @@ local databaseGroup = {
 
             statsText =
               NS.ColorsLUT["info"]:WrapTextInColorCode("Number of Players :   ") ..
-              BreakUpLargeNumbers(numPlayers) .. "\n" .. NS.ColorsLUT["green"]:WrapTextInColorCode("Number of Guilds :   ") .. BreakUpLargeNumbers(numGuilds)
+              BreakUpLargeNumbers(numPlayers) ..
+                "\n" ..
+                  NS.ColorsLUT["green"]:WrapTextInColorCode("Number of Guilds :   ") .. BreakUpLargeNumbers(numGuilds)
             statsText = statsText .. "\n"
             return statsText
           end,
@@ -976,7 +1020,10 @@ local databaseGroup = {
 
 --> CROSSHAIR GROUP <------------------
 ---------------------------------------
-local crosshairTips = NS.ColorsLUT["info"]:WrapTextInColorCode("Enemy Player Nameplates must be Enabled in order for the Crosshair to be displayed!")
+local crosshairTips =
+  NS.ColorsLUT["info"]:WrapTextInColorCode(
+  "Enemy Player Nameplates must be Enabled in order for the Crosshair to be displayed!"
+)
 local crosshairGroup = {
   name = "|TInterface/Addons/weizPVP/Media/Icons/crosshair.tga:16|t  |cffffffffCrosshair|r",
   type = "group",
@@ -1241,29 +1288,6 @@ local crosshairGroup = {
           end,
           set = function(_, value)
             SetCVar("nameplateTargetBehindMaxDistance", tostring(value))
-          end,
-          hidden = function()
-            return not NS.WOW_RETAIL
-          end
-        },
-        nameplateTargetBehindMaxDistance_tbc = {
-          type = "range",
-          name = "|cff42dcf4nameplateTargetBehindMaxDistance|r |cffffffff(|r|cff37ff3760 is recommended|r|cffffffff)|r",
-          desc = "The max distance to show the target nameplate when the target is behind the camera.",
-          width = "full",
-          min = 15,
-          max = 40, -- 40 seems to be max in tbc
-          validate = ValidateNumeric,
-          step = 1,
-          order = 3,
-          get = function()
-            return tonumber(C_CVar_GetCVar("nameplateTargetBehindMaxDistance"))
-          end,
-          set = function(_, value)
-            SetCVar("nameplateTargetBehindMaxDistance", tostring(value))
-          end,
-          hidden = function()
-            return not NS.WOW_BCC
           end
         },
         NamePlateHorizontalScale = {
@@ -1550,7 +1574,8 @@ local labGroup = {
   order = 110,
   args = {
     intro = {
-      name = "|TInterface/Addons/weizPVP/Media/Icons/lab.tga:20|t  |cffffffffDev Lab|r  " .. NS.ColorsLUT["info"]:WrapTextInColorCode("(Experimental)"),
+      name = "|TInterface/Addons/weizPVP/Media/Icons/lab.tga:20|t  |cffffffffDev Lab|r  " ..
+        NS.ColorsLUT["info"]:WrapTextInColorCode("(Experimental)"),
       type = "header",
       order = 1,
       width = "full"
@@ -1559,7 +1584,10 @@ local labGroup = {
       type = "description",
       fontSize = "small",
       name = "\nThe options in this section are for those wanting to test new features out that are still being developed. There may be bugs, and if so; please report them!\n\n" ..
-        NS.ColorsLUT["yellow"]:WrapTextInColorCode("If you have any ideas for new features, create a feature request 'issue' on the weizPVP Curseforge project page!") .. "\n\n",
+        NS.ColorsLUT["yellow"]:WrapTextInColorCode(
+          "If you have any ideas for new features, create a feature request 'issue' on the weizPVP Curseforge project page!"
+        ) ..
+          "\n\n",
       width = "full",
       order = 2
     },
@@ -1601,7 +1629,8 @@ local labGroup = {
         ActiveTimeout = {
           name = "Active Timeout (seconds)",
           desc = "The amount time in seconds when a player stays on the 'active' list since last seen \n" ..
-            NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 20)") .. "\n|cffff00bbActive Timeout must be less than Inactive timeout!|r",
+            NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 20)") ..
+              "\n|cffff00bbActive Timeout must be less than Inactive timeout!|r",
           type = "range",
           order = 1,
           width = "full",
@@ -1620,7 +1649,8 @@ local labGroup = {
         InactiveTimeout = {
           name = "Inactive Timeout (seconds)",
           desc = "The amount total time the player will remain on the list since last seen\n" ..
-            NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 32)") .. "\n|cffff00bbActive Timeout must be less than Inactive timeout!|r",
+            NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 32)") ..
+              "\n|cffff00bbActive Timeout must be less than Inactive timeout!|r",
           type = "range",
           order = 1,
           width = "full",
@@ -1646,7 +1676,8 @@ local labGroup = {
       args = {
         maxNumberBars = {
           name = " Max Number of Bars to show",
-          desc = "Change the maximum number of player bars that are shown\n" .. NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 20)"),
+          desc = "Change the maximum number of player bars that are shown\n" ..
+            NS.ColorsLUT["info"]:WrapTextInColorCode("(Default = 20)"),
           type = "range",
           order = 1,
           width = "full",
@@ -1684,7 +1715,9 @@ local labGroup = {
 --> Create Options Table <-------------------------------------------
 function NS.CreateInterfaceOptions()
   local OptionsTable = {
-    name = " " .. "|TInterface/Addons/weizPVP/Media/weizpvp_nobg_offset_high.tga:24|t" .. "  " .. NS.Constants.AddonString .. " |cffbbbbbb - |r|cffcafdff " .. _G.weizPVP.Addon_Version .. "|r",
+    name = " " ..
+      "|TInterface/Addons/weizPVP/Media/weizpvp_nobg_offset_high.tga:24|t" ..
+        "  " .. NS.Constants.AddonString .. " |cffbbbbbb - |r|cffcafdff " .. _G.weizPVP.Addon_Version .. "|r",
     type = "group",
     args = {
       generalGroup = generalGroup,

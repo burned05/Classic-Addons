@@ -8,6 +8,22 @@ VER 3 0000000001000001 "corruption" "INV_MISC_QUESTIONMARK"
 /petattack [@mouseover, exists][@target, exists]
 /cast [@mouseover, exists] Corruption; Corruption
 END
+VER 3 0000000001000004 "DS" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/cast Drain Soul 
+/run local a=GetBagName(4); if a=="Core Felcloth Bag" or a=="Felcloth Bag" or a=="Soul Pouch" or a=="Box of Souls" or a=="Small Soul Pouch" then PickupContainerItem(4,GetContainerNumSlots(4)) DeleteCursorItem() else end
+END
+VER 3 0000000001000005 "petskill" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/petattack [@mouseover, harm][@target, harm]
+/cast [pet:felguard, @mouseover, harm][pet:felguard, @target, harm] Intercept
+END
+VER 3 0000000001000006 "sb trink" "INV_MISC_QUESTIONMARK"
+#showtooltip Shadow bolt
+/use 13
+/use 14
+/cast Shadow bolt
+END
 VER 3 0000000001000002 "siphon life" "INV_MISC_QUESTIONMARK"
 #showtooltip
 /petattack [@mouseover, exists][@target, exists]

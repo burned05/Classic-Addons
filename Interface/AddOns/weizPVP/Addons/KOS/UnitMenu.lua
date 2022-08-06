@@ -8,7 +8,10 @@ local _, NS = ...
 local function ShowMenu(self)
   local isUnitMenu = self.unit and true or false
 
-  if (not isUnitMenu) or (not NS.IsUnitValidForTracking(self.unit)) or InCombatLockdown() or (UIDROPDOWNMENU_MENU_LEVEL > 1) then
+  if
+    (not isUnitMenu) or (not NS.IsUnitValidForTracking(self.unit)) or InCombatLockdown() or
+      (UIDROPDOWNMENU_MENU_LEVEL > 1)
+   then
     return
   end
 

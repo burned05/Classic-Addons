@@ -69,7 +69,9 @@ NS.SlashCommands = {
       order = 6,
       func = function()
         if NS.Options.Window.Locked then
-          NS.PrintAddonMessage("Window is currently |cffff3838LOCKED|r. Window can only be pinned after being unlocked.")
+          NS.PrintAddonMessage(
+            "Window is currently |cffff3838LOCKED|r. Window can only be pinned after being unlocked."
+          )
         else
           NS.CoreUI.TogglePin()
         end
@@ -107,9 +109,7 @@ NS.SlashCommands = {
           return
         end
         weizPVP:OnEnable()
-        if NS.WOW_RETAIL then
-          NS.WarModeChanged()
-        end
+        NS.WarModeChanged()
         NS.PrintAddonMessage("Addon Enabled!")
       end,
       dialogHidden = true

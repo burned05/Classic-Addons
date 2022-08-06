@@ -6,7 +6,7 @@
 ---------------------------------------------------------------------------------------------------
 local ADDON_NAME, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local GetUnitName = GetUnitName
 local GetRealmName = GetRealmName
 local UnitFactionGroup = UnitFactionGroup
@@ -19,7 +19,12 @@ local select = select
 --: Build Addon Global :---------------
 _G.weizPVP = _G.weizPVP or LibStub("AceAddon-3.0"):NewAddon("weizPVP", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
---: 📚 LIB SHARED MEDIA :--------------
+--: Settings :-------------------------
+NS.DEBUG = false
+
+---------------------------------------------------------------------------------------------------
+--|> 📚 LIB SHARED MEDIA
+---------------------------------------------------------------------------------------------------
 local SM = LibStub:GetLibrary("LibSharedMedia-3.0")
 
 --: Status Bars :----------------------
@@ -36,9 +41,17 @@ SM:Register("BORDER", "weizPVP: Border", [[Interface\BUTTONS\WHITE8X8]])
 --: Fonts :----------------------------
 SM:Register("FONT", "Roboto Condensed", [[Interface\Addons\weizPVP\Media\Fonts\RobotoCondensed.ttf]])
 SM:Register("FONT", "Roboto Condensed Bold", [[Interface\Addons\weizPVP\Media\Fonts\RobotoCondensed-Bold.ttf]])
-SM:Register("FONT", "Roboto Condensed BoldItalic", [[Interface\Addons\weizPVP\Media\Fonts\RobotoCondensed-BoldItalic.ttf]])
+SM:Register(
+  "FONT",
+  "Roboto Condensed BoldItalic",
+  [[Interface\Addons\weizPVP\Media\Fonts\RobotoCondensed-BoldItalic.ttf]]
+)
 SM:Register("FONT", "Accidental Presidency", [[Interface\Addons\weizPVP\Media\Fonts\AccidentalPresidency.ttf]])
-SM:Register("FONT", "Accidental Presidency Italic", [[Interface\Addons\weizPVP\Media\Fonts\AccidentalPresidency-Italic.ttf]])
+SM:Register(
+  "FONT",
+  "Accidental Presidency Italic",
+  [[Interface\Addons\weizPVP\Media\Fonts\AccidentalPresidency-Italic.ttf]]
+)
 
 --: Sounds :---------------------------
 SM:Register("SOUND", "weizPVP: MLG Air Horn 1", [[Interface\Addons\weizPVP\Media\Sounds\airhorn-1.ogg]])

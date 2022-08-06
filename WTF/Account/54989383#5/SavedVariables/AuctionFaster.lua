@@ -10,9 +10,15 @@ AuctionFasterDb = {
 	["sniper"] = {
 		["refreshInterval"] = 5,
 	},
-	["favorites"] = {
+	["buy"] = {
+		["tooltips"] = {
+			["enabled"] = true,
+			["anchor"] = "BOTTOMRIGHT",
+		},
+		["recentSearches"] = {
+		},
 	},
-	["auctionDb"] = {
+	["chainBuy"] = {
 	},
 	["tutorials"] = {
 		["sell"] = false,
@@ -23,23 +29,17 @@ AuctionFasterDb = {
 		["maxBidDeviation"] = 20,
 	},
 	["fastMode"] = true,
-	["defaultTab"] = "NONE",
 	["sell"] = {
 		["tooltips"] = {
 			["enabled"] = true,
-			["itemAnchor"] = "TOPRIGHT",
-			["itemEnabled"] = true,
 			["anchor"] = "TOPRIGHT",
+			["itemEnabled"] = true,
+			["itemAnchor"] = "TOPRIGHT",
 		},
 	},
-	["chainBuy"] = {
+	["auctionDb"] = {
 	},
-	["buy"] = {
-		["tooltips"] = {
-			["enabled"] = true,
-			["anchor"] = "BOTTOMRIGHT",
-		},
-		["recentSearches"] = {
-		},
+	["favorites"] = {
 	},
+	["defaultTab"] = "NONE",
 }

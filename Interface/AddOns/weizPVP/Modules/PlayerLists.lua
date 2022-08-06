@@ -1,19 +1,19 @@
 ---------------------------------------------------------------------------------------------------
---|> PLAYER LISTS
+--|> Player Lists
 -- 📌 Manages the lists of players shown
 ---------------------------------------------------------------------------------------------------
 --|> Upvalues Globals
 -----------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local CopyTable = CopyTable
 local InCombatLockdown, GetTime = InCombatLockdown, GetTime
 local pairs, gsub, wipe = pairs, gsub, wipe
 local PixelUtil_SetStatusBarValue = PixelUtil.SetStatusBarValue
 
---: NAMESPACE :------------------------
+--: 📛 NAMESPACE :----------------------
 NS.NearbyListSize = 0
 NS.CurrentList = {}
 NS.CurrentNameplates = {}
@@ -29,7 +29,28 @@ local NearbyCountTopColorLimit = 100
 function NS.UpdateNearbyCount()
   NS.NearbyCount = NS.NearbyListSize
   if NS.NearbyCount < 100 then
-    weizPVP_CoreBar.Title:SetText("|cff" .. NS.GetColorValueFromGradient((NS.NearbyCount / NearbyCountTopColorLimit), 0.4, 1, 0, 1, 0.74, 0, 1, 0.35, 0, 1, 0, 0.34, 1, 0, 0) .. NS.NearbyCount .. "|r")
+    weizPVP_CoreBar.Title:SetText(
+      "|cff" ..
+        NS.GetColorValueFromGradient(
+          (NS.NearbyCount / NearbyCountTopColorLimit),
+          0.4,
+          1,
+          0,
+          1,
+          0.74,
+          0,
+          1,
+          0.35,
+          0,
+          1,
+          0,
+          0.34,
+          1,
+          0,
+          0
+        ) ..
+          NS.NearbyCount .. "|r"
+    )
   else
     weizPVP_CoreBar.Title:SetText("|cffff0000" .. NS.NearbyCount .. "|r")
   end
@@ -71,7 +92,10 @@ function NS.ManageListTimeouts()
   local timestamp = GetTime()
   --: ACTIVE
   for player in pairs(NS.ActiveList) do
-    if (timestamp - NS.ActiveList[player].TimeUpdated) > NS.Options.Sorting.NearbyActiveTimeout and NS.CurrentNameplates[player] == nil then
+    if
+      (timestamp - NS.ActiveList[player].TimeUpdated) > NS.Options.Sorting.NearbyActiveTimeout and
+        NS.CurrentNameplates[player] == nil
+     then
       NS.InactiveList[player] = NS.ActiveList[player]
       NS.InactiveList[player].TimeAdded = timestamp + (count * 0.001)
       NS.ActiveList[player] = nil
@@ -128,35 +152,32 @@ function NS.ManageListTimeouts()
   end
 end
 
---> Format Relative Level for Display <------------------------------
-local formatted
-local function FormatRelativeLevelForDisplay(level)
-  if level then
-    formatted = ""
-    if level == 0 then --> 0
-      formatted = "|cFFFF00CC??|r"
-    elseif level < NS.Player.Level - 20 then --> 20+ below
-      formatted = "|cFF7cffd1" .. level .. "|r"
-    elseif level < NS.Player.Level - 10 then --> 10-20 below
-      formatted = "|cFF7cd1ff" .. level .. "|r"
-    elseif level < NS.Player.Level then --> 1-9 below
-      formatted = "|cFF7cff7f" .. level .. "|r"
-    elseif level > NS.Player.Level then --> Higher level
-      formatted = "|cFFf7694a" .. level .. "|r"
-    else
-      formatted = "|cFFffc863" .. level .. "|r"
-    end
-    return formatted
-  end
-end
-local function FormatLevelString(estimated, level)
+--> FormatLevelString <----------------------------------------------
+local levelText
+function NS.FormatLevelString(estimated, level)
   if not level then
     return
   end
-  local levelText = FormatRelativeLevelForDisplay(level)
+
+  levelText = ""
+  if level == 0 then -- 0
+    levelText = "|cFFFF00CC??|r"
+  elseif level < NS.Player.Level - 20 then -- 20+ below
+    levelText = "|cFF7cffd1" .. level .. "|r"
+  elseif level < NS.Player.Level - 10 then -- 10-20 below
+    levelText = "|cFF7cd1ff" .. level .. "|r"
+  elseif level < NS.Player.Level then -- 1-9 below
+    levelText = "|cFF7cff7f" .. level .. "|r"
+  elseif level > NS.Player.Level then -- Higher level
+    levelText = "|cFFf7694a" .. level .. "|r"
+  else -- same level
+    levelText = "|cFFffc863" .. level .. "|r"
+  end
+
   if estimated and level ~= 0 then
     levelText = levelText .. "|cFFFF00CC+|r"
   end
+
   return levelText
 end
 
@@ -219,15 +240,22 @@ local function UpdateBar(num, GUID, Alpha, Health, Class, Guild, Level, Estimate
 
     --: TAXI ICON
     if NS.PlayerActiveCache[GUID].OnTaxi then
-      NS.CoreUI.Bar[num].Name:SetText("|TInterface/Addons/weizPVP/Media/Icons/flight_path.tga:0|t " .. NS.CoreUI.Bar[num].Name:GetText())
+      NS.CoreUI.Bar[num].Name:SetText(
+        "|TInterface/Addons/weizPVP/Media/Icons/flight_path.tga:0|t " .. NS.CoreUI.Bar[num].Name:GetText()
+      )
     end
 
     --: LEVEL
-    NS.CoreUI.Bar[num].Level:SetText(FormatLevelString(Estimated, Level))
+    NS.CoreUI.Bar[num].Level:SetText(NS.FormatLevelString(Estimated, Level))
 
     --: CLASS COLOR (BAR COLOR)
     if Class and RAID_CLASS_COLORS[Class] then
-      NS.CoreUI.Bar[num]:SetStatusBarColor(RAID_CLASS_COLORS[Class].r - darkenValue, RAID_CLASS_COLORS[Class].g - darkenValue, RAID_CLASS_COLORS[Class].b - darkenValue, Alpha)
+      NS.CoreUI.Bar[num]:SetStatusBarColor(
+        RAID_CLASS_COLORS[Class].r - darkenValue,
+        RAID_CLASS_COLORS[Class].g - darkenValue,
+        RAID_CLASS_COLORS[Class].b - darkenValue,
+        Alpha
+      )
     end
     NS.CoreUI.Bar[num].bg:SetVertexColor(0, 0, 0, 0.5)
 

@@ -2,7 +2,4 @@
 ..\FrameXML\UI.xsd">
 	<Script file="LUT_Specs.lua" />
 	<Script file="LUT_Levels.lua" />
-	<Script file="LUT_Classes_BCC.lua" />
-	<Script file="LUT_Specs_BCC.lua" />
-	<Script file="LUT_Levels_BCC.lua" />
 </Ui>

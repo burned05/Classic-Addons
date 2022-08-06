@@ -3,7 +3,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local bit_band = bit.band
 local strfind = strfind
 local strsub = strsub
@@ -69,95 +69,79 @@ local function RoleAssign(class)
   return nil
 end
 
---> Get Class from SpellID <-----------------------------------------
-local function GetClassFromSpell(spellID)
-  if spellID and NS.WOW_BCC then
-    return NS.GetClassFromSpellId(spellID)
-  end
-  return nil
-end
-
 --> Role Check <-----------------------------------------------------
 local function ClRoleCheck(spellId, class)
-  local role = RoleAssign(class)
-  if role ~= nil then
-    return role
-  end
-  role = NS.GetRoleFromSpellId(spellId)
-  return role
+  return RoleAssign(class) or NS.GetRoleFromSpellId(spellId)
 end
 
 --> Is Valid Player? <-----------------------------------------------
 local function IsValidPlayer(flags, guid, name)
   -- Valid Check
   if not flags or not guid or not name then
-    return false
+    return
   end
-
-  -- Check for 'Unknown': Reserved Name for players that dont have name information yet
+  -- Check for 'Unknown': Reserved Name for players that don't have name information yet
   name = name or "Unknown"
   if strfind(name, "Unknown") then
-    return false
+    return
   end
-
+  -- Is this a Hostile Player?
   if not NS.DEBUG then
-    -- Is this a Hostile Player?
     if bit_band(flags, CL_HOSTILE) == CL_HOSTILE and bit_band(flags, CL_PLAYER) == CL_PLAYER then
       return true
     end
   else
-    --!! DEBUG ENABLED !!--
     -- Is Player?
     if bit_band(flags, CL_PLAYER) == CL_PLAYER then
       return true
     end
   end
-  return false -- Not a valid unit
+  return
 end
 
 --> CL: CREATE NEW PLAYER ENTRY IN DB <------------------------------
+local abilityType
 local function AddNewPlayerToDatabase(event, srcName, srcGUID, spellId)
   if srcName and srcGUID then
     NS.PlayerDB[srcName] = {}
     NS.PlayerDB[srcName].T = time()
     NS.PlayerDB[srcName].E = true
-    local abilityType = strsub(event, 1, 5)
+    abilityType = strsub(event, 1, 5)
     if abilityType == "SWING" or abilityType == "SPELL" or abilityType == "RANGE" then
       NS.PlayerDB[srcName].L = NS.GetLevelFromSpellId(spellId) or 0
     else
       NS.PlayerDB[srcName].L = 0
     end
     _, NS.PlayerDB[srcName].C = GetPlayerInfoByGUID(srcGUID)
-    if not NS.PlayerDB[srcName].C then
-      NS.PlayerDB[srcName].C = GetClassFromSpell(spellId)
-    end
     NS.PlayerDB[srcName].RL = ClRoleCheck(spellId, NS.PlayerDB[srcName].C) or nil
   end
+  abilityType = nil
 end
 
 --> CL: DEATH CHECK <------------------------------------------------
 local function CLDeath(event, GUID, name)
-  if NS.PlayerActiveCache[GUID] and event == "UNIT_DIED" then
-    NS.PlayerActiveCache[GUID].Dead = true
-    NS.UpdatePlayerActiveCache(name, nil, true, nil, GUID)
-    return true
+  if (not NS.PlayerActiveCache[GUID]) or event ~= "UNIT_DIED" then
+    return false --: return false on no death seen
   end
-  return false --: return false on no death seen
+  NS.PlayerActiveCache[GUID].Dead = true
+  NS.UpdatePlayerActiveCache(name, nil, true, nil, GUID)
+  return true
 end
 
 --> Aura Check <-----------------------------------------------------
+local spellIcon
 local function AuraCheck(spellID, spellName, srcGUID, srcName)
-  -- Stealth check
+  -- * Stealth check
   if stealthNames[spellName] or stealthIDs[spellID] then
     if NS.Options.StealthAlert.Enabled then
-      local _, _, icon = GetSpellInfo(spellID)
-      NS.StealthAlertEvent(spellName, NS.FormatPlayerNameAndRealm(srcName, srcGUID), icon)
+      _, _, spellIcon = GetSpellInfo(spellID)
+      NS.StealthAlertEvent(spellName, NS.FormatPlayerNameAndRealm(srcName, srcGUID), spellIcon)
     end
     NS.UpdatePlayerActiveCache(srcName, true, false, nil, srcGUID)
     return true
   end
 
-  -- Redemption check
+  -- * Redemption check
   if holyPriest[spellID] then
     NS.UpdatePlayerActiveCache(srcName, nil, true, "HEALER", srcGUID)
     return true --: Return after updating player cache
@@ -166,10 +150,8 @@ local function AuraCheck(spellID, spellName, srcGUID, srcName)
   return false
 end
 
+--> Format CLog Name <-----------------------------------------------
 local function FormatCLogName(srcName)
-  if not srcName then
-    return nil
-  end
   if not strfind(srcName, "-") then
     srcName = srcName .. "-" .. NS.PlayerRealm
   end
@@ -177,24 +159,27 @@ local function FormatCLogName(srcName)
 end
 
 --> Process Source <-------------------------------------------------
+local srcName
+local newLevel
+local srcRole
 local function ParseSource(eventData)
   if IsValidPlayer(eventData[6], eventData[4], eventData[5]) then
-    local srcName = FormatCLogName(eventData[5])
+    srcName = FormatCLogName(eventData[5])
 
-    -- Check if unit is not in DB yet
+    -- * Check if unit is not in DB yet
     if not NS.PlayerDB[srcName] then
       AddNewPlayerToDatabase(eventData[2], srcName, eventData[4], eventData[12])
     end
 
-    -- Level Check, if Estimated
+    -- * Level Check, if Estimated
     if NS.PlayerDB[srcName].E then
-      local newLevel = NS.GetLevelFromSpellId(eventData[12]) or nil
+      newLevel = NS.GetLevelFromSpellId(eventData[12]) or nil
       if newLevel then
         NS.PlayerDB[srcName].L = (newLevel > (NS.PlayerDB[srcName].L or 0)) and newLevel or NS.PlayerDB[srcName].L
       end
     end
 
-    -- AuraCheck
+    -- * AuraCheck
     if eventData[2] == "SPELL_AURA_APPLIED" then
       if AuraCheck(eventData[12], eventData[13], eventData[4], srcName) then
         return
@@ -203,9 +188,9 @@ local function ParseSource(eventData)
 
     NS.UpdatePlayerActiveCache(srcName, nil, false, nil, eventData[4]) --(name, stealth, dead, role, GUID)
 
-    -- Check role
+    -- * Check role
     if NS.PlayersOnBars[eventData[4]] and not NS.PlayerActiveCache[eventData[4]].RoleFound then
-      local srcRole = ClRoleCheck(eventData[12], NS.PlayerDB[srcName].C)
+      srcRole = ClRoleCheck(eventData[12], NS.PlayerDB[srcName].C)
       if srcRole then
         if NS.PlayerDB[srcName].RL ~= srcRole then
           NS.PlayerDB[srcName].RL = srcRole
@@ -219,8 +204,11 @@ end
 --> Process Destination <--------------------------------------------
 -- Only checks for deaths; basic player data would be overkill as being hit will trigger another event instantly anyways
 local function ParseDestination(eventData)
-  if IsValidPlayer(eventData[10], eventData[8], eventData[9]) then
-    CLDeath(eventData[2], eventData[8], FormatCLogName(eventData[9]))
+  -- * Check for unit death
+  if eventData[2] == "UNIT_DIED" then -- unit died?
+    if IsValidPlayer(eventData[10], eventData[8], eventData[9]) then
+      CLDeath(eventData[2], eventData[8], FormatCLogName(eventData[9]))
+    end
   end
 end
 

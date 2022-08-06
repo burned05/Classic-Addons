@@ -1,11 +1,8 @@
-﻿#- Retail -----------------------------------------------------------
-#- Interface: 90005
-#- Title: weizPVP |TInterface/Addons/weizPVP/Media/toc:16|t |cff7fdfff[Retail]|r
-#- BCC --------------------------------------------------------------
-## Interface: 20501
-## Title: weizPVP |TInterface/Addons/weizPVP/Media/toc:16|t |cffbcff00[BCC]|r
+﻿#- weizPVP ----------------------------------------------------------
+## Interface: 90150
+## Title: weizPVP |TInterface/Addons/weizPVP/Media/toc:16|t
 #--------------------------------------------------------------------
-## Version: v1.9.6.2b
+## Version: v1.9.8d
 ## Author: weiz
 ## Notes: World PVP Multi-tool: Detect, analyze, and display enemy players. Target Crosshair, Stealth Alerts, Kill On Sight and more!
 #--------------------------------------------------------------------
@@ -20,5 +17,4 @@
 ## X-Curse-Project-ID: 300711
 ## X-WoWI-ID: 24779
 #--------------------------------------------------------------------
-# Load Addon
 Load.xml

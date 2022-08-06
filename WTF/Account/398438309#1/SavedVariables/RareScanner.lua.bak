@@ -1,0 +1,47 @@
+
+RareScannerDB = {
+	["profileKeys"] = {
+		["Shiptiititii - Grobbulus"] = "Default",
+	},
+	["global"] = {
+		["object_names"] = {
+			["enUS"] = {
+			},
+		},
+		["rares_loot"] = {
+		},
+		["dbversion"] = {
+			{
+				["locale"] = "enUS",
+				["version"] = 3,
+			}, -- [1]
+		},
+		["rares_found"] = {
+		},
+		["recentlySeen"] = {
+		},
+		["lootdbversion"] = 3,
+		["rare_names"] = {
+			["enUS"] = {
+				[472] = "Fedfennel",
+				[5828] = "Humar the Pridelord",
+				[99] = "Morgaine the Sly",
+				[471] = "Mother Fang",
+				[79] = "Narg the Taskmaster",
+				[61] = "Thuros Lightfingers",
+				[3581] = "Sewer Beast",
+				[100] = "Gruff Swiftbite",
+			},
+		},
+		["containers_loot"] = {
+		},
+		["custom_npcs"] = {
+		},
+		["loot_info"] = {
+		},
+	},
+	["profiles"] = {
+		["Default"] = {
+		},
+	},
+}

@@ -4,7 +4,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local select = select
 local gsub = gsub
 local GetClassColor = GetClassColor
@@ -28,21 +28,29 @@ function NS.KOS.ChangeKosStatus(playerName)
   end
   local unescapedName = NS.Unescape(playerName)
   NS.KOS.menuPlayerName = unescapedName
-  local printedName = WrapTextInColorCode(gsub(unescapedName, "-(.*)", ""), select(4, GetClassColor(NS.PlayerDB[unescapedName].C)))
+  local printedName =
+    WrapTextInColorCode(gsub(unescapedName, "-(.*)", ""), select(4, GetClassColor(NS.PlayerDB[unescapedName].C)))
   local printedRealm = gsub(unescapedName, "^(.*-)", "")
   if NS.KosList[NS.KOS.menuPlayerName] then
     NS.KOS.RemovePlayer(NS.KOS.menuPlayerName)
-    NS.PrintAddonMessage("|TInterface/Addons/weizPVP/Media/Icons/kos.tga:0|t |cff8fdaffRemoved|r |cff666666:|r " .. printedName .. " |cffbbbbbb-|r " .. printedRealm)
+    NS.PrintAddonMessage(
+      "|TInterface/Addons/weizPVP/Media/Icons/kos.tga:0|t |cff8fdaffRemoved|r |cff666666:|r " ..
+        printedName .. " |cffbbbbbb-|r " .. printedRealm
+    )
   elseif NS.KOS.menuPlayerName then
     NS.KOS.AddPlayer(NS.KOS.menuPlayerName)
-    NS.PrintAddonMessage("|TInterface/Addons/weizPVP/Media/Icons/kos.tga:0|t |cff8fdaffAdded|r |cff666666:|r " .. printedName .. " |cffbbbbbb-|r " .. printedRealm)
+    NS.PrintAddonMessage(
+      "|TInterface/Addons/weizPVP/Media/Icons/kos.tga:0|t |cff8fdaffAdded|r |cff666666:|r " ..
+        printedName .. " |cffbbbbbb-|r " .. printedRealm
+    )
   end
   IsPlayerTarget()
 end
 
 --> Set Menu Text <--------------------------------------------------
 function NS.KOS.SetMenuText(playerName)
-  return NS.KosList[playerName] and "|TInterface/Addons/weizPVP/Addons/KOS/Media/kos_icon_remove.tga:0|t |cff8fdaffRemove from|r |cffff0037KOS|r" or
+  return NS.KosList[playerName] and
+    "|TInterface/Addons/weizPVP/Addons/KOS/Media/kos_icon_remove.tga:0|t |cff8fdaffRemove from|r |cffff0037KOS|r" or
     "|TInterface/Addons/weizPVP/Addons/KOS/Media/kos_icon_add.tga:0|t |cff8fdaffAdd to|r |cffff0037KOS|r"
 end
 

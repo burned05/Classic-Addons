@@ -7,8 +7,11 @@ _weizpvp_chardb = {
 		["Default"] = {
 			["Options"] = {
 				["Database"] = {
-					["LastCleaned"] = 1652596452,
+					["LastCleaned"] = 1659593151,
 					["VERSION"] = 3,
+				},
+				["Window"] = {
+					["Visible"] = false,
 				},
 				["LDB"] = {
 					["minimapPos"] = 268.1522562262892,
@@ -23,6 +26,9 @@ _weizpvp_chardb = {
 					},
 					["Height"] = 216,
 				},
+			},
+			["KosList"] = {
+				["Mbull-Grobbulus"] = true,
 			},
 		},
 	},

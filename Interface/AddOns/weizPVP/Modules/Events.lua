@@ -3,11 +3,11 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local wipe = wipe
 local UnitGUID = UnitGUID
 local UnitLevel = UnitLevel
-local C_PvP_IsWarModeDesired = C_PvP.IsWarModeDesired
+local C_Timer_After = C_Timer.After
 
 NS.PlayerActiveCache = NS.PlayerActiveCache or {}
 
@@ -32,19 +32,14 @@ function NS.EnableEvents()
   weizPVP:RegisterEvent("LOADING_SCREEN_ENABLED", NS.LoadingScreenEnabled)
   weizPVP:RegisterEvent("LOADING_SCREEN_DISABLED", NS.LoadingScreenDisabled)
   -- COMBAT/PVP
-  if NS.WOW_RETAIL then
-    weizPVP:RegisterEvent("WAR_MODE_STATUS_UPDATE", NS.WarModeChanged)
-  end
+  -- weizPVP:RegisterEvent("WAR_MODE_STATUS_UPDATE", NS.WarModeChanged) --no longer working, thanks blizz -_-
   weizPVP:RegisterEvent("PLAYER_REGEN_DISABLED", NS.EnteringCombat)
   weizPVP:RegisterEvent("PLAYER_REGEN_ENABLED", NS.LeavingCombat)
   -- PLAYER UPDATES
-  if NS.WOW_RETAIL then
-    weizPVP:RegisterEvent("UI_INFO_MESSAGE", NS.UiInfoMessage)
-  end
+  weizPVP:RegisterEvent("UI_INFO_MESSAGE", NS.UiInfoMessage)
   weizPVP:RegisterEvent("PLAYER_LEVEL_UP", NS.PlayerLevelUp)
   -- DISPLAY CHANGES
   weizPVP:RegisterEvent("DISPLAY_SIZE_CHANGED", NS.UpdateDisplayData)
-
   -- Crosshair
   NS.Crosshair.Enable()
 end
@@ -92,25 +87,22 @@ end
 
 --> ⚡ UI_INFO_MESSAGE -------------------------------------
 function NS.UiInfoMessage(_, msgType, _)
-  if msgType == 999 then
+  if msgType == 1035 or msgType == 998 then
     NS.WarModeChanged(false)
-  elseif msgType == 998 then
+  elseif msgType == 1034 then
     NS.WarModeChanged(true)
   end
 end
-
 --> ⚡ WAR_MODE_STATUS_UPDATE ------------------------------
-function NS.WarModeChanged(enable)
-  local WmOn = false
-  if not enable then
-    WmOn = C_PvP_IsWarModeDesired()
-    NS.Player.WarMode = WmOn
-  end
-  if (not WmOn) and NS.Options.Addon.DisabledWhenWarmodeOff then
-    weizPVP:OnDisable()
-  else
-    weizPVP:OnEnable()
-  end
+function NS.WarModeChanged(input)
+  NS.Player.WarMode = input or C_PvP.IsWarModeDesired()
+  NS.GetPVPZone()
+  C_Timer_After(
+    0.5,
+    function()
+      NS.GetPVPZone()
+    end
+  )
 end
 
 --|> UNITS

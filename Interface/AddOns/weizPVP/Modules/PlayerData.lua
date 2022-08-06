@@ -4,7 +4,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local UnitName = UnitName
 local GetGuildInfo = GetGuildInfo
 local UnitCanAttack = UnitCanAttack
@@ -55,6 +55,7 @@ local function AddNewPlayer(GUID, name)
 end
 
 --> UpdatePlayerActiveCache <----------------------------------------
+local newPlayerOnList = false
 function NS.UpdatePlayerActiveCache(name, stealth, dead, role, GUID)
   -- Verify GUID exists
   if not GUID or not name then
@@ -62,7 +63,7 @@ function NS.UpdatePlayerActiveCache(name, stealth, dead, role, GUID)
   end
 
   -- : Check for player already in cache
-  local newPlayerOnList = false
+
   if not NS.PlayerActiveCache[GUID] then
     AddNewPlayer(GUID, name)
     newPlayerOnList = true
@@ -95,6 +96,8 @@ function NS.UpdatePlayerActiveCache(name, stealth, dead, role, GUID)
   end
 
   NS.AddPlayerDataToNearby(GUID, newPlayerOnList)
+
+  newPlayerOnList = false
 end
 
 --> Static Role Assignment <-----------------------------------------
@@ -106,74 +109,77 @@ function NS.ClassRoleAssign(class)
 end
 
 --> Get Unit Data <--------------------------------------------------
+local currentTime
+local fullName
+local getGUID
 local unitUpdateThreshold = 120 -- 2 minutes between guild/race/level/role checks
 function NS.GetUnitData(unit)
   if not unit then
     return
   end
   if UnitExists(unit) and NS.IsUnitValidForTracking(unit) then
-    local currentTime = time()
-    local name = NS.GetFullNameOfUnit(unit) or nil
-    local guid = UnitGUID(unit) or nil
-    if name and guid then
+    currentTime = time()
+    fullName = NS.GetFullNameOfUnit(unit) or nil
+    getGUID = UnitGUID(unit) or nil
+    if fullName and getGUID then
       -- : Add player to DB if not found
-      if not NS.PlayerDB[name] then
-        NS.PlayerDB[name] = {}
-        _, NS.PlayerDB[name].C = UnitClass(unit)
-        NS.PlayerDB[name].RL = NS.ClassRoleAssign(NS.PlayerDB[name].C)
+      if not NS.PlayerDB[fullName] then
+        NS.PlayerDB[fullName] = {}
+        _, NS.PlayerDB[fullName].C = UnitClass(unit)
+        NS.PlayerDB[fullName].RL = NS.ClassRoleAssign(NS.PlayerDB[fullName].C)
       end
 
-      NS.PlayerDB[name].T = currentTime
+      NS.PlayerDB[fullName].T = currentTime
 
       -- : Update player info if estimated or past update threshold
-      if NS.PlayerDB[name].T + unitUpdateThreshold > currentTime or NS.PlayerDB[name].E then
-        NS.PlayerDB[name].G = GetGuildInfo(unit)
-        NS.PlayerDB[name].L = UnitLevel(unit)
-        NS.PlayerDB[name].RC = UnitRace(unit)
+      if NS.PlayerDB[fullName].T + unitUpdateThreshold > currentTime or NS.PlayerDB[fullName].E then
+        NS.PlayerDB[fullName].G = GetGuildInfo(unit)
+        NS.PlayerDB[fullName].L = UnitLevel(unit)
+        NS.PlayerDB[fullName].RC = UnitRace(unit)
       end
 
       -- : Player On Bars?
-      if NS.PlayersOnBars[guid] and NS.PlayerActiveCache[guid] then
-        NS.PlayerActiveCache[guid].OnTaxi = UnitOnTaxi(unit) or nil
+      if NS.PlayersOnBars[getGUID] and NS.PlayerActiveCache[getGUID] then
+        NS.PlayerActiveCache[getGUID].OnTaxi = UnitOnTaxi(unit) or nil
         NS:UnitHealthEvent(unit)
       end
 
-      NS.PlayerDB[name].E = false
-      NS.UpdatePlayerActiveCache(name, nil, nil, nil, guid) -- (name, stealth, dead, role, GUID)
+      NS.PlayerDB[fullName].E = nil
+      NS.UpdatePlayerActiveCache(fullName, nil, nil, nil, getGUID) -- (name, stealth, dead, role, GUID)
     end
   end
 end
 
 --> Remove Friendly Player <-----------------------------------------
+local removeFriendGUID
 local function RemoveFriendlyPlayer(unit)
-  local GUID = UnitGUID(unit) or nil
+  removeFriendGUID = UnitGUID(unit) or nil
 
   --: Remove from Cache
-  NS.PlayerActiveCache[GUID] = nil
+  NS.PlayerActiveCache[removeFriendGUID] = nil
 
   --: Remove player for lists
-
   -- Alive
-  if NS.ActiveList[GUID] then
-    NS.ActiveList[GUID].TimeAdded = 0
-    NS.ActiveList[GUID].TimeUpdated = 0
-  elseif NS.ActiveDeadList[GUID] then
+  if NS.ActiveList[removeFriendGUID] then
+    NS.ActiveList[removeFriendGUID].TimeAdded = 0
+    NS.ActiveList[removeFriendGUID].TimeUpdated = 0
+  elseif NS.ActiveDeadList[removeFriendGUID] then
     -- Dead
-    NS.ActiveDeadList[GUID].TimeAdded = 0
-    NS.ActiveDeadList[GUID].TimeUpdated = 0
-  elseif NS.InactiveList[GUID] then
+    NS.ActiveDeadList[removeFriendGUID].TimeAdded = 0
+    NS.ActiveDeadList[removeFriendGUID].TimeUpdated = 0
+  elseif NS.InactiveList[removeFriendGUID] then
     -- Inactive
-    NS.InactiveList[GUID].TimeAdded = 0
-    NS.InactiveList[GUID].TimeUpdated = 0
-  elseif NS.InactiveDeadList[GUID] then
+    NS.InactiveList[removeFriendGUID].TimeAdded = 0
+    NS.InactiveList[removeFriendGUID].TimeUpdated = 0
+  elseif NS.InactiveDeadList[removeFriendGUID] then
     -- Inactive Dead
-    NS.InactiveDeadList[GUID].TimeAdded = 0
-    NS.InactiveDeadList[GUID].TimeUpdated = 0
+    NS.InactiveDeadList[removeFriendGUID].TimeAdded = 0
+    NS.InactiveDeadList[removeFriendGUID].TimeUpdated = 0
   end
 
   --: Wipe from Current List
-  if NS.CurrentNameplates[GUID] then
-    NS.CurrentNameplates[GUID] = nil
+  if NS.CurrentNameplates[removeFriendGUID] then
+    NS.CurrentNameplates[removeFriendGUID] = nil
   end
 
   --: Refresh list by re-checking timeouts (which we zeroed)
@@ -209,15 +215,14 @@ function NS.IsUnitValidForTracking(unit)
 end
 
 -->  Get Full Name of Unit <-----------------------------------------
--- @param unit UnitType
--- @return "name-realm" string
+local name, realm
 function NS.GetFullNameOfUnit(unit)
   if not unit then -- check for unit
     return
   end
 
   -- get name
-  local name, realm = UnitName(unit, true)
+  name, realm = UnitName(unit, true)
   if not name then
     return
   end

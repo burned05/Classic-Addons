@@ -3,7 +3,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local time = time
 local pairs = pairs
 local wipe = wipe
@@ -44,9 +44,12 @@ local function OptimizeDatabase(currentTime, days)
       NS.PlayerDB[player].L = NS.PlayerDB[player].Level
       NS.PlayerDB[player].Level = nil
     end
-    if NS.PlayerDB[player].Estimated then
+    if NS.PlayerDB[player].Estimated ~= nil then
       NS.PlayerDB[player].E = NS.PlayerDB[player].Estimated
       NS.PlayerDB[player].Estimated = nil
+    end
+    if NS.PlayerDB[player].E == false then
+      NS.PlayerDB[player].E = nil
     end
 
     --* v1 -  clean old db leftovers (Name)

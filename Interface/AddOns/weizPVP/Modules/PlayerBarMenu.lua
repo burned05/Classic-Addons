@@ -3,7 +3,7 @@
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local gsub = gsub
 local GetClassColor = GetClassColor
 local WrapTextInColorCode = WrapTextInColorCode
@@ -19,7 +19,11 @@ function weizPVP_PlayerBarMenu_OnLoad()
     return
   end
   -- NAME
-  local printedName = WrapTextInColorCode(gsub(NS.KOS.menuPlayerName, "-(.*)", ""), select(4, GetClassColor(NS.PlayerDB[NS.KOS.menuPlayerName].C)))
+  local printedName =
+    WrapTextInColorCode(
+    gsub(NS.KOS.menuPlayerName, "-(.*)", ""),
+    select(4, GetClassColor(NS.PlayerDB[NS.KOS.menuPlayerName].C))
+  )
   local printedRealm = gsub(NS.KOS.menuPlayerName, "^(.*-)", "")
   info.text = printedName .. " |cffbbbbbb-|r |cffdddddd" .. printedRealm .. "|r"
   info.notCheckable = 1

@@ -1,9 +1,19 @@
 ---------------------------------------------------------------------------------------------------
 --|> ZONE DETECTION
+-- TODO : Rework entire module
+---------------------------------------------------------------------------------------------------
+--[[
+Order of events:
+- PLAYER_ENTERING_WORLD
+- CheckValidInstance
+- CheckValidWorldZone
+- GetZoneType
+  - All NS.Zone info should be updated at this point.
+]]
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local select = select
 local wipe = wipe
 local C_Timer_After = C_Timer.After
@@ -13,99 +23,116 @@ local GetZonePVPInfo = GetZonePVPInfo
 local GetAddOnMetadata = GetAddOnMetadata
 local StaticPopup_Show = StaticPopup_Show
 
---: ZONES AND INSTANCES :--------------
+--: Locals :---------------------------
 NS.Zone = {}
 NS.Zone.instance = ""
 NS.Zone.pvpType = ""
 NS.Zone.InInstance = nil
 NS.ZoneKnown = nil
-
 NS.LoadingScreenActive = true
 
---> Check for Valid (PVP) Instance <---------------------------------
-local function CheckValidInstance()
-  local state = false
-  if NS.Zone.instance == "pvp" and NS.Options.Addon.EnabledInBattlegrounds then
-    state = true
-  end
-  if NS.Zone.instance == "arena" and NS.Options.Addon.EnabledInArena then
-    state = true
-  end
-  return state
-end
+--> Is Enabled Area? <-----------------------------------------------
+local function IsEnabledArea()
+  -- Warmode check
+  NS.Player.WarMode = C_PvP.IsWarModeDesired()
 
---> Check for Valid World Zone <-------------------------------------
-local function CheckValidWorldZone()
-  -- Checking for Valid WPVP Zone
-  if NS.Zone.instance ~= "none" then
-    return
-  end
+  -- Sanctuary check
   if NS.Options.Addon.DisabledInSanctuary and NS.Zone.pvpType == "sanctuary" then
-    return
-  else
-    return true
+    return false
+  end
+
+  -- Instance or World?
+  if NS.Zone.instance ~= "none" then ---- INSTANCE --------------------------
+    -- BG Instance Check
+    if NS.Zone.instance == "pvp" and NS.Options.Addon.EnabledInBattlegrounds then
+      return true
+    end
+
+    -- Arena Instance Check
+    if NS.Zone.instance == "arena" and NS.Options.Addon.EnabledInArena then
+      return true
+    end
+
+    -- Options to be displayed are not enabled; disable the window
+    return false
+  else ---- WORLD -------------------------------------------------------------
+    -- War Mode Check
+    if (not NS.Player.WarMode) and NS.Options.Addon.DisabledWhenWarmodeOff then
+      -- check if sanctuaries are allowed while WM is disabled
+      if (not NS.Options.Addon.DisabledWhenWarmodeOffSanctuaries) and NS.Zone.pvpType == "sanctuary" then
+        return true
+      else
+        return false
+      end
+    else
+      return true
+    end
   end
 end
 
 --> Get Zone Type <--------------------------------------------------
-local gettingZone = nil
+-- local gettingZone = nil
 local inInstance = nil
 local reattemptInQueue = nil
 local FirstLogin = true
 
 local function GetZoneType()
-  -- Is initializing still?
+  -- Are we initializing still?
   if NS.addonInitializing then
     if not reattemptInQueue then
       reattemptInQueue = true
-      C_Timer_After(0.2, GetZoneType)
+      C_Timer_After(0.5, GetZoneType)
       NS.ZoneKnown = nil
     end
     return
   end
 
-  -- if GetZoneText() == "" then
-  if (GetZoneText() == "" or NS.LoadingScreenActive) then
+  -- ....still, really?
+  if (GetZoneText() == "") or NS.LoadingScreenActive or (C_PvP.IsWarModeDesired() == nil) then
     if not reattemptInQueue then
       reattemptInQueue = true
-      C_Timer_After(0.2, GetZoneType)
+      C_Timer_After(0.5, GetZoneType)
       NS.ZoneKnown = nil
-      return
     end
+    return
   end
 
   reattemptInQueue = nil
+
+  -- Good to go! No more waiting
+  NS.Player.WarMode = C_PvP.IsWarModeDesired()
   NS.Zone.pvpType = select(1, GetZonePVPInfo())
   NS.Zone.InInstance, NS.Zone.instance = IsInInstance()
+
+  -- player in instance?
   if NS.Zone.InInstance ~= inInstance then
     if FirstLogin then
+      C_Timer_After(0.5, GetZoneType)
       FirstLogin = nil
     else
       NS.ClearListData()
     end
     inInstance = NS.Zone.InInstance
   end
-  if CheckValidInstance() then
+
+  -- Are we in a valid instance/zone?
+  if IsEnabledArea() then
     weizPVP:OnEnable()
-  elseif CheckValidWorldZone() then
-    if NS.WOW_BCC then
-      weizPVP:OnEnable()
-    else
-      NS.WarModeChanged()
-    end
+    NS.DebugOutput(NS.Zone, "true")
+    NS.DebugOutput(NS.Options.Addon, "options")
+    NS.DebugOutput(NS.Player.WarMode, "WM")
   else
     weizPVP:OnDisable()
+    NS.DebugOutput(NS.Zone, "false")
+    NS.DebugOutput(NS.Options.Addon, "options")
+    NS.DebugOutput(NS.Player.WarMode, "WM")
   end
-  gettingZone = nil
+
   NS.ZoneKnown = true
 end
 
 --> Get PVP Zone <---------------------------------------------------
 function NS.GetPVPZone()
-  if gettingZone then
-    return
-  end
-  gettingZone = true
   GetZoneType()
 end
 
@@ -141,7 +168,10 @@ end
 --> ⚡ Player Entering World -------------------------------
 function NS.PlayerEnteringWorldEvent()
   if NS.addonInitializing then -- check if this is the first 'entering world' run since init was ran
-    NS.PrintAddonMessage(NS.Constants.AddonString .. " |cffcccccc" .. GetAddOnMetadata("weizPVP", "Version") .. "|r : |cff37ff37Initialized!|r")
+    NS.PrintAddonMessage(
+      NS.Constants.AddonString ..
+        " |cffcccccc" .. GetAddOnMetadata("weizPVP", "Version") .. "|r : |cff37ff37Initialized!|r"
+    )
     NS.addonInitializing = nil
   end
 
@@ -156,13 +186,17 @@ function NS.PlayerEnteringWorldEvent()
         NS.databaseReset = nil
         StaticPopup_Show("WEIZPVP_UPGRADE_DB_RESET")
         NS.PrintAddonMessage("|cffFFA200Saved options and data have been reset!|r")
-        NS.PrintAddonMessage("The database reset was required to resolve potential issues with the new KOS features and player tracking, especially for players that play on multiple realms.")
-        NS.PrintAddonMessage("Database updates in the future will migrate all your data and settings; No more resets will be needed.")
+        NS.PrintAddonMessage(
+          "The database reset was required to resolve potential issues with the new KOS features and player tracking, especially for players that play on multiple realms."
+        )
+        NS.PrintAddonMessage(
+          "Database updates in the future will migrate all your data and settings; No more resets will be needed."
+        )
       end
     )
   end
   NS.CoreUI.Initialize()
   NS.SetWindowSettings()
-  gettingZone = true
+  -- gettingZone = true
   GetZoneType()
 end

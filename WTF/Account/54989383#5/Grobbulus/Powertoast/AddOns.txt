@@ -15,3 +15,4 @@ Questie: enabled
 Auctionator: enabled
 AuctionFaster: disabled
 Auc-Advanced: disabled
+WoWPro: disabled

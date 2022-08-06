@@ -1,0 +1,52 @@
+VER 3 0000000000000002 "chickn" "132089"
+/chicken
+END
+VER 3 0000000000000011 "follow" "INV_MISC_QUESTIONMARK"
+/follow vadikpaladin
+END
+VER 3 0000000000000010 "guild rec" "132103"
+/4 Looking for some <Painfully Average> recruits for Mag/Gruuls. Warlocks? Need 'em. Paladins? Bring it. Mages? You bet. Ele Shams? Hell yea brother. DPS Warriors? We'll actually love you. Raids Tues/Thurs 9-12PM ST. MS>OS, 1 SR. Pst for more info.
+END
+VER 3 000000000000000A "inv targ" "132089"
+/invite [@target]
+END
+VER 3 0000000000000006 "jed target" "132193"
+/target jed
+END
+VER 3 0000000000000009 "lfg 1" "132160"
+/4 LF Tank/Heals N Slabs
+/4 LF Tank/Heals N Slabs
+/4 LF Tank/Heals N Slabs
+END
+VER 3 0000000000000008 "lfg 4" "132166"
+/4 LF1M Tank for SP
+/4 LF1M Tank for SP
+END
+VER 3 000000000000000F "mount" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/cast [flyable] Swift Red Windrider; Great White Kodo
+/dismount [mounted]
+END
+VER 3 0000000000000007 "rajaxx" "135807"
+/cleartarget
+/target General R
+/cast Fire Blast(Rank 1)
+END
+VER 3 0000000000000003 "target" "132212"
+/target krom'gul
+END
+VER 3 0000000000000004 "trink1" "INV_MISC_QUESTIONMARK"
+#showtooltip 13
+/use 13
+END
+VER 3 0000000000000005 "trink2" "INV_MISC_QUESTIONMARK"
+#showtooltip 14
+/use 14
+END
+VER 3 000000000000000E "tsm open" "136072"
+/tsm
+END
+VER 3 000000000000000D "TSMMacro" "INV_Misc_Flower_01"
+/click TSMShoppingBuyoutBtn
+/click TSMBidBuyConfirmBtn
+END

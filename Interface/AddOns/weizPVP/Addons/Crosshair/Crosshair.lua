@@ -11,9 +11,13 @@ local RC = LibStub("LibRangeCheck-2.0")
 --: NAMESPACE :------------------------
 NS.Crosshair = {}
 NS.Crosshair.Enabled = false
-local eventFrame
+--: LOCALS :---------------------------
+NS.Crosshair = {}
+NS.Crosshair.Enabled = false
+local eventFrame = CreateFrame("frame")
+local RangeCheckTicker
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 local DISABLED_FONT_COLOR = DISABLED_FONT_COLOR
 local UIFrameFadeIn = UIFrameFadeIn
@@ -72,10 +76,30 @@ local function SetCrosshairColors()
   weizPVP_CrosshairFrame.Core:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, 0.3)
   weizPVP_CrosshairFrame.Core_ADD:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, 0.8)
   --: LINES
-  weizPVP_CrosshairFrame.TopLine:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, NS.Options.Crosshair.LineAlpha)
-  weizPVP_CrosshairFrame.BottomLine:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, NS.Options.Crosshair.LineAlpha)
-  weizPVP_CrosshairFrame.LeftLine:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, NS.Options.Crosshair.LineAlpha)
-  weizPVP_CrosshairFrame.RightLine:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, NS.Options.Crosshair.LineAlpha)
+  weizPVP_CrosshairFrame.TopLine:SetVertexColor(
+    targetClassColor.r,
+    targetClassColor.g,
+    targetClassColor.b,
+    NS.Options.Crosshair.LineAlpha
+  )
+  weizPVP_CrosshairFrame.BottomLine:SetVertexColor(
+    targetClassColor.r,
+    targetClassColor.g,
+    targetClassColor.b,
+    NS.Options.Crosshair.LineAlpha
+  )
+  weizPVP_CrosshairFrame.LeftLine:SetVertexColor(
+    targetClassColor.r,
+    targetClassColor.g,
+    targetClassColor.b,
+    NS.Options.Crosshair.LineAlpha
+  )
+  weizPVP_CrosshairFrame.RightLine:SetVertexColor(
+    targetClassColor.r,
+    targetClassColor.g,
+    targetClassColor.b,
+    NS.Options.Crosshair.LineAlpha
+  )
   weizPVP_CrosshairFrame.TargetFX:SetVertexColor(targetClassColor.r, targetClassColor.g, targetClassColor.b, 0.8)
   NS.Crosshair.SetAlpha()
   --: NAME TEXT
@@ -144,8 +168,6 @@ local function RangeCheckPulse()
     TargetRangeCheck()
   end
 end
-
-local RangeCheckTicker
 
 --> Check KOS <------------------------------------------------------
 local function CheckKOS()
@@ -353,7 +375,6 @@ function NS.Crosshair.OnLoad()
   NS.Crosshair.Reset()
 end
 
-eventFrame = CreateFrame "frame"
 eventFrame:SetScript(
   "OnEvent",
   function(_, event, ...)

@@ -2,16 +2,19 @@
 TomTomDB = {
 	["profileKeys"] = {
 		["Powertoast - Grobbulus"] = "Default",
+		["Powerbanker - Grobbulus"] = "Default",
+		["Normalshaman - Grobbulus"] = "Default",
+		["Regularrogue - Grobbulus"] = "Default",
 	},
 	["profiles"] = {
 		["Default"] = {
 			["arrow"] = {
 				["position"] = {
-					"TOPRIGHT", -- [1]
+					"TOP", -- [1]
 					nil, -- [2]
-					"TOPRIGHT", -- [3]
-					-367.5570068359375, -- [4]
-					-227.8890533447266, -- [5]
+					"TOP", -- [3]
+					-5.557420253753662, -- [4]
+					-117.8890228271484, -- [5]
 				},
 			},
 			["block"] = {
@@ -30,9 +33,18 @@ TomTomWaypoints = nil
 TomTomWaypointsM = {
 	["profileKeys"] = {
 		["Powertoast - Grobbulus"] = "Powertoast - Grobbulus",
+		["Powerbanker - Grobbulus"] = "Powerbanker - Grobbulus",
+		["Normalshaman - Grobbulus"] = "Normalshaman - Grobbulus",
+		["Regularrogue - Grobbulus"] = "Regularrogue - Grobbulus",
 	},
 	["profiles"] = {
 		["Powertoast - Grobbulus"] = {
+		},
+		["Powerbanker - Grobbulus"] = {
+		},
+		["Normalshaman - Grobbulus"] = {
+		},
+		["Regularrogue - Grobbulus"] = {
 		},
 	},
 }

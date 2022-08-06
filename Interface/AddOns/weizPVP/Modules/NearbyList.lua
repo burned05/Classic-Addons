@@ -36,7 +36,10 @@ function NS.ManageNearbyListTimeouts()
   local timestamp = GetTime()
   --: ACTIVE
   for player in pairs(NS.ActiveList) do
-    if (timestamp - NS.ActiveList[player].TimeUpdated) > NS.Options.Sorting.NearbyActiveTimeout and NS.CurrentNameplates[player] == nil then
+    if
+      (timestamp - NS.ActiveList[player].TimeUpdated) > NS.Options.Sorting.NearbyActiveTimeout and
+        NS.CurrentNameplates[player] == nil
+     then
       NS.InactiveList[player] = NS.ActiveList[player]
       NS.InactiveList[player].TimeAdded = timestamp + (count * 0.001)
       NS.ActiveList[player] = nil

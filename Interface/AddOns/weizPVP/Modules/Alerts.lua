@@ -125,7 +125,9 @@ local StealthSoundReadyToPlay = true
 local function StealthChatOutput(player, icon, text)
   -- print chat output
   if NS.Options.StealthAlert.ChatAlert then
-    NS.PrintAddonMessage(player .. "|cffbbbbbb used|r |T" .. icon .. ":0|t " .. NS.ColorsLUT["stealth"]:WrapTextInColorCode(text))
+    NS.PrintAddonMessage(
+      player .. "|cffbbbbbb used|r |T" .. icon .. ":0|t " .. NS.ColorsLUT["stealth"]:WrapTextInColorCode(text)
+    )
   end
 end
 
@@ -153,7 +155,10 @@ local function StealthPopUp(player, icon, text)
   NS.AlertFrame.eventText:SetText(text .. " Detected")
   NS.AlertFrame.playerText:SetText(player)
   NS.AlertFrame:SetHeight(NS.AlertFrame.eventText:GetTop() - NS.AlertFrame.playerText:GetBottom() + 14)
-  NS.AlertFrame:SetWidth(NS.AlertFrame.playerText:GetWidth() + NS.AlertFrame.eventText:GetWidth() + NS.AlertFrame.div:GetWidth() + NS.AlertFrame:GetHeight())
+  NS.AlertFrame:SetWidth(
+    NS.AlertFrame.playerText:GetWidth() + NS.AlertFrame.eventText:GetWidth() + NS.AlertFrame.div:GetWidth() +
+      NS.AlertFrame:GetHeight()
+  )
   NS.AlertFrame:SetPoint("TOP", UIParent, "CENTER", 0, UIParent:GetTop() / 3)
   NS.AlertFrame.Icon:SetSize(NS.AlertFrame:GetHeight(), NS.AlertFrame:GetHeight())
   NS.AlertFrame.anim:Play()
@@ -161,23 +166,11 @@ end
 
 --> 🔊 Play Audio Alert <---------------------------------------------
 local AlertSoundReadyToPlay = true
-local newPlayerAlertPending = nil
 local function PlayAudioAlert(url, now, channel)
   if (not NS.ZoneKnown) or NS.LoadingScreenActive then
-    if newPlayerAlertPending then
-      return
-    end
-    newPlayerAlertPending = true
-    C_Timer_After(
-      0.1,
-      function()
-        NS.NewPlayerAlert()
-      end
-    )
     return
   end
 
-  newPlayerAlertPending = nil
   channel = channel or "Master"
   if now or AlertSoundReadyToPlay then
     PlaySoundFile(url, channel)
@@ -240,6 +233,9 @@ end
 
 --> ✔️ New Player Alert Check <--------------------------------------
 function NS.NewPlayerAlert()
+  if (not NS.ZoneKnown) or NS.LoadingScreenActive then
+    return
+  end
   -- Sound Enabled?
   if not NS.Options.AudioAlerts.DetectedPlayerSound then
     return
@@ -254,7 +250,11 @@ function NS.NewPlayerAlert()
   end
 
   -- ▶️ PLAY
-  PlayAudioAlert(SM:Fetch("sound", NS.Options.AudioAlerts.DetectedPlayerSoundFile), false, NS.Options.AudioAlerts.SoundChannel)
+  PlayAudioAlert(
+    SM:Fetch("sound", NS.Options.AudioAlerts.DetectedPlayerSoundFile),
+    false,
+    NS.Options.AudioAlerts.SoundChannel
+  )
 end
 
 --> 🎯 KOS Alert <----------------------------------------------------
@@ -269,6 +269,9 @@ function NS.KOSAlert(GUID)
   end
   -- Chat Alert
   if NS.Options.KOS.ChatAlert then
-    NS.PrintAddonMessage("|TInterface/Addons/weizPVP/Media/Icons/kos.tga::0|t " .. NS.FormatPlayerNameAndRealm(NS.PlayerActiveCache[GUID].displayName, GUID) .. "|cff8fdaff detected!|r ")
+    NS.PrintAddonMessage(
+      "|TInterface/Addons/weizPVP/Media/Icons/kos.tga::0|t " ..
+        NS.FormatPlayerNameAndRealm(NS.PlayerActiveCache[GUID].displayName, GUID) .. "|cff8fdaff detected!|r "
+    )
   end
 end

@@ -4,18 +4,11 @@
 local _, NS = ...
 NS = NS or {}
 
---: ⬆️ Upvalues :----------------------
+--: 🆙 Upvalues :----------------------
 local CopyTable = CopyTable
 
 --: Settings :-------------------------
 weizPVP.ENABLED = false
-
---: Version :---------------------------
-if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-  NS.WOW_RETAIL = true
-elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
-  NS.WOW_BCC = true
-end
 
 ---------------------------------------------------------------------------------------------------
 --|> Addon Control Functions <|--------------------------------------------------------------------
@@ -76,7 +69,9 @@ end
 
 --> Print Addon Message <--------------------------------------------
 function NS.PrintAddonMessage(msg)
-  (SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage("|TInterface/Addons/weizPVP/Media/weizpvp_chat.tga:0|t " .. msg)
+  (SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage(
+    "|TInterface/Addons/weizPVP/Media/weizpvp_chat.tga:0|t " .. msg
+  )
 end
 
 --> Bindings <-------------------------------------------------------
@@ -92,12 +87,6 @@ end
 --------------------------------------------------------------------------------------------------
 --> Get Game Info <--------------------------------------------------
 function NS.GetGameInfo()
-  if NS.WOW_RETAIL then
-    NS.LUT_Levels_Retail_Initialize()
-    NS.LUT_Specs_Retail_Initialize()
-  elseif NS.WOW_BCC then
-    NS.LUT_Levels_BCC_Initialize()
-    NS.LUT_Classes_BCC_Initialize()
-    NS.LUT_Specs_BCC_Initialize()
-  end
+  NS.LUT_Levels_Initialize()
+  NS.LUT_Specs_Initialize()
 end

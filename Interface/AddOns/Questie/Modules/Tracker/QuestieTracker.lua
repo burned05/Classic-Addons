@@ -388,7 +388,7 @@ function _QuestieTracker:CreateActiveQuestsHeader()
             local maxQuestAmount = "/" .. C_QuestLog.GetMaxNumQuestsCanAccept()
 
             local _, activeQuests = GetNumQuestLogEntries()
-            self.trackedQuests.label:SetText(Questie.TBC_BETA_BUILD_VERSION_SHORTHAND .. l10n("Questie Tracker: ") .. tostring(activeQuests) .. maxQuestAmount)
+            self.trackedQuests.label:SetText(l10n("Questie Tracker: ") .. tostring(activeQuests) .. maxQuestAmount)
             self.trackedQuests.label:SetPoint("TOPLEFT", self.trackedQuests, "TOPLEFT", 0, 0)
 
             --self.trackedQuests.label2:SetFont(LSM30:Fetch("font", Questie.db.global.trackerFontHeader) or STANDARD_TEXT_FONT, trackerFontSizeHeader)
@@ -673,11 +673,10 @@ function _QuestieTracker:CreateTrackedQuestItemButtons()
 
             -- Edge case to find "equipped" quest items since they will no longer be in the players bag
             if (not isFound) then
-                for j = 13, 18 do
-                    local itemID = GetInventoryItemID("player", j)
-                    local texture = GetInventoryItemTexture("player", j)
+                for inventorySlot = 1, 19 do
+                    local itemID = GetInventoryItemID("player", inventorySlot)
                     if quest.sourceItemId == itemID then
-                        validTexture = texture
+                        validTexture = GetInventoryItemTexture("player", inventorySlot)
                         isFound = true
                         break
                     end
@@ -2252,7 +2251,7 @@ end
 
 function QuestieTracker:AQW_Insert(index, expire)
     Questie:Debug(Questie.DEBUG_DEVELOP, "QuestieTracker: AQW_Insert")
-    if QuestieTracker._disableHooks then
+    if (not Questie.db.global.trackerEnabled) or QuestieTracker._disableHooks then
         return
     end
 
@@ -2307,7 +2306,7 @@ function QuestieTracker:AQW_Insert(index, expire)
                 Questie.db.char.collapsedZones[zoneId] = nil
             end
         else
-            Questie:Error(Questie.TBC_BETA_BUILD_VERSION_SHORTHAND.."Missing quest " .. tostring(questId) .. "," .. tostring(expire) .. " during tracker update")
+            Questie:Error("Missing quest " .. tostring(questId) .. "," .. tostring(expire) .. " during tracker update")
         end
         QuestieCombatQueue:Queue(function()
             QuestieTracker:ResetLinesForChange()

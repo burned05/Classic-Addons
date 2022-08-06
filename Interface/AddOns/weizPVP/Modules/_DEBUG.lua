@@ -1,19 +1,20 @@
 ---------------------------------------------------------------------------------------------------
 --|> 🐞 DEBUG 🐞
+-- 📌 Leaving debugging in the release so that players can help when needed
+-- ⚠️ Uses a custom-updated ViragDevTool addon for any output!
 ---------------------------------------------------------------------------------------------------
 local _, NS = ...
 
---: ⬆️ Upvalues :----------------------
+-- : 🆙 Upvalues :----------------------
 local wipe = wipe
 local collectgarbage = collectgarbage
-local C_Timer_After = C_Timer.After
-
---: Settings :-------------------------
-NS.DEBUG = false
 
 --> Debug Output <---------------------------------------------------
 -- Output via ViragDevTools, if available
 function NS.DebugOutput(data, label)
+  if not NS.DEBUG then
+    return
+  end
   if ViragDevTool_AddData and NS.DEBUG then
     label = label or "|cFFFF0033 [UNLABELED]|r"
     ViragDevTool_AddData(data, label)
@@ -25,12 +26,7 @@ function NS.Debug_Init()
   NS.DEBUG = NS.Options.Addon.Debug or nil
   if NS.DEBUG then
     if NS.addonInitializing then
-      C_Timer_After(
-        2,
-        function()
-          NS.PrintAddonMessage("|cffff0066DEBUG ENABLED|r")
-        end
-      )
+      NS.PrintAddonMessage("|cffff0066DEBUG ENABLED|r")
     end
     NS.Debug_Enable(true)
   end

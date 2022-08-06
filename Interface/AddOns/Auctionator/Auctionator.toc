@@ -1,6 +1,6 @@
 ## Interface: 20504
 ## Title: Auctionator
-## Version: 9.2.16
+## Version: 9.2.22
 ## Author: Borjamacare, plusmouse
 ## X-Website: http://mods.curse.com/addons/wow/auctionator
 ## X-Localizations: enUS, itIT, deDE, ruRU, koKR, frFR, esES, esMX, zhTW, ptBR, zhCN
@@ -12,13 +12,11 @@
 
 Patches\TaintLess.xml
 
-Assets_TBC.xml
+Assets_Classic.xml
 
-Imports_TBC\Manifest.xml
+Imports_Classic\Manifest.xml
 
 Locales\Manifest.xml
 
 Source\Manifest.xml
-Source_TBC\Manifest.xml
-
-Auctionator.xml
+Source_Classic\Manifest.xml

@@ -1,15 +1,11 @@
 # <DBM> Outlands
 
-## [2.5.35](https://github.com/DeadlyBossMods/DBM-BCC/tree/2.5.35) (2022-05-11)
-[Full Changelog](https://github.com/DeadlyBossMods/DBM-BCC/commits/2.5.35) [Previous Releases](https://github.com/DeadlyBossMods/DBM-BCC/releases)
+## [2.5.40](https://github.com/DeadlyBossMods/DBM-BCC/tree/2.5.40) (2022-07-15)
+[Full Changelog](https://github.com/DeadlyBossMods/DBM-BCC/compare/2.5.39...2.5.40) [Previous Releases](https://github.com/DeadlyBossMods/DBM-BCC/releases)
 
-- prep new tags  
-- update BW version checker  
-- Update README.md  
-- More fixes  
-- Lua check looks good, now fix that  
-- Create ci.yml  
-    Create workflow  
-- Restore invisible files  
-- Update README.md  
-- Rebuilt Burning Crusade Classic repo with my sunwell updates  
+- Squeeze fated rate api check into that  
+- prep new tags, second time is a charm  
+- Update .pkgmeta  
+- Update .pkgmeta  
+- add expansion 9 cat  
+- bump alpha revisions  
