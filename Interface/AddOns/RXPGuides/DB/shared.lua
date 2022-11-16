@@ -107,14 +107,221 @@ if gameVersion < 30000 then
         ["Eastern Kingdoms"] = 1415,
         ["Outland"] = 987
     }
+elseif gameVersion < 40000 then
+    addon.mapId = {
+        ["Dire Maul"] = 234,
+        ["The Hinterlands"] = 1425,
+        ["Northrend"] = 571,
+        ["Cosmic"] = 946,
+        ["Blackrock Spire"] = 250,
+        ["Razorfen Downs"] = 300,
+        ["Hrothgar's Landing"] = 170,
+        ["Black Temple"] = 339,
+        ["Westfall"] = 1436,
+        ["Isle of Conquest"] = 169,
+        ["The Eye of Eternity"] = 141,
+        ["Eastern Kingdoms"] = 1415,
+        ["Undercity"] = 1458,
+        ["Zul'Aman"] = 333,
+        ["The Blood Furnace"] = 261,
+        ["Kalimdor"] = 1414,
+        ["Karazhan"] = 350,
+        ["Ahn'kahet: The Old Kingdom"] = 132,
+        ["The Barrens"] = 1413,
+        ["StormwindNew"] = 1453,
+        ["Darnassus"] = 1457,
+        ["Azuremyst Isle"] = 1943,
+        ["Ruins of Ahn'Qiraj"] = 247,
+        ["Gundrak"] = 153,
+        ["Sethekk Halls"] = 258,
+        ["Un'Goro Crater"] = 1449,
+        ["Ironforge"] = 1455,
+        ["Dalaran"] = 125,
+        ["The Violet Hold"] = 168,
+        ["Burning Steppes"] = 1428,
+        ["Wetlands"] = 1437,
+        ["SholazarBasin"] = 119,
+        ["Halls of Stone"] = 140,
+        ["Plaguelands: The Scarlet Enclave"] = 124,
+        ["Howling Fjord"] = 117,
+        ["CrystalsongForest"] = 127,
+        ["Arathi Basin"] = 1461,
+        ["BoreanTundra"] = 114,
+        ["Dustwallow Marsh"] = 1445,
+        ["Naxxramas"] = 162,
+        ["Searing Gorge"] = 1427,
+        ["Loch Modan"] = 1432,
+        ["Blade's Edge Mountains"] = 1949,
+        ["Hyjal Summit"] = 329,
+        ["Hellfire Ramparts"] = 347,
+        ["Vault of Archavon"] = 156,
+        ["Wailing Caverns"] = 279,
+        ["Onyxia's Lair"] = 248,
+        ["Grizzly Hills"] = 116,
+        ["Ashenvale"] = 1440,
+        ["Pit of Saron"] = 184,
+        ["Azeroth"] = 947,
+        ["Blackfathom Deeps"] = 221,
+        ["Serpentshrine Cavern"] = 332,
+        ["EPLNew"] = 1423,
+        ["HowlingFjord"] = 117,
+        ["ScholomanceOLD"] = 306,
+        ["Blackrock Depths"] = 242,
+        ["Nagrand"] = 1951,
+        ["Wintergrasp"] = 123,
+        ["TheStormPeaks"] = 120,
+        ["Terokkar Forest"] = 1952,
+        ["Ahn'Qiraj"] = 319,
+        ["Eversong Woods"] = 1941,
+        ["The Underbog"] = 262,
+        ["Utgarde Keep"] = 133,
+        ["Maraudon"] = 280,
+        ["Trial of the Crusader"] = 172,
+        ["Tanaris"] = 1446,
+        ["Stratholme"] = 317,
+        ["Borean Tundra"] = 114,
+        ["Utgarde Pinnacle"] = 136,
+        ["The Temple of Atal'Hakkar"] = 220,
+        ["EPLClassic"] = 1423,
+        ["Swamp of Sorrows"] = 1435,
+        ["StormwindClassic"] = 1453,
+        ["Moonglade"] = 1450,
+        ["The Culling of Stratholme"] = 130,
+        ["ZulDrak"] = 121,
+        ["Shadow Labyrinth"] = 260,
+        ["Eastern Plaguelands"] = 1423,
+        ["StormPeaks"] = 120,
+        ["Arathi Highlands"] = 1417,
+        ["ScarletEnclave"] = 124,
+        ["Isle of Quel'Danas"] = 1957,
+        ["Blasted Lands"] = 1419,
+        ["Halls of Lightning"] = 138,
+        ["Eye of the Storm"] = 1956,
+        ["Mulgore"] = 1412,
+        ["Shattrath City"] = 1955,
+        ["Deadwind Pass"] = 1430,
+        ["Silvermoon City"] = 1954,
+        ["Halls of Reflection"] = 185,
+        ["Bloodmyst Isle"] = 1950,
+        ["Shadowmoon Valley"] = 1948,
+        ["Shadowfang Keep"] = 310,
+        ["The Exodar"] = 1947,
+        ["The Shattered Halls"] = 246,
+        ["Zangarmarsh"] = 1946,
+        ["The Obsidian Sanctum"] = 155,
+        ["Silverpine Forest"] = 1421,
+        ["Hellfire Peninsula"] = 1944,
+        ["Trial of the Champion"] = 171,
+        ["Zul'Farrak"] = 219,
+        ["Warsong Gulch"] = 1460,
+        ["Thunder Bluff"] = 1456,
+        ["Alterac Valley"] = 1459,
+        ["Stonetalon Mountains"] = 1442,
+        ["Orgrimmar"] = 1454,
+        ["Stormwind City"] = 1453,
+        ["Azjol-Nerub"] = 157,
+        ["Ulduar"] = 147,
+        ["Auchenai Crypts"] = 256,
+        ["Drak'Tharon Keep"] = 160,
+        ["Winterspring"] = 1452,
+        ["Outland"] = 987,
+        ["Silithus"] = 1451,
+        ["GrizzlyHills"] = 116,
+        ["Scarlet Monastery"] = 302,
+        ["The Ruby Sanctum"] = 200,
+        ["Felwood"] = 1448,
+        ["The Mechanar"] = 267,
+        ["The Nexus"] = 129,
+        ["The Black Morass"] = 273,
+        ["Badlands"] = 1418,
+        ["Thousand Needles"] = 1441,
+        ["Dragonblight"] = 115,
+        ["Old Hillsbrad Foothills"] = 274,
+        ["Gnomeregan"] = 226,
+        ["Desolace"] = 1443,
+        ["Tirisfal Glades"] = 1420,
+        ["Zul'Gurub"] = 233,
+        ["Sunwell Plateau"] = 335,
+        ["Azshara"] = 1447,
+        ["Darkshore"] = 1439,
+        ["The Botanica"] = 266,
+        ["Teldrassil"] = 1438,
+        ["Sholazar Basin"] = 119,
+        ["Stranglethorn Vale"] = 1434,
+        ["The Stockade"] = 225,
+        ["Alterac Mountains"] = 1416,
+        ["Icecrown"] = 118,
+        ["Strand of the Ancients"] = 128,
+        ["Netherstorm"] = 1953,
+        ["The Steamvault"] = 263,
+        ["Gruul's Lair"] = 330,
+        ["Redridge Mountains"] = 1433,
+        ["The Deadmines"] = 291,
+        ["Uldaman"] = 230,
+        ["Ghostlands"] = 1942,
+        ["Magtheridon's Lair"] = 331,
+        ["Duskwood"] = 1431,
+        ["Elwynn Forest"] = 1429,
+        ["Ragefire Chasm"] = 213,
+        ["Western Plaguelands"] = 1422,
+        ["Dun Morogh"] = 1426,
+        ["Icecrown Citadel"] = 186,
+        ["IcecrownGlacier"] = 118,
+        ["The Storm Peaks"] = 120,
+        ["The Forge of Souls"] = 183,
+        ["Crystalsong Forest"] = 127,
+        ["Durotar"] = 1411,
+        ["Tempest Keep"] = 334,
+        ["Razorfen Kraul"] = 301,
+        ["The Slave Pens"] = 265,
+        ["Zul'Drak"] = 121,
+        ["Feralas"] = 1444,
+        ["Molten Core"] = 232,
+        ["Blackwing Lair"] = 287,
+        ["Mana-Tombs"] = 272,
+        ["The Oculus"] = 142,
+        ["Hillsbrad Foothills"] = 1424,
+        ["The Arcatraz"] = 269,
+    }
 else
-    addon.mapId = {["ScarletEnclave"] = 124}
+    addon.mapId = {}
     for i = 1, 2200 do
         local map = C_Map.GetMapInfo(i)
         if map and not addon.mapId[map.name] then
             addon.mapId[map.name] = i
         end
     end
+
+    addon.hearthstoneSpellIds = {
+        375357,
+        363799,
+        136508,
+        298068,
+        278559,
+        94719,
+        172179,
+        342122,
+        326064,
+        340200,
+        345393,
+        285424,
+        75136,
+        278244,
+        231504,
+        142543,
+        286331,
+        367013,
+        286353,
+        285362,
+        391042,
+        286031,
+        279066,
+        366945,
+    }
+end
+
+if gameVersion > 30000 then
+    addon.mapId["ScarletEnclave"] = 124
     addon.mapId["IcecrownGlacier"] = addon.mapId["Icecrown"]
     addon.mapId["CrystalsongForest"] = addon.mapId["Crystalsong Forest"]
     addon.mapId["StormPeaks"] = addon.mapId["The Storm Peaks"]
@@ -324,13 +531,22 @@ local CreatePanel
 local requestText = true
 local questText = ""
 local requestTimer = 0
+local mode
+local missingQs
+
 local SetText = function()
     local ctime = GetTime()
     if requestText and ctime - requestTimer > 0.2 then
         requestTimer = ctime
         questText,requestText = addon.GetBestQuests(false,2)
+        missingQs = addon.ShowMissingQuests()
     end
-    return questText
+
+    if mode == "missing" then
+        return missingQs
+    else
+        return questText
+    end
 end
 
 local function OnClick(self)
@@ -377,15 +593,33 @@ function CreatePanel()
                 name = "Refresh",
                 type = 'execute',
                 func = function() _G.InterfaceOptionsFrame_OpenToCategory(RXP.settings.gui.quest) end,
-            }
+            },
+            showAvailable = {
+                order = 14,
+                name = "Show 25 Quests",
+                type = 'execute',
+                func = function()
+                    mode = "quests"
+                    _G.InterfaceOptionsFrame_OpenToCategory(RXP.settings.gui.quest)
+                end,
+            },
+            showMissing = {
+                order = 15,
+                name = "Show Missing Quests",
+                type = 'execute',
+                func = function()
+                    mode = "missing"
+                    _G.InterfaceOptionsFrame_OpenToCategory(RXP.settings.gui.quest)
+                end,
+            },
         }
 
     }
 
-    LibStub("AceConfig-3.0"):RegisterOptionsTable("RXP Guides/Quest Data", questDataTable)
+    LibStub("AceConfig-3.0"):RegisterOptionsTable(addon.title .. "/Quest Data", questDataTable)
 
     addon.settings.gui.quest = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
-                                    "RXP Guides/Quest Data", "Quest Data", "RXP Guides")
+                                    addon.title .. "/Quest Data", "Quest Data", addon.title)
 
 end
 
@@ -444,6 +678,9 @@ function addon.functions.showtotalxp(self,text,flags)
 
 end
 
+addon.questsDone = {}
+addon.questsAvailable = {}
+
 function addon.CalculateTotalXP(flags)
     local totalXp = 0
     flags = flags or 0
@@ -453,12 +690,15 @@ function addon.CalculateTotalXP(flags)
         local aldor = addon.AldorScryerCheck("Aldor") and 932
         local scryer = addon.AldorScryerCheck("Scryer") and 934
         ignorePreReqs = aldor or scryer or 932
+    else
+        addon.questsDone = {}
     end
     local groups = {}
     local function ProcessQuest(quest,qid,skipgrpcheck)
         qid = qid or quest.Id
         local group = quest.group or ""
-        if (group == "" or skipgrpcheck or not groups[group]) and IsQuestAvailable(quest,qid,ignorePreReqs) and (ignorePreReqs or (IsPreReqComplete(quest))) then
+        local isAvailable = IsQuestAvailable(quest,qid,ignorePreReqs)
+        if (group == "" or skipgrpcheck or not groups[group]) and isAvailable and (ignorePreReqs or (IsPreReqComplete(quest))) then
             groups[group] = true
             local xp = quest.xp or 0
             totalXp = totalXp + xp
@@ -467,6 +707,7 @@ function addon.CalculateTotalXP(flags)
                                     addon.GetQuestName(qid) or "", qid))
             end
         end
+        return isAvailable
     end
     if not addon.questLogQuests then addon.GetBestQuests(true) end
     if ignorePreReqs then
@@ -474,28 +715,42 @@ function addon.CalculateTotalXP(flags)
             local quest = addon.questLogQuests[i]
             if quest then
                 ProcessQuest(quest)
+                addon.questsAvailable[quest.Id] = true
             end
         end
     end
     for id, quest in pairs(addon.QuestDB) do
+
         if not ignorePreReqs and quest.questLog and addon.IsQuestComplete(id) then
-            ProcessQuest(quest,id,true)
+            if ProcessQuest(quest,id) then
+                addon.questsDone[id] = true
+            end
         elseif not (quest.questLog or addon.IsQuestTurnedIn(id)) then
             local item = quest.itemId
             if ignorePreReqs and item then
-                ProcessQuest(quest,id)
+                if ProcessQuest(quest,id) then
+                    addon.questsDone[id] = true
+                end
             elseif type(item) == "table" then
                 local state = true
                 for n, itemId in pairs(item) do
                     state = state and GetItemCount(itemId, true) >=
                                 quest.itemAmount[n]
                 end
-                if state then ProcessQuest(quest,id) end
+                if state then
+                    if ProcessQuest(quest,id) then
+                        addon.questsDone[id] = true
+                    end
+                end
             elseif type(item) == "number" and GetItemCount(item, true) >=
                 quest.itemAmount then
-                ProcessQuest(quest,id)
+                if ProcessQuest(quest,id) then
+                    addon.questsDone[id] = true
+                end
             elseif not item then
-                ProcessQuest(quest,id)
+                if ProcessQuest(quest,id) then
+                    addon.questsDone[id] = true
+                end
             end
         end
     end
@@ -503,6 +758,21 @@ function addon.CalculateTotalXP(flags)
     return totalXp
 end
 
+function addon.ShowMissingQuests(output)
+    RXP.CalculateTotalXP(1)
+    RXP.CalculateTotalXP(0)
+    local t = ""
+    for qid,v in pairs(addon.questsAvailable) do
+        if not addon.questsDone[qid] and qid > 0 then
+            t = string.format("%s\n%s (%d)", t,
+                addon.GetQuestName(qid) or "", qid)
+        end
+    end
+    if output then
+        print(t)
+    end
+    return t
+end
 
 addon.QuestDB = {
 	[11505] = {

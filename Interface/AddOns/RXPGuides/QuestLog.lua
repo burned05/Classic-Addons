@@ -1,6 +1,7 @@
 local addonName, addon = ...
 
 local _G = _G
+local L = addon.locale.Get
 
 function addon.UpdateQuestButton(index)
     local button = addon.questLogButton
@@ -74,9 +75,9 @@ function addon.UpdateQuestButton(index)
         if addon.pickUpList[questID] then
             local pickUpList = GetGuideList(addon.pickUpList[questID])
             if pickUpList ~= "" then
-                tooltip = format("%s%s%sQuest is being picked up at|r%s",
+                tooltip = format("%s%s%s%s|r%s",
                                  tooltip, addon.icons.accept,
-                                 addon.colors.tooltip, pickUpList)
+                                 addon.colors.tooltip, L("Quest is being picked up at"), pickUpList)
                 showButton = true
                 separator = "\n\n"
             end
@@ -84,9 +85,9 @@ function addon.UpdateQuestButton(index)
         if addon.turnInList[questID] then
             local turnInList = GetGuideList(addon.turnInList[questID])
             if turnInList ~= "" then
-                tooltip = format("%s%s%s%sQuest is being turned in at|r%s",
+                tooltip = format("%s%s%s%s%s|r%s",
                                  tooltip, separator, addon.icons.turnin,
-                                 addon.colors.tooltip, turnInList)
+                                 addon.colors.tooltip, L("Quest is being turned in at"), turnInList)
                 showButton = true
             end
         end
@@ -122,8 +123,8 @@ function addon.GetQuestLog(QL,LT)
     end
     addon.next = group.next
 
-    if (RXPCData.SoM and guide.era or not RXPCData.SoM and guide.som or
-        RXPCData.SoM and RXPCData.phase > 2 and guide["era/som"]) or not guide then
+    if (addon.settings.db.profile.SoM and guide.era or not addon.settings.db.profile.SoM and guide.som or
+    addon.settings.db.profile.SoM and addon.settings.db.profile.phase > 2 and guide["era/som"]) or not guide then
         return
     end
     for ns, step in ipairs(guide.steps) do
@@ -176,12 +177,19 @@ function addon.GetQuestLog(QL,LT)
     return QL
 end
 
-_G.GameTooltip:HookScript("OnTooltipSetItem", function(self)
-    if self:IsForbidden() or _G.GameTooltip:IsForbidden() then
+local function SetItemTooltip(tooltip, tooltipInfo)
+    if tooltip:IsForbidden() or _G.GameTooltip:IsForbidden() then
         return
     end
-    local _,link = _G.GameTooltip:GetItem()
-    local id = tonumber(link:match("item:(%d+)"))
+
+    local id
+    if tooltipInfo then
+        id = tooltipInfo.id
+    else
+        local _,link = tooltip:GetItem()
+        id = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+    end
+
     local questId = id and addon.questItemList[id]
     local guideList = questId and addon.turnInList[questId]
 
@@ -189,9 +197,15 @@ _G.GameTooltip:HookScript("OnTooltipSetItem", function(self)
         local prefix = "Item used in guide:\n"
         for _,entry in ipairs(guideList) do
             if addon.IsGuideActive(entry.guide) and addon.IsStepShown(entry.step) then
-                _G.GameTooltip:AddLine(prefix..addon.icons.turnin..entry.name)
+                tooltip:AddLine(prefix..addon.icons.turnin..entry.name)
                 prefix = ""
             end
         end
     end
-end)
+end
+
+if TooltipDataProcessor then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, SetItemTooltip)
+else
+    _G.GameTooltip:HookScript("OnTooltipSetItem", SetItemTooltip)
+end

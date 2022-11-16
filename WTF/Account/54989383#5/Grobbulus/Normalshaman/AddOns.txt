@@ -11,3 +11,8 @@ kExtraBossFrames: disabled
 WeakAurasCompanion: enabled
 WeakAurasArchive: enabled
 ElvUI_OptionsUI: enabled
+weizPVP: disabled
+Auc-Advanced: disabled
+AuctionFaster: disabled
+WoWPro: disabled
+WoWPro_Leveling: disabled

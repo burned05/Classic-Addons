@@ -7,12 +7,6 @@ local strmatch, gmatch, strfind = strmatch, gmatch, strfind
 local tinsert, tremove, sort, wipe = tinsert, tremove, sort, wipe
 local tonumber, floor, band = tonumber, floor, bit.band
 
-local ContainerIDToInventoryID = ContainerIDToInventoryID
-local GetContainerItemID = GetContainerItemID
-local GetContainerItemInfo = GetContainerItemInfo
-local GetContainerItemLink = GetContainerItemLink
-local GetContainerNumFreeSlots = GetContainerNumFreeSlots
-local GetContainerNumSlots = GetContainerNumSlots
 local GetCurrentGuildBankTab = GetCurrentGuildBankTab
 local GetCursorInfo = GetCursorInfo
 local GetGuildBankItemInfo = GetGuildBankItemInfo
@@ -23,19 +17,25 @@ local GetItemFamily = GetItemFamily
 local GetItemInfo = GetItemInfo
 local GetTime = GetTime
 local InCombatLockdown = InCombatLockdown
-local PickupContainerItem = PickupContainerItem
 local PickupGuildBankItem = PickupGuildBankItem
 local QueryGuildBankTab = QueryGuildBankTab
-local SplitContainerItem = SplitContainerItem
 local SplitGuildBankItem = SplitGuildBankItem
 
-local NUM_BAG_SLOTS = NUM_BAG_SLOTS
+local NUM_BAG_SLOTS = NUM_BAG_SLOTS + (E.Retail and 1 or 0) -- add the profession bag
 local NUM_BANKBAGSLOTS = NUM_BANKBAGSLOTS
 local BANK_CONTAINER = BANK_CONTAINER
 
 local C_PetJournalGetPetInfoBySpeciesID = C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID
 local ItemClass_Armor = Enum.ItemClass.Armor
 local ItemClass_Weapon = Enum.ItemClass.Weapon
+
+local ContainerIDToInventoryID = ContainerIDToInventoryID or (C_Container and C_Container.ContainerIDToInventoryID)
+local GetContainerItemID = GetContainerItemID or (C_Container and C_Container.GetContainerItemID)
+local GetContainerItemLink = GetContainerItemLink or (C_Container and C_Container.GetContainerItemLink)
+local GetContainerNumFreeSlots = GetContainerNumFreeSlots or (C_Container and C_Container.GetContainerNumFreeSlots)
+local GetContainerNumSlots = GetContainerNumSlots or (C_Container and C_Container.GetContainerNumSlots)
+local PickupContainerItem = PickupContainerItem or (C_Container and C_Container.PickupContainerItem)
+local SplitContainerItem = SplitContainerItem or (C_Container and C_Container.SplitContainerItem)
 
 local guildBags = {51,52,53,54,55,56,57,58}
 local bankBags = {BANK_CONTAINER}
@@ -421,7 +421,10 @@ function B:GetItemInfo(bag, slot)
 	if IsGuildBankBag(bag) then
 		return GetGuildBankItemInfo(bag - 50, slot)
 	else
-		return GetContainerItemInfo(bag, slot)
+		local info = B:GetContainerItemInfo(bag, slot)
+		if info then
+			return info.iconFileID, info.stackCount, info.isLocked
+		end
 	end
 end
 
@@ -476,7 +479,7 @@ function B:Encode_BagSlot(bag, slot)
 end
 
 function B:Decode_BagSlot(int)
-	return floor(int/100), int % 100
+	return floor(int*0.01), int % 100
 end
 
 function B:IsPartial(bag, slot)
@@ -489,7 +492,7 @@ function B:EncodeMove(source, target)
 end
 
 function B:DecodeMove(move)
-	local s = floor(move/10000)
+	local s = floor(move*0.0001)
 	local t = move%10000
 	s = (t>9000) and (s+1) or s
 	t = (t>9000) and (t-10000) or t

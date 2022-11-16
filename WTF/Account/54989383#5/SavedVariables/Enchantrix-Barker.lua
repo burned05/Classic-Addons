@@ -1,4 +1,7 @@
 
-EnchantrixBarkerConfig = nil
+EnchantrixBarkerConfig = {
+	["profile.Default"] = {
+	},
+}
 EnchantrixBarkerSavedInfo = {
 }

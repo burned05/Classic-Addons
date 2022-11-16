@@ -11,7 +11,8 @@ AuctionFasterDb = {
 		["refreshInterval"] = 5,
 	},
 	["defaultTab"] = "NONE",
-	["fastMode"] = true,
+	["favorites"] = {
+	},
 	["tutorials"] = {
 		["sell"] = false,
 		["chain"] = true,
@@ -20,8 +21,7 @@ AuctionFasterDb = {
 	["pricing"] = {
 		["maxBidDeviation"] = 20,
 	},
-	["favorites"] = {
-	},
+	["fastMode"] = true,
 	["auctionDb"] = {
 	},
 	["sell"] = {

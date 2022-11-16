@@ -65,23 +65,18 @@ local function UpdateColor(self, event, unit)
 	local colors = self.colors.power[BREWMASTER_POWER_BAR_NAME]
 	local perc = (element.cur or 0) / (element.max or 1)
 
-	local t
-	if(perc >= STAGGER_RED_TRANSITION) then
-		t = colors and colors[STAGGER_RED_INDEX]
-	elseif(perc > STAGGER_YELLOW_TRANSITION) then
-		t = colors and colors[STAGGER_YELLOW_INDEX]
-	else
-		t = colors and colors[STAGGER_GREEN_INDEX]
-	end
+	local index = (perc >= STAGGER_RED_TRANSITION and STAGGER_RED_INDEX) or (perc >= STAGGER_YELLOW_TRANSITION and STAGGER_YELLOW_INDEX) or STAGGER_GREEN_INDEX
+	local color = colors and colors[index]
 
 	local r, g, b
-	if(t) then
-		r, g, b = t[1], t[2], t[3]
-		if(b) then
+	if color then
+		r, g, b = color.r, color.g, color.b
+
+		if r then
 			element:SetStatusBarColor(r, g, b)
 
 			local bg = element.bg
-			if(bg and b) then
+			if bg and b then
 				local mu = bg.multiplier or 1
 				bg:SetVertexColor(r * mu, g * mu, b * mu)
 			end
@@ -218,7 +213,7 @@ local function Enable(self, unit)
 		self:RegisterEvent('UNIT_DISPLAYPOWER', VisibilityPath)
 		self:RegisterEvent('PLAYER_TALENT_UPDATE', VisibilityPath, true)
 
-		if(element:IsObjectType('StatusBar') and not (element:GetStatusBarTexture() or element:GetStatusBarAtlas())) then
+		if(element:IsObjectType('StatusBar') and not element:GetStatusBarTexture()) then
 			element:SetStatusBarTexture([[Interface\TargetingFrame\UI-StatusBar]])
 		end
 

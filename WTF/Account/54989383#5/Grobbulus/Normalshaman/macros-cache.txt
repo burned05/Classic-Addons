@@ -1,0 +1,5 @@
+VER 3 0000000001000001 "dispel" "INV_MISC_QUESTIONMARK"
+#showtooltip
+/cast Cure Disease
+/cast Cure Poison
+END

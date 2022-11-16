@@ -1,9 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local UF = E:GetModule('UnitFrames')
-
-local _, ns = ...
-local ElvUF = ns.oUF
-assert(ElvUF, 'ElvUI was unable to locate oUF.')
+local ElvUF = E.oUF
 
 local random = random
 local unpack = unpack
@@ -73,7 +70,7 @@ function UF:Configure_Power(frame)
 		E:SetSmoothing(power, UF.db.smoothbars)
 
 		--Text
-		local attachPoint = UF:GetObjectAnchorPoint(frame, db.power.attachTextTo)
+		local attachPoint = UF:GetObjectAnchorPoint(frame, db.power.attachTextTo, true)
 		power.value:ClearAllPoints()
 		power.value:Point(db.power.position, attachPoint, db.power.position, db.power.xOffset, db.power.yOffset)
 		frame:Tag(power.value, db.power.text_format)
@@ -131,7 +128,7 @@ function UF:Configure_Power(frame)
 
 		if frame.POWERBAR_DETACHED then
 			if power.Holder and power.Holder.mover then
-				E:EnableMover(power.Holder.mover:GetName())
+				E:EnableMover(power.Holder.mover.name)
 			else
 				power.Holder = CreateFrame('Frame', nil, power)
 				power.Holder:Point('BOTTOM', frame, 'BOTTOM', 0, -20)
@@ -168,13 +165,13 @@ function UF:Configure_Power(frame)
 
 			if frame.ORIENTATION == 'LEFT' then
 				power:Width(frame.POWERBAR_WIDTH - UF.BORDER*2)
-				power:Point('RIGHT', frame, 'BOTTOMRIGHT', -(UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)/2))
+				power:Point('RIGHT', frame, 'BOTTOMRIGHT', -(UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)*0.5))
 			elseif frame.ORIENTATION == 'RIGHT' then
 				power:Width(frame.POWERBAR_WIDTH - UF.BORDER*2)
-				power:Point('LEFT', frame, 'BOTTOMLEFT', (UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)/2))
+				power:Point('LEFT', frame, 'BOTTOMLEFT', (UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)*0.5))
 			else
-				power:Point('LEFT', frame, 'BOTTOMLEFT', (UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)/2))
-				power:Point('RIGHT', frame, 'BOTTOMRIGHT', -(UF.BORDER*2 + 4 + (frame.PVPINFO_WIDTH or 0)), ((frame.POWERBAR_HEIGHT-UF.BORDER)/2))
+				power:Point('LEFT', frame, 'BOTTOMLEFT', (UF.BORDER*2 + 4), ((frame.POWERBAR_HEIGHT-UF.BORDER)*0.5))
+				power:Point('RIGHT', frame, 'BOTTOMRIGHT', -(UF.BORDER*2 + 4 + (frame.PVPINFO_WIDTH or 0)), ((frame.POWERBAR_HEIGHT-UF.BORDER)*0.5))
 			end
 
 			power:SetFrameLevel(50)
@@ -188,7 +185,7 @@ function UF:Configure_Power(frame)
 
 		--Hide mover until we detach again
 		if not frame.POWERBAR_DETACHED and power.Holder and power.Holder.mover then
-			E:DisableMover(power.Holder.mover:GetName())
+			E:DisableMover(power.Holder.mover.name)
 		end
 
 		if db.power.strataAndLevel and db.power.strataAndLevel.useCustomStrata then
@@ -242,7 +239,7 @@ do
 	local tokens = {[0]='MANA','RAGE','FOCUS','ENERGY','RUNIC_POWER'}
 	local function GetRandomPowerColor()
 		local color = ElvUF.colors.power[tokens[random(0,4)]]
-		return color[1], color[2], color[3]
+		return color.r, color.g, color.b
 	end
 
 	function UF:PostUpdatePowerColor()

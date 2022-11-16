@@ -4,6 +4,7 @@ local faction = UnitFactionGroup("player")
 local _, class = UnitClass("player")
 local gameVersion = select(4, GetBuildInfo())
 local RXPG = addon.RXPG
+local L = addon.locale.Get
 addon.functions.__index = addon.functions
 local events = {}
 addon.stepUpdateList = {}
@@ -53,7 +54,8 @@ events.acceptmultiple = events.accept
 events.dailyturninmultiple = events.turnin
 
 local function GetIcon(path,index,size)
-local x1, x2, y1, y2 = GetPOITextureCoords(index)
+    local coords = GetPOITextureCoords or C_Minimap.GetPOITextureCoords
+    local x1, x2, y1, y2 = coords(index)
     return format("|T%s:0:0:0:0:%d:%d:%d:%d:%d:%d|t", path, size, size, x1*size, x2*size, y1*size, y2*size)
 end
 
@@ -104,6 +106,10 @@ local _G = _G
 local GetNumQuests = C_QuestLog.GetNumQuestLogEntries or
                          _G.GetNumQuestLogEntries
 local GetQuestLogTitle = _G.GetQuestLogTitle
+local GetNumDayEvents = _G.C_Calendar.GetNumDayEvents
+local GetDayEvent = _G.C_Calendar.GetDayEvent
+local GetCurrentCalendarTime = _G.C_DateAndTime.GetCurrentCalendarTime
+local OpenCalendar = _G.C_Calendar.OpenCalendar
 
 addon.recentTurnIn = {}
 
@@ -140,6 +146,7 @@ local IsQuestComplete = addon.IsQuestComplete
 
 local function IsOnQuest(id) return C_QuestLog.IsOnQuest(id) end
 
+addon.IsOnQuest = IsOnQuest
 addon.IsQuestTurnedIn = IsQuestTurnedIn
 addon.IsQuestComplete = IsQuestComplete
 
@@ -304,7 +311,7 @@ function addon.GetQuestObjectives(id, step)
                     local fulfilled = 0
                     if isComplete then fulfilled = 1 end
                     questInfo[1] = {
-                        text = "Objective Complete",
+                        text = L("Objective Complete"),
                         type = "event",
                         numRequired = 1,
                         numFulfilled = fulfilled,
@@ -358,7 +365,7 @@ function addon.GetQuestObjectives(id, step)
         if not err then
             if nObj == 0 then
                 qInfo[1] = {
-                    text = "Objective Complete",
+                    text = L("Objective Complete"),
                     type = "event",
                     numRequired = 1,
                     numFulfilled = 0,
@@ -396,7 +403,7 @@ function addon.GetQuestObjectives(id, step)
                     (questInfo[1].type == "" or not questInfo[1].type)) or
                     #questInfo == 0 then
                     questInfo[1] = {
-                        text = "Objective Complete",
+                        text = L("Objective Complete"),
                         type = "event",
                         numRequired = 1,
                         numFulfilled = 0,
@@ -542,6 +549,34 @@ function addon.InsertQuestGuide(id,tbl)
     table.insert(tbl[id],entry)
 end
 
+function addon.IsOnTurnInGuide(self)
+    if UnitLevel("player") >= 70 or not RXPData.skipTurnInGuideQuests then
+        return
+    end
+    if type(self) == "table" then
+        local element = self.element
+        local id = element.questId
+        if id and addon.turnInList[id] then
+            for i,v in pairs(addon.turnInList[id]) do
+                if v.name == "Launch Turn in Guide" then
+                    addon.SetElementComplete(self, true)
+                    --print(addon.GetQuestName(id),v.name,id)
+                    return
+                end
+            end
+        end
+    elseif type(self) == "number" then
+        local id = self
+        if id and addon.turnInList[id] then
+            for i,v in pairs(addon.turnInList[id]) do
+                if v.name == "Launch Turn in Guide" then
+                    return true
+                end
+            end
+        end
+    end
+end
+
 addon.pickUpList = {}
 function addon.functions.accept(self, ...)
     if type(self) == "string" then -- on parse
@@ -552,7 +587,7 @@ function addon.functions.accept(self, ...)
         flags = tonumber(flags) or 0
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                       L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.title = ""
@@ -561,7 +596,7 @@ function addon.functions.accept(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Accept *quest*"
+            element.text = _G.ACCEPT .. " *quest*"
             element.requestFromServer = true
         end
         if element.text:find("%*quest%*") then
@@ -573,7 +608,7 @@ function addon.functions.accept(self, ...)
         --[[
         flags:
             1 - disable auto accept
-            2 - skip the step if quest Id defined by arg1 is not turned in
+            2 - mark element as complete if quest Id defined by arg1 is not turned in
         ]]
         if bit.band(flags,0x2) == 0x2 then
             element.requiredTurnIn = tonumber(arg1)
@@ -630,7 +665,7 @@ function addon.functions.accept(self, ...)
                 end
                 if requiredQuests and #requiredQuests > 0 then
                     local tooltip = addon.colors.tooltip ..
-                                        "Missing pre-requisites:|r\n"
+                                        L("Missing pre-requisites") .. ":|r\n"
                     for i, qid in ipairs(requiredQuests) do
                         tooltip = format("%s\n%s%s (%d)", tooltip,
                                          addon.icons.turnin,
@@ -641,7 +676,7 @@ function addon.functions.accept(self, ...)
                     -- skip = RXPData.skipMissingPreReqs
                 elseif not doable then
                     local tooltip = addon.colors.tooltip ..
-                                        "Missing pre-requisites|r"
+                                        L("Missing pre-requisites") .. "|r"
                     element.tooltip = tooltip
                     element.icon = addon.icons.error
                     -- skip = RXPData.skipMissingPreReqs
@@ -678,7 +713,7 @@ function addon.functions.accept(self, ...)
         end
 
     end
-
+    addon.IsOnTurnInGuide(self)
 end
 
 function addon.functions.daily(self, text, ...)
@@ -700,7 +735,7 @@ function addon.functions.daily(self, text, ...)
 
         if err then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                       L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.multiple = #ids > 1
@@ -736,7 +771,7 @@ function addon.functions.turnin(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         if id < 0 then
@@ -750,7 +785,7 @@ function addon.functions.turnin(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Turn in *quest*"
+            element.text = _G.TURN_IN_QUEST .. " *quest*"
             element.requestFromServer = true
         end
         if element.text:find("%*quest%*") then
@@ -803,7 +838,7 @@ function addon.functions.turnin(self, ...)
                 end
 
                 local tooltip = addon.colors.tooltip ..
-                                    "Missing pre-requisites:|r\n"
+                                    L("Missing pre-requisites") .. ":|r\n"
                 for i, qid in ipairs(requiredQuests) do
                     if i < #requiredQuests then
                         tooltip = format("%s\n%s%s (%d)", tooltip,
@@ -856,7 +891,7 @@ function addon.functions.turnin(self, ...)
         end
 
     end
-
+    addon.IsOnTurnInGuide(self)
 end
 
 function addon.functions.dailyturnin(self, text, ...)
@@ -879,7 +914,7 @@ function addon.functions.dailyturnin(self, text, ...)
 
         if err then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "   .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.multiple = #ids > 1
@@ -921,15 +956,17 @@ function addon.UpdateQuestCompletionData(self)
     local icon = addon.icons.complete
     local id = element.questId
 
-    if type(id) ~= "number" then
-        print('Error: Invalid quest ID at step ' .. element.step.index)
+    if not element.tag or element.tag ~= "complete" then
+        return
+    elseif type(id) ~= "number" then
+        print('Error (.' .. element.tag .. '): Invalid quest ID at step ' .. element.step.index)
         return
     end
     -- local skip
     local objectives = addon.GetQuestObjectives(id, element.step.index)
     local isQuestComplete = IsQuestTurnedIn(id) or IsQuestComplete(id)
 
-    local objtext
+    local objtext = " "
     local completed
 
     if objectives and #objectives > 0 then
@@ -943,8 +980,8 @@ function addon.UpdateQuestCompletionData(self)
                     obj.numFulfilled = obj.numRequired
                 end]]
             end
-            local t = obj.text
-            if t:find("%a") then
+            local t = obj.text or " "
+            if t:find("[%a\194-\234]") then
                 element.requestFromServer = false
             else
                 element.requestFromServer = true
@@ -976,7 +1013,7 @@ function addon.UpdateQuestCompletionData(self)
         end
     else
         element.requestFromServer = true
-        element.text = "Retrieving quest data..."
+        element.text = L("Retrieving quest data") .. "..."
         element.tooltipText = nil
 
         addon.UpdateStepText(self)
@@ -1005,7 +1042,7 @@ function addon.UpdateQuestCompletionData(self)
                     requiredQuests = {id}
                 end
                 local tooltip = addon.colors.tooltip ..
-                                    "Missing pre-requisites:|r\n"
+                                    L("Missing pre-requisites") .. ":|r\n"
                 for i, qid in ipairs(requiredQuests) do
                     if i < #requiredQuests then
                         tooltip = format("%s\n%s%s (%d)", tooltip,
@@ -1039,7 +1076,10 @@ function addon.UpdateQuestCompletionData(self)
     else
         element.title = ""
     end
-    local prefix = objtext:sub(1, 1)
+    local prefix = " "
+    if objtext and #objtext > 0 then
+        prefix = objtext:sub(1, 1)
+    end
     if not quest or prefix == " " or prefix == ":" then
         element.requestFromServer = true
     elseif quest then
@@ -1078,20 +1118,24 @@ function addon.functions.complete(self, ...)
         local element = {}
         local text, id, obj, objMax = ...
         id = tonumber(id)
-        if not (id and obj) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
-                            ": Invalid objective or quest ID\n" .. self)
+        if id and id < 0 then
+            id = math.abs(id)
+            element.skipIfMissing = true
         end
-        element.obj = tonumber(obj)
+        id = id and questConversion[id] or id
+        obj = tonumber(obj)
+        if not (id and obj) then
+            addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
+                            ": Invalid objective or quest ID\n" .. self)
+            return
+        end
+        element.obj = obj
         element.objMax = tonumber(objMax)
         element.dynamicText = true
         -- element.title = addon.GetQuestName(id)
         -- local objectives = addon.GetQuestObjectives(id)--queries the server for items/creature names associated with the quest
-        if id < 0 then
-            id = -id
-            element.skipIfMissing = true
-        end
-        element.questId = questConversion[id] or id
+
+        element.questId = id
 
         element.text = ""
         element.requestFromServer = true
@@ -1116,6 +1160,9 @@ function addon.functions.complete(self, ...)
             end
         end
         addon.UpdateQuestCompletionData(self)
+        if step.active and element.skipIfMissing and not IsOnQuest(element.questId) then
+            addon.SetElementComplete(self,true)
+        end
     else
         if not step.active then
             if math.abs(RXPCData.currentStep - step.index) > 2 then
@@ -1140,6 +1187,7 @@ function addon.functions.complete(self, ...)
             end
         end
     end
+    addon.IsOnTurnInGuide(self)
 end
 
 local lastZone
@@ -1156,7 +1204,7 @@ addon.functions["goto"] = function(self, ...)
         element.zone, element.x , element.y = addon.GetMapInfo(zone,x,y)
         if not (element.x and element.y and element.zone) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid coordinates or map name\n" .. self)
         end
 
@@ -1183,7 +1231,7 @@ addon.functions["goto"] = function(self, ...)
                 end
             elseif radius > 0 then
                 if not text or text == "" then
-                    element.text = string.format("Go to %.1f,%.1f (%s)",
+                    element.text = string.format(L("Go to") .. " %.1f,%.1f (%s)",
                                                  element.x, element.y, zone)
                 end
                 element.parent = nil
@@ -1219,7 +1267,7 @@ function addon.functions.waypoint(self, text, zone, x, y, radius, lowPrio, ...)
         element.zone, element.x , element.y = addon.GetMapInfo(zone,x,y)
         if not (element.x and element.y and element.zone) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid coordinates or map name\n" .. self)
         end
 
@@ -1277,7 +1325,7 @@ function addon.functions.pin(self, ...)
         element.zone, element.x , element.y = addon.GetMapInfo(zone,x,y)
         if not (element.x and element.y and element.zone) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid coordinates or map name\n" .. self)
         end
 
@@ -1308,7 +1356,7 @@ function addon.functions.line(self, text, zone, ...)
         local mapID = addon.mapId[zone] or tonumber(zone)
         if not (segments and #segments > 0 and zone and mapID) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid coordinates or map name\n" .. self)
         end
         element.zone = mapID
@@ -1337,7 +1385,7 @@ function addon.functions.loop(self, text, range, zone, ...)
         local mapID = addon.mapId[zone] or tonumber(zone)
         if not (segments and #segments > 0 and zone and mapID) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid coordinates or map name\n" .. self)
         end
         element.zone = mapID
@@ -1364,7 +1412,7 @@ function addon.functions.hs(self, ...)
             element.text = text
         else
             element.textOnly = true
-            element.text = "Set your Hearthstone to " .. location
+            element.text = string.format("%s %s", L("Set your Hearthstone to"), location)
         end
         element.tooltipText = addon.icons.hs .. element.text
         return element
@@ -1378,16 +1426,22 @@ function addon.functions.hs(self, ...)
 
     step.activeItems = step.activeItems or {}
     step.activeItems[6948] = true
-    step.activeItems[348699] = true
     step.activeItems[184871] = true
 
-    if event == "UNIT_SPELLCAST_SUCCEEDED" and unit == "player" and
-        (id == 8690 or id == 556 or id == 348699 or id == 184871) then
-        addon.SetElementComplete(self)
+    if event == "UNIT_SPELLCAST_SUCCEEDED" and unit == "player" then
+        if (id == 8690 or id == 556 or id == 348699 or id == 184871) then
+            addon.SetElementComplete(self)
+        elseif WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+            for _,v in pairs(addon.hearthstoneSpellIds) do
+                if v == id then
+                    return addon.SetElementComplete(self)
+                end
+            end
+        end
     end
 end
 
-local GossipSelectOption = C_GossipInfo.SelectOption or _G.SelectGossipOption
+local GossipSelectOption = _G.SelectGossipOption
 local GossipGetOptions = C_GossipInfo.GetOptions or _G.GetGossipOptions
 function addon.SelectGossipType(type)
     if C_GossipInfo.GetOptions then
@@ -1416,14 +1470,16 @@ function addon.functions.home(self, ...)
             element.text = text
         else
             element.textOnly = true
-            element.text = "Set your Hearthstone to " .. location
+            element.text = string.format("%s %s", L("Set your Hearthstone to", location))
         end
         element.tooltipText = addon.icons.home .. element.text
         return element
     end
 
+    if not addon.settings.db.profile.enableBindAutomation or IsShiftKeyDown() then return end
+
     local element = self.element
-    if not element.step.active then
+    if not element.step.active or element.completed or element.skip then
         element.confirm = false
         return
     end
@@ -1432,7 +1488,13 @@ function addon.functions.home(self, ...)
         addon.SetElementComplete(self)
         element.confirm = false
     elseif event == "CONFIRM_BINDER" then
-        ConfirmBinder()
+
+        if ConfirmBinder then
+            ConfirmBinder()
+        elseif C_PlayerInteractionManager then
+            C_PlayerInteractionManager.ConfirmationInteraction(Enum.PlayerInteractionType.Binder)
+            C_PlayerInteractionManager.ClearInteraction(Enum.PlayerInteractionType.Binder)
+        end
         element.confirm = true
         _G.StaticPopup1:Hide()
     elseif not element.confirm and event == "GOSSIP_SHOW" then
@@ -1449,7 +1511,7 @@ function addon.functions.fp(self, ...)
             element.text = text
         else
             element.textOnly = true
-            element.text = "Get the " .. location .. " flight path"
+            element.text = string.format(L("Get the %s flight path"), location)
         end
 
         if location and location ~= "" and location:find("%w+") then
@@ -1481,10 +1543,10 @@ function addon.functions.fly(self, ...)
             element.text = text
         elseif not location then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid text/location\n" .. self)
         else
-            element.text = "Fly to " .. location
+            element.text = L("Fly to") .. " " .. location
         end
         if location and location ~= "" and location:find("%w") then
             element.location = strupper(location)
@@ -1495,12 +1557,14 @@ function addon.functions.fly(self, ...)
         return element
     end
 
+    if not addon.settings.db.profile.enableFPAutomation or IsShiftKeyDown() then return end
+
     local element = self.element
     if not element.step.active then return end
     local event = ...
     if not element.confirm and event == "GOSSIP_SHOW" and addon.SelectGossipType("taxi") then
         element.confirm = true
-    elseif event == "TAXIMAP_OPENED" and not RXPData.disableFPAutomation and
+    elseif event == "TAXIMAP_OPENED" and addon.settings.db.profile.enableFPAutomation and
         element.location then
         addon:TAXIMAP_OPENED()
         for i = 1, NumTaxiNodes() do
@@ -1515,11 +1579,16 @@ function addon.functions.fly(self, ...)
     elseif (event and UnitOnTaxi("player")) or
         (event == "PLAYER_CONTROL_LOST" and GetTime() - addon.flightInfo.startFlight < 1.5) then
         addon.SetElementComplete(self)
-        addon.comms:AnnounceStepEvent('.fly', {
-            destination = addon.flightInfo.dest,
-            duration = addon.flightInfo.timer,
-            guideName = RXPCData.currentGuideName
-        })
+
+        -- Only send flight announcements on initial loss
+        if event == "PLAYER_CONTROL_LOST" then
+            addon.comms:AnnounceStepEvent('.fly', {
+                destination = addon.flightInfo.dest,
+                duration = addon.flightInfo.timer,
+                guideName = RXPCData.currentGuideName
+            })
+        end
+
         if element.timer then
             addon.StartTimer(element.timer,element.timerText)
         end
@@ -1537,7 +1606,7 @@ function addon.functions.deathskip(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Die and respawn at the graveyard"
+            element.text = L("Die and respawn at the graveyard")
         end
         element.tooltipText = addon.icons.deathskip .. element.text
         addon.step.softcore = true
@@ -1564,7 +1633,7 @@ function addon.functions.collect(self, ...)
         flags = tonumber(flags) or 0
         if not id then
             return addon.error(
-                       'Error parsing guide ' .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ': No item ID provided\n' .. self)
         end
         element.objFlags = objFlags
@@ -1579,12 +1648,12 @@ function addon.functions.collect(self, ...)
 flags:
 1   (0x1): Disables the checkBox
 2   (0x2): Subtract from the given quest objective (given by the objective bitmask from objFlags)
-4   (0x4): Completes the step if the flagged objectives are complete (see objFlags again)
+4   (0x4): Element completes itself if the flagged objectives are complete (see objFlags again)
 8   (0x8): Includes items in your bank into the item count
-16 (0x10): Don't complete the element if the quest is turned in
+16 (0x10): Element doesn't complete itself if the quest is turned in
 negative sign: same as 3 (0x2+0x1), -5 subtracts 5 units for each quest item
 
-By default, the step will complete the step if the quest ID provided is turned in
+By default, the element will complete itself if the quest ID provided is turned in
 
 objFlags:
 Each power of 2 corresponds to an objective, as an example:
@@ -1608,7 +1677,7 @@ if objFlags is omitted or set to 0, element will complete if you have the quest 
             element.requestFromServer = true
             element.text = " "
         end
-        if flags ~= 0 and element.questId and element.questId > 0 then
+        if objFlags ~= 0 and element.questId and element.questId > 0 then
             addon.questItemList[id] = element.questId
         end
         return element
@@ -1733,7 +1802,7 @@ if objFlags is omitted or set to 0, element will complete if you have the quest 
     elseif not element.textOnly then
         addon.SetElementIncomplete(self)
     end
-
+    addon.IsOnTurnInGuide(self)
 end
 
 function addon.functions.destroy(self, ...)
@@ -1743,7 +1812,7 @@ function addon.functions.destroy(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       'Error parsing guide ' .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ': No item ID provided\n' .. self)
         end
 
@@ -1780,7 +1849,7 @@ function addon.functions.destroy(self, ...)
             element.tooltipText = addon.icons.collect .. element.rawtext
             element.text = element.rawtext
         else
-            element.text = string.format("Throw away %s%s from your bags",
+            element.text = string.format(L("Throw away %s%s from your bags"),
                                          addon.icons.collect, element.itemName)
             element.tooltipText = element.text
         end
@@ -1808,7 +1877,7 @@ function addon.functions.xp(self, ...)
         element.level = tonumber(level)
         if not level then
             return addon.error(
-                       'Error parsing guide ' .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ': Invalid syntax\n' .. self)
         end
         if operator == "<" then element.reverseLogic = true end
@@ -1819,15 +1888,15 @@ function addon.functions.xp(self, ...)
             if element.xp and element.xp ~= 0 then
                 if element.xp < 0 then
                     element.text = string.format(
-                                       "Grind until you are %d xp away from level %s",
+                                       L("Grind until you are %d xp away from level %s"),
                                        -1 * element.xp, level)
                 elseif element.xp >= 1 then
                     element.text = string.format(
-                                       "Grind until you are %s xp into level %s",
+                                       L("Grind until you are %s xp into level %s"),
                                        xp, level)
                 else
                     element.text = string.format(
-                                       "Grind until you are %.0f%% into level %s",
+                                       L("Grind until you are %.0f%% into level %s"),
                                        element.xp * 100, level)
                 end
             else
@@ -1839,6 +1908,9 @@ function addon.functions.xp(self, ...)
         if not element.xp then element.xp = 0 end
         return element
     end
+
+    if addon.isHidden then return end
+
     local currentXP = UnitXP("player")
     local maxXP = UnitXPMax("player")
     local level = UnitLevel("player")
@@ -1855,7 +1927,7 @@ function addon.functions.xp(self, ...)
             (element.level == level and currentXP >= maxXP * element.xp)))) ==
         not reverseLogic then
         if element.skipstep then
-            if step.active and not step.completed then
+            if step.active and not step.completed and not(addon.settings.db.profile.northrendLM and not reverseLogic) then
                 addon.updateSteps = true
                 step.completed = true
             end
@@ -1878,7 +1950,7 @@ function addon.functions.skill(self, text, skillName, str, skipstep, useMaxValue
 
         level = tonumber(level)
         if not (level and skillName) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
+            addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
                             ": Invalid skill name or point threshold\n" .. self)
             return
         end
@@ -1903,7 +1975,7 @@ function addon.functions.skill(self, text, skillName, str, skipstep, useMaxValue
 
     if (level >= element.level) == not reverseLogic then
         if element.skipstep then
-            if step.active and not step.completed then
+            if step.active and not step.completed and not addon.isHidden then
                 addon.updateSteps = true
                 step.completed = true
             end
@@ -1942,7 +2014,7 @@ function addon.functions.reputation(self, ...)
         end
 
         if not (faction and standing) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
+            addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
                             ": Invalid faction/standing\n" .. self)
             return
         end
@@ -1969,16 +2041,16 @@ function addon.functions.reputation(self, ...)
             if element.repValue and element.repValue ~= 0 then
                 if element.repValue < 0 then
                     element.text = string.format(
-                                       "Grind until you are %d away from %s with %s",
+                                       L("Grind until you are %d away from %s with %s"),
                                        -1 * element.repValue, standinglabel,
                                        factionname)
                 elseif element.repValue >= 1 then
                     element.text = string.format(
-                                       "Grind until you are %s into %s with %s",
+                                       L("Grind until you are %s into %s with %s"),
                                        rep, standinglabel, factionname)
                 else
                     element.text = string.format(
-                                       "Grind until you are %.0f%% into %s with %s",
+                                       L("Grind until you are %.0f%% into %s with %s"),
                                        element.repValue * 100, standinglabel,
                                        factionname)
                 end
@@ -2008,7 +2080,7 @@ function addon.functions.reputation(self, ...)
         element.operator then
         if not element.skipStep then
             addon.SetElementComplete(self, true)
-        elseif step.active then
+        elseif step.active and not addon.isHidden then
             addon.updateSteps = true
             step.completed = true
         end
@@ -2023,7 +2095,7 @@ function addon.functions.vendor(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Sell junk/resupply"
+            element.text = L("Sell junk/resupply")
         end
         element.tooltipText = addon.icons.vendor .. element.text
         return element
@@ -2049,7 +2121,7 @@ function addon.functions.trainer(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Train skills"
+            element.text = L("Train skills")
         end
         element.tooltipText = addon.icons.trainer .. element.text
         return element
@@ -2074,7 +2146,7 @@ function addon.functions.stable(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Stable your pet"
+            element.text = L("Stable your pet")
         end
         element.tooltipText = addon.icons.stable .. element.text
         return element
@@ -2132,7 +2204,7 @@ function addon.functions.money(self, ...)
             element.greaterThan = true
         else
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid arguments\n" .. self)
         end
         element.money = tonumber(money:match("(%d+%.?%d*)"))
@@ -2140,7 +2212,7 @@ function addon.functions.money(self, ...)
             element.money = element.money * 1e4
         else
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid arguments\n" .. self)
         end
         element.textOnly = true
@@ -2199,7 +2271,7 @@ function addon.functions.next(skip, guide)
             local era = "(Era)"
             local som = "(SoM)"
 
-            if RXPCData.SoM then
+            if addon.settings.db.profile.SoM then
                 next = next:gsub(era, som)
             else
                 next = next:gsub(som, era)
@@ -2209,11 +2281,11 @@ function addon.functions.next(skip, guide)
         nextGuide = addon.GetGuideTable(group, next)
 
         if nextGuide then
-            if (nextGuide.era and RXPCData.SoM or nextGuide.som and
-                not RXPCData.SoM or RXPCData.SoM and RXPCData.phase > 2 and
+            if (nextGuide.era and addon.settings.db.profile.SoM or nextGuide.som and
+                not addon.settings.db.profile.SoM or addon.settings.db.profile.SoM and addon.settings.db.profile.phase > 2 and
                 nextGuide["era/som"]) or
-                (nextGuide.hardcore and not (RXPCData.hardcore) or
-                    nextGuide.softcore and RXPCData.hardcore) then
+                (nextGuide.hardcore and not (addon.settings.db.profile.hardcore) or
+                    nextGuide.softcore and addon.settings.db.profile.hardcore) then
                 return addon.functions.next(nil, nextGuide)
             else
                 addon:LoadGuide(nextGuide)
@@ -2241,7 +2313,7 @@ function addon.functions.train(self, ...)
 
         if type(spellId) ~= "number" then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid spell name/id\n" .. self)
         end
         if rank then element.rank = tonumber(rank:match("(%d+)")) or 0 end
@@ -2300,7 +2372,7 @@ function addon.functions.istrained(self, text, ...)
         element.textOnly = true
         return element
     end
-
+    if addon.isHidden then return end
     for _, id in pairs(self.element.id) do
         if IsPlayerSpell(id) or IsSpellKnown(id, true) or
         IsSpellKnown(id) then
@@ -2319,7 +2391,7 @@ function addon.functions.abandon(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " "  .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.title = ""
@@ -2328,7 +2400,7 @@ function addon.functions.abandon(self, ...)
         if text and text ~= "" then
             element.text = text
         else
-            element.text = "Abandon *quest*"
+            element.text = _G.ABANDON_QUEST_ABBREV .. " *quest*"
             element.requestFromServer = true
         end
         if element.text:match("%*quest%*") then
@@ -2383,7 +2455,7 @@ function addon.functions.petFamily(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid icon ID\n" .. self)
         end
         element.id = id
@@ -2406,7 +2478,7 @@ function addon.functions.isQuestComplete(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.questId = id
@@ -2415,7 +2487,7 @@ function addon.functions.isQuestComplete(self, ...)
         return element
     end
     local id = self.element.questId
-    if self.element.step.active and not (IsOnQuest(id) and IsQuestComplete(id)) and not RXP.debug then
+    if self.element.step.active and not (IsOnQuest(id) and IsQuestComplete(id)) and not addon.settings.db.profile.debug and not addon.isHidden then
         self.element.step.completed = true
         addon.updateSteps = true
     end
@@ -2424,11 +2496,12 @@ end
 function addon.functions.isOnQuest(self, ...)
     if type(self) == "string" then
         local element = {}
-        local text, id = ...
+        local text, id, reverse = ...
+        element.reverse = reverse
         id = tonumber(id)
         if not id then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.questId = id
@@ -2436,11 +2509,16 @@ function addon.functions.isOnQuest(self, ...)
         element.textOnly = true
         return element
     end
-    local id = self.element.questId
-    if self.element.step.active and not IsOnQuest(id) and not addon.debug then
-        self.element.step.completed = true
+    local element = self.element
+    local id = element.questId
+    if element.step.active and not addon.settings.db.profile.debug and (not IsOnQuest(id)) == not element.reverse and not addon.isHidden then
+        element.step.completed = true
         addon.updateSteps = true
     end
+end
+
+function addon.functions.isNotOnQuest(self, text, id)
+    return addon.functions.isOnQuest(self, text, id, true)
 end
 
 function addon.functions.isQuestTurnedIn(self, text, ...)
@@ -2450,7 +2528,7 @@ function addon.functions.isQuestTurnedIn(self, text, ...)
         for k, v in pairs(ids) do ids[k] = tonumber(v) end
         if not ids[1] then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid quest ID\n" .. self)
         end
         element.questIds = ids
@@ -2463,11 +2541,16 @@ function addon.functions.isQuestTurnedIn(self, text, ...)
     local ids = element.questIds
     local questTurnedIn = false
 
-    for _, id in pairs(ids) do
-        questTurnedIn = questTurnedIn or IsQuestTurnedIn(id)
+    if element.reverse then
+        for _, id in pairs(ids) do
+            questTurnedIn = questTurnedIn or not IsQuestTurnedIn(id)
+        end
+    else
+        for _, id in pairs(ids) do
+            questTurnedIn = questTurnedIn or IsQuestTurnedIn(id)
+        end
     end
-
-    if step.active and (not questTurnedIn == not element.reverse) and not addon.debug then
+    if step.active and not questTurnedIn and not addon.settings.db.profile.debug and not addon.isHidden then
         step.completed = true
         addon.updateSteps = true
     end
@@ -2498,7 +2581,7 @@ function addon.functions.spellmissing(self, text, id)
         if not id then return end
         return {id = id, textOnly = true}
     end
-    if not IsPlayerSpell(self.element.id) and self.element.step.active then
+    if not IsPlayerSpell(self.element.id) and self.element.step.active and not addon.isHidden then
         addon.SetElementComplete(self)
         self.element.step.completed = true
         addon.updateSteps = true
@@ -2513,7 +2596,7 @@ function addon.functions.zone(self, ...)
         local mapID = addon.mapId[zone] or tonumber(zone)
         if not (mapID and text) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid text/map name\n" .. self)
         end
         element.map = mapID
@@ -2526,9 +2609,10 @@ function addon.functions.zone(self, ...)
         element.tooltipText = element.icon .. text
         return element
     end
-    if not self.element.step.active then return end
+    local currentMap = C_Map.GetBestMapForUnit("player")
+    if not self.element.step.active or addon.isHidden or type(currentMap) ~= "number" then return end
     local zone = self.element.map
-    if zone == C_Map.GetBestMapForUnit("player") then
+    if zone == currentMap then
         addon.SetElementComplete(self)
         self.element.step.completed = true
         addon.updateSteps = true
@@ -2541,7 +2625,7 @@ function addon.functions.zoneskip(self, text, zone, flags)
         local mapID = addon.mapId[zone] or tonumber(zone)
         if not mapID then
             return addon.error(
-                "Error parsing guide " .. addon.currentGuideName ..
+                L("Error parsing guide") .. " " .. addon.currentGuideName ..
                 ": map name/ID\n" .. self)
         end
         flags = tonumber(flags) or 0
@@ -2556,10 +2640,10 @@ function addon.functions.zoneskip(self, text, zone, flags)
 
     local element = self.element
     local step = element.step
-
-    if not step.active then return end
+    local currentMap = C_Map.GetBestMapForUnit("player")
+    if not step.active or addon.isHidden or type(currentMap) ~= "number" then return end
     local zone = element.map
-    if (zone == C_Map.GetBestMapForUnit("player")) == not element.reverse then
+    if (zone == currentMap) == not element.reverse then
         step.completed = true
         addon.updateSteps = true
     end
@@ -2578,13 +2662,13 @@ function addon.functions.link(self, ...)
         local text, url = ...
         if not (url and text) then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                    L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid text/url\n" .. self)
         end
         element.textOnly = true
         element.url = url
         element.hideTooltip = true
-        element.tooltip = "Click to view the link"
+        element.tooltip = L("Click to view the link")
         element.text = text
         return element
     end
@@ -2625,6 +2709,7 @@ function addon.functions.cast(self, ...)
         if not text or text == "" then
             element.textOnly = true
             element.dynamicText = true
+            element.text = nil
         elseif icon then
             element.icon = "|T" .. icon .. ":0|t"
             element.tooltipText = element.icon .. element.text
@@ -2652,21 +2737,24 @@ end
 function addon.functions.unitscan(self, text, ...)
     if type(self) == "string" then
         local element = {}
-        local npcs = {...}
-        for k, v in pairs(npcs) do
-            local npc = strupper(v)
-            if addon.guide.unitscan[npc] then
-                table.insert(addon.guide.unitscan[npc], element)
-            else
-                addon.guide.unitscan[npc] = {element}
-            end
-        end
 
         if text and text ~= "" then element.text = text end
         element.textOnly = true
+        element.unitscan = {...}
         return element
     end
 
+end
+
+function addon.functions.target(self, text, ...)
+    if type(self) == "string" then
+        local element = {}
+
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        element.targets = {...}
+        return element
+    end
 end
 
 local BLquests = {
@@ -2721,7 +2809,7 @@ function addon.functions.blastedLands(self)
 
     local skip = true
     -- element.textInactive = ""
-    element.text = "Collect the following items:"
+    element.text = L("Collect the following items:")
 
     for item, goal in pairs(total) do
         local itemCount = GetItemCount(id[item])
@@ -2734,7 +2822,7 @@ function addon.functions.blastedLands(self)
     end
 
     if skip then
-        element.text = "Do the Blasted Lands collection quests"
+        element.text = L("Do the Blasted Lands collection quests")
         addon.SetElementComplete(self)
     else
         addon.SetElementIncomplete(self)
@@ -2845,7 +2933,7 @@ function addon.DepositItems(itemList)
         local name = GetItemInfo(id) or id
         if name then
             if text == "" then
-                text = "Attempting to deposit: " .. name
+                text = L("Attempting to deposit") .. ": " .. name
             else
                 text = text .. ", " .. name
             end
@@ -2921,7 +3009,7 @@ function addon.WithdrawItems(itemList)
         local name = GetItemInfo(id) or id
         if name then
             if text == "" then
-                text = "Attempting to withdraw: " .. name
+                text = L("Attempting to withdraw") .. ": " .. name
             else
                 text = text .. ", " .. name
             end
@@ -3008,13 +3096,13 @@ function addon.functions.bronzetube(self, text, rev)
     if type(self) == "string" then -- on parse
         local element = {}
         element.textOnly = true
+        element.rev = rev
 
         if text and text ~= "" then element.text = text end
         return element
     end
 
     local element = self.element
-    element.rev = rev
 
     local count = GetItemCount(4371)
     local total = 0
@@ -3024,7 +3112,7 @@ function addon.functions.bronzetube(self, text, rev)
         total = total + 1
     end]]
 
-    if count >= total then
+    if count >= total == not element.rev and not addon.isHidden then
         self.element.step.completed = true
         addon.updateSteps = true
     end
@@ -3037,7 +3125,7 @@ function addon.functions.buy(self, ...)
         id = tonumber(id)
         if not id then
             return addon.error(
-                       'Error parsing guide ' .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ': No item ID provided\n' .. self)
         end
         element.questId = tonumber(questId)
@@ -3107,7 +3195,7 @@ local GossipGetNumActiveQuests = C_GossipInfo.GetNumActiveQuests or
                                  _G.GetNumGossipActiveQuests
 local GossipGetNumAvailableQuests = C_GossipInfo.GetNumAvailableQuests or
                                     _G.GetNumGossipAvailableQuests
-local GossipSelectOption = C_GossipInfo.SelectOption or _G.SelectGossipOption
+local GossipSelectOption = _G.SelectGossipOption
 --local GossipGetNumOptions = C_GossipInfo.GetNumOptions or GetNumGossipOptions
 
 function addon.functions.skipgossip(self, text, ...)
@@ -3117,6 +3205,8 @@ function addon.functions.skipgossip(self, text, ...)
         element.args = #args > 0 and args
         return element
     end
+
+    if not addon.settings.db.profile.enableGossipAutomation or IsShiftKeyDown() then return end
 
     local element = self.element
     local args = element.args or {}
@@ -3176,7 +3266,7 @@ function addon.functions.maxlevel(self, ...)
 
         if not level then
             return addon.error(
-                       "Error parsing guide " .. addon.currentGuideName ..
+                        L("Error parsing guide") .. " " .. addon.currentGuideName ..
                            ": Invalid syntax\n" .. self)
         end
 
@@ -3197,8 +3287,10 @@ function addon.functions.maxlevel(self, ...)
     local step = element.step
     local ref = element.ref
 
-    if level > element.level then
-        if step.active and not step.completed then
+    if addon.isHidden then
+        return
+    elseif level > element.level then
+        if step.active and not step.completed and not addon.settings.db.profile.northrendLM then
             addon.updateSteps = true
             step.completed = true
         end
@@ -3206,7 +3298,7 @@ function addon.functions.maxlevel(self, ...)
         if ref and guide.labels[ref] then
             local n = guide.labels[ref]
             element.text = string.format(
-                               "Skip to step %d if you are level %d or above",
+                               L("Skip to step %d if you are level %d or above"),
                                n, element.level + 1)
             if step.active then
                 addon.nextStep = guide.labels[ref]
@@ -3214,10 +3306,10 @@ function addon.functions.maxlevel(self, ...)
             end
         end
         element.text = string.format(
-                           "(Skip this step if you are level %d or above)",
+                           L("(Skip this step if you are level %d or above)"),
                            element.level + 1)
     else
-        element.text = ""
+        element.text = nil
     end
 
 end
@@ -3234,7 +3326,7 @@ function addon.functions.use(self, text, ...)
             if id then
                 element.activeItems[id] = true
             else
-                return addon.error("Error parsing guide " ..
+                return addon.error(L("Error parsing guide") .. " " ..
                                        addon.currentGuideName ..
                                        ": Invalid item ID\n" .. self)
             end
@@ -3278,10 +3370,10 @@ function addon.functions.vehicle(self, ...)
 
     local element = self.element
 
-    if not element or element.tag ~= "vehicle" then
-        return UnitInVehicle("player")
-    elseif not (element.step and element.step.active) then
+    if not (UnitInVehicle and element.step and element.step.active) then
         return
+    elseif not element or element.tag ~= "vehicle" then
+        return UnitInVehicle("player")
     end
     local event, unit, showVehicleFrame, isControlSeat, vehicleUIIndicatorID,
           guid = ...
@@ -3310,8 +3402,8 @@ function addon.functions.itemcount(self, ...)
         end
         element.id = tonumber(id)
         element.total = tonumber(total)
-        if not (total and id) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
+        if not (element.total and element.id) then
+            return addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
                             ": Invalid item ID/count\n" .. self)
         end
         if operator == "<" then
@@ -3332,7 +3424,7 @@ function addon.functions.itemcount(self, ...)
 
     local element = self.element
     local step = element.step
-    if not step.active then return end
+    if not step.active or addon.isHidden then return end
     local operator = element.operator
     local eq = element.eq
     local total = element.total
@@ -3435,7 +3527,7 @@ function addon.functions.cooldown(self, text, cooldownType, id, remaining,
                                                   "([<>]?)%s*(%d+%p?%d*)%s*(m?)")
         cd = tonumber(cd) or 0
         if not (cd and id) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
+            addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
                             ": Invalid arguments\n" .. self)
         end
         if operator == "<" then
@@ -3455,7 +3547,7 @@ function addon.functions.cooldown(self, text, cooldownType, id, remaining,
 
     local element = self.element or self
     local step = element.step
-    if not step.active or step.completed then
+    if not step.active or step.completed or addon.isHidden then
         element.isActive = false
         return
     elseif not element.isActive then
@@ -3522,7 +3614,7 @@ function addon.functions.scenario(self, ...)
         stage = tonumber(stage)
         criteriaIndex = tonumber(criteriaIndex)
         if not (stage and criteriaIndex) then
-            addon.error("Error parsing guide " .. addon.currentGuideName ..
+            addon.error(L("Error parsing guide") .. " " .. addon.currentGuideName ..
                             ": Invalid arguments\n" .. self)
             return
         end
@@ -3549,7 +3641,7 @@ function addon.functions.scenario(self, ...)
                                                                 criteriaIndex)
     local required = element.objMax or totalQuantity
     local scenario = C_ScenarioInfo.GetScenarioInfo()
-    local currentStage = scenario.currentStage
+    local currentStage = scenario and scenario.currentStage
     local currentObj = select(9, C_Scenario.GetCriteriaInfo(criteriaIndex))
     if criteriaID == currentObj then element.stagePos = currentStage end
 
@@ -3667,4 +3759,108 @@ function addon.functions.wpbuff(self)
         if id == self.buff then return self.state end
     end
     return not self.state
+end
+
+function addon.functions.dmf(self, ...)
+    if type(self) == "string" then
+        local element = {}
+        local text = ...
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        return element
+    end
+
+    local element = self.element
+    local isDmfInTown = false
+
+    local event
+    local monthDay = GetCurrentCalendarTime().monthDay
+
+    -- Async relies on CALENDAR_UPDATE_EVENT_LIST
+    -- Currently results in one false negative if on a DMF step at login
+    -- If called during the loading process, (even at PLAYER_ENTERING_WORLD) the query will not return
+    if not addon.calendarLoaded then
+        OpenCalendar()
+        return
+    end
+
+    for i = 1, GetNumDayEvents(0, monthDay) do
+        event = GetDayEvent(0, monthDay, i)
+
+        if event and event.title == _G.CALENDAR_FILTER_DARKMOON then
+            isDmfInTown = true
+            break
+        end
+    end
+
+    if element.step.active and not addon.settings.db.profile.debug and (not isDmfInTown) == not element.reverse and not addon.isHidden then
+        element.step.completed = true
+        addon.updateSteps = true
+    end
+end
+
+function addon.functions.nodmf(self, ...)
+    if type(self) == "string" then
+        local element = {}
+        local text = ...
+        element.reverse = true
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        return element
+    end
+    return addon.functions.dmf(self, ...)
+end
+
+events.pvp = "WAR_MODE_STATUS_UPDATE"
+events.pve = events.pvp
+function addon.functions.pvp(self, ...)
+    if type(self) == "string" then
+        local element = {}
+        local text = ...
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        return element
+    end
+
+    local element = self.element
+    local isPvPEnabled = C_PvP and (C_PvP.IsWarModeDesired() or C_PvP.IsWarModeActive())
+
+    if element.step.active and not addon.settings.db.profile.debug and (not isPvPEnabled) == not element.reverse and not addon.isHidden then
+        element.step.completed = true
+        addon.updateSteps = true
+    end
+end
+
+function addon.functions.pve(self, ...)
+    if type(self) == "string" then
+        local element = {}
+        local text = ...
+        element.reverse = true
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        return element
+    end
+    return addon.functions.pvp(self, ...)
+end
+
+events.flyable = "ZONE_CHANGED"
+function addon.functions.flyable(self, ...)
+    if type(self) == "string" then
+        local element = {}
+        local text, continent, reverse = ...
+        element.reverse = reverse
+        element.continent = addon.mapId[continent] or tonumber(continent)
+        if text and text ~= "" then element.text = text end
+        element.textOnly = true
+        return element
+    end
+
+    local element = self.element
+    local id = element.questId
+    local canPlayerFly = true -- TODO: Substitute that for the fly mount check function
+
+    if element.step.active and not addon.settings.db.profile.debug and (not canPlayerFly) == not element.reverse and not addon.isHidden then
+        element.step.completed = true
+        addon.updateSteps = true
+    end
 end

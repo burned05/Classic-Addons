@@ -1,7 +1,13 @@
-# RXP Guides
+# RestedXP Guides
 
-## [v4.2.1](https://github.com/RestedXP/RXPGuides/tree/v4.2.1) (2022-08-06)
-[Full Changelog](https://github.com/RestedXP/RXPGuides/compare/v4.2.0...v4.2.1) [Previous Releases](https://github.com/RestedXP/RXPGuides/releases)
+## [v4.3.23](https://github.com/RestedXP/RXPGuides/tree/v4.3.23) (2022-11-09)
+[Full Changelog](https://github.com/RestedXP/RXPGuides/compare/v4.3.22...v4.3.23) [Previous Releases](https://github.com/RestedXP/RXPGuides/releases)
 
-- loader improvements  
-- version check  
+- guidelist update  
+- warmode check  
+- fresh account check  
+- Add targeting automation (#113)  
+    * Add targeting keybind configs  
+    * Remove unitscan addon integration  
+    * Add target to feedback data  
+    * Handle unitscan conflicts  

@@ -28,7 +28,8 @@ AuctionFasterDb = {
 	["pricing"] = {
 		["maxBidDeviation"] = 20,
 	},
-	["fastMode"] = true,
+	["favorites"] = {
+	},
 	["sell"] = {
 		["tooltips"] = {
 			["enabled"] = true,
@@ -39,7 +40,6 @@ AuctionFasterDb = {
 	},
 	["auctionDb"] = {
 	},
-	["favorites"] = {
-	},
+	["fastMode"] = true,
 	["defaultTab"] = "NONE",
 }

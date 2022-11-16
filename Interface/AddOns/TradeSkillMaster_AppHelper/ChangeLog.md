@@ -1,6 +1,5 @@
-## v4.0.21 Changes
+## v4.11.1 Changes
 
-* [Retail] Updated for 9.2.5
-* [Classic] Updated for 1.14.3
+* [Retail] Updated for 10.0.2
 
 [Known Issues](http://support.tradeskillmaster.com/display/KB/TSM4+Currently+Known+Issues)

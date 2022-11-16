@@ -5,10 +5,14 @@ local SEARCH_EVENTS = {
   Auctionator.AH.Events.ScanAborted,
 }
 
+local function GetPrice(entry)
+  return entry.info[Auctionator.Constants.AuctionItemInfo.Buyout] / entry.info[Auctionator.Constants.AuctionItemInfo.Quantity]
+end
+
 local function GetMinPrice(entries)
   local minPrice = nil
   for _, entry in ipairs(entries) do
-    local buyout = entry.info[Auctionator.Constants.AuctionItemInfo.Buyout] / entry.info[Auctionator.Constants.AuctionItemInfo.Quantity]
+    local buyout = GetPrice(entry)
     if buyout ~= 0 then
       if minPrice == nil then
         minPrice = buyout
@@ -37,7 +41,16 @@ local function GetOwned(entries)
   return false
 end
 
-function AuctionatorDirectSearchProviderMixin:CreateSearchTerm(term)
+local function GetIsTop(entries, minPrice)
+  for _, entry in ipairs(entries) do
+    if entry.info[Auctionator.Constants.AuctionItemInfo.Owner] == (GetUnitName("player")) and minPrice == GetPrice(entry) then
+      return true
+    end
+  end
+  return false
+end
+
+function AuctionatorDirectSearchProviderMixin:CreateSearchTerm(term, config)
   Auctionator.Debug.Message("AuctionatorDirectSearchProviderMixin:CreateSearchTerm()", term)
 
   local parsed = Auctionator.Search.SplitAdvancedSearch(term)
@@ -49,7 +62,7 @@ function AuctionatorDirectSearchProviderMixin:CreateSearchTerm(term)
       maxLevel = parsed.maxLevel,
       itemClassFilters = Auctionator.Search.GetItemClassCategories(parsed.categoryKey),
       isExact = parsed.isExact,
-      quality = parsed.quality,
+      quality = parsed.quality, -- Blizzard API ignores this parameter, but kept in case it works again
     },
     extraFilters = {
       itemLevel = {
@@ -64,7 +77,10 @@ function AuctionatorDirectSearchProviderMixin:CreateSearchTerm(term)
         min = parsed.minPrice,
         max = parsed.maxPrice,
       },
-    }
+      quality = parsed.quality, -- Check the quality locally because the Blizzard search API ignores quality
+    },
+    -- Force searchAllPages when the config UI forces it
+    searchAllPages = Auctionator.Config.Get(Auctionator.Config.Options.SHOPPING_ALWAYS_LOAD_MORE) or config.searchAllPages or false,
   }
 end
 
@@ -74,6 +90,8 @@ function AuctionatorDirectSearchProviderMixin:GetSearchProvider()
   --Run the query, and save extra filter data for processing
   return function(searchTerm)
     self.gotAllResults = false
+    self.aborted = false
+    self.searchAllPages = searchTerm.searchAllPages
     self.currentFilter = searchTerm.extraFilters
     self.resultsByKey = {}
     self.individualResults = {}
@@ -89,7 +107,9 @@ function AuctionatorDirectSearchProviderMixin:HasCompleteTermResults()
 end
 
 function AuctionatorDirectSearchProviderMixin:GetCurrentEmptyResult()
-  return Auctionator.Search.GetEmptyResult(self:GetCurrentSearchParameter(), self:GetCurrentSearchIndex())
+  local r = Auctionator.Search.GetEmptyResult(self:GetCurrentSearchParameter(), self:GetCurrentSearchIndex())
+  r.complete = not self.aborted
+  return r
 end
 
 function AuctionatorDirectSearchProviderMixin:AddFinalResults()
@@ -100,17 +120,25 @@ function AuctionatorDirectSearchProviderMixin:AddFinalResults()
     table.sort(results, function(a, b)
       return a.minPrice > b.minPrice
     end)
+    -- Handle case when no results on the first page after filters have been
+    -- applied.
+    if #results == 0 and self.aborted then
+      table.insert(results, self:GetCurrentEmptyResult())
+    end
     Auctionator.Search.GroupResultsForDB(self.individualResults)
     self:AddResults(results)
   end
 
   for key, entries in pairs(self.resultsByKey) do
+    local minPrice = GetMinPrice(entries)
     local possibleResult = {
       itemString = key,
       minPrice = GetMinPrice(entries),
       totalQuantity = GetQuantity(entries),
       containsOwnerItem = GetOwned(entries),
+      isTopItem = GetIsTop(entries, minPrice),
       entries = entries,
+      complete = not self.aborted,
     }
     local item = Item:CreateFromItemID(GetItemInfoInstant(key))
     item:ContinueOnItemLoad(function()
@@ -147,7 +175,8 @@ function AuctionatorDirectSearchProviderMixin:ProcessSearchResults(pageResults)
 
   if self:HasCompleteTermResults() then
     self:AddFinalResults()
-  elseif Auctionator.Config.Get(Auctionator.Config.Options.SHOPPING_EXCLUDE_RESULTS_FOR_SPEED) then
+  elseif not self.searchAllPages then
+    self.aborted = true
     Auctionator.AH.AbortQuery()
   end
 
@@ -172,12 +201,12 @@ function AuctionatorDirectSearchProviderMixin:RegisterProviderEvents()
 end
 
 function AuctionatorDirectSearchProviderMixin:UnregisterProviderEvents()
-  if not self.gotAllResults then
-    Auctionator.AH.AbortQuery()
-  end
-
   if self.registeredOnEventBus then
     self.registeredOnEventBus = false
     Auctionator.EventBus:Unregister(self, SEARCH_EVENTS)
+  end
+
+  if not self.gotAllResults then
+    Auctionator.AH.AbortQuery()
   end
 end

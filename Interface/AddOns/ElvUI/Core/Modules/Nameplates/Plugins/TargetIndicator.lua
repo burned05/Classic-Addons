@@ -1,8 +1,6 @@
 local E, L, V, P, G = unpack(ElvUI)
 local NP = E:GetModule('NamePlates')
-
-local _, ns = ...
-local oUF = ns.oUF
+local ElvUF = E.oUF
 
 local UnitHealth = UnitHealth
 local UnitIsUnit = UnitIsUnit
@@ -73,7 +71,8 @@ local function Update(self)
 			local health, maxHealth = UnitHealth(self.unit), UnitHealthMax(self.unit)
 			local perc = (maxHealth > 0 and health/maxHealth) or 0
 
-			if perc <= element.lowHealthThreshold / 2 then
+			-- color tables are class updated in UpdateMedia
+			if perc <= element.lowHealthThreshold * 0.5 then
 				ShowIndicators(element, isTarget, NP.db.colors.lowHealthHalf)
 			elseif perc <= element.lowHealthThreshold then
 				ShowIndicators(element, isTarget, NP.db.colors.lowHealthColor)
@@ -158,4 +157,4 @@ local function Disable(self)
 	end
 end
 
-oUF:AddElement('TargetIndicator', Path, Enable, Disable)
+ElvUF:AddElement('TargetIndicator', Path, Enable, Disable)

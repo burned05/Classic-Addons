@@ -1,9 +1,7 @@
 local E, L, V, P, G = unpack(ElvUI)
 local NP = E:GetModule('NamePlates')
 local LSM = E.Libs.LSM
-
 local ElvUF = E.oUF
-assert(ElvUF, 'ElvUI was unable to locate oUF.')
 
 local _G = _G
 local select, strsplit, tostring = select, strsplit, tostring
@@ -136,10 +134,6 @@ function NP:CVarReset()
 end
 
 function NP:SetCVars()
-	if NP.db.units.ENEMY_NPC.questIcon.enable or NP.db.units.FRIENDLY_NPC.questIcon.enable then
-		NP:SetCVar('showQuestTrackingTooltips', 1)
-	end
-
 	if NP.db.clampToScreen then
 		NP:SetCVar('nameplateOtherTopInset', 0.08)
 		NP:SetCVar('nameplateOtherBottomInset', 0.1)
@@ -150,7 +144,7 @@ function NP:SetCVars()
 
 	NP:SetCVar('nameplateMotion', NP.db.motionType == 'STACKED' and 1 or 0)
 
-	if E.TBC then
+	if E.Wrath then
 		NP:SetCVar('nameplateMaxDistance', NP.db.loadDistance)
 	end
 
@@ -229,6 +223,26 @@ function NP:Construct_RaisedELement(nameplate)
 	return RaisedElement
 end
 
+function NP:Construct_ClassPowerTwo(nameplate)
+	if nameplate ~= _G.ElvNP_Test then
+		if E.myclass == 'DEATHKNIGHT' then
+			nameplate.Runes = NP:Construct_Runes(nameplate)
+		elseif E.myclass == 'MONK' then
+			nameplate.Stagger = NP:Construct_Stagger(nameplate)
+		end
+	end
+end
+
+function NP:Update_ClassPowerTwo(nameplate)
+	if nameplate ~= _G.ElvNP_Test then
+		if E.myclass == 'DEATHKNIGHT' then
+			NP:Update_Runes(nameplate)
+		elseif E.myclass == 'MONK' then
+			NP:Update_Stagger(nameplate)
+		end
+	end
+end
+
 function NP:StyleTargetPlate(nameplate)
 	nameplate:SetScale(E.uiscale)
 	nameplate:ClearAllPoints()
@@ -238,21 +252,12 @@ function NP:StyleTargetPlate(nameplate)
 	nameplate.RaisedElement = NP:Construct_RaisedELement(nameplate)
 	nameplate.ClassPower = NP:Construct_ClassPower(nameplate)
 
-	if E.myclass == 'DEATHKNIGHT' then
-		nameplate.Runes = NP:Construct_Runes(nameplate)
-	elseif E.myclass == 'MONK' then
-		nameplate.Stagger = NP:Construct_Stagger(nameplate)
-	end
+	NP:Construct_ClassPowerTwo(nameplate)
 end
 
 function NP:UpdateTargetPlate(nameplate)
 	NP:Update_ClassPower(nameplate)
-
-	if E.myclass == 'DEATHKNIGHT' then
-		NP:Update_Runes(nameplate)
-	elseif E.myclass == 'MONK' then
-		NP:Update_Stagger(nameplate)
-	end
+	NP:Update_ClassPowerTwo(nameplate)
 
 	nameplate:UpdateAllElements('OnShow')
 end
@@ -318,11 +323,7 @@ function NP:StylePlate(nameplate)
 	NP:Construct_Auras(nameplate)
 	NP:StyleFilterEvents(nameplate) -- prepare the watcher
 
-	if E.myclass == 'DEATHKNIGHT' then
-		nameplate.Runes = NP:Construct_Runes(nameplate)
-	elseif E.myclass == 'MONK' then
-		nameplate.Stagger = NP:Construct_Stagger(nameplate)
-	end
+	NP:Construct_ClassPowerTwo(nameplate)
 
 	NP.Plates[nameplate] = nameplate:GetName()
 
@@ -364,11 +365,7 @@ function NP:UpdatePlate(nameplate, updateBase)
 		NP:Update_ThreatIndicator(nameplate)
 		NP:Update_Cutaway(nameplate)
 
-		if E.myclass == 'DEATHKNIGHT' then
-			NP:Update_Runes(nameplate)
-		elseif E.myclass == 'MONK' then
-			NP:Update_Stagger(nameplate)
-		end
+		NP:Update_ClassPowerTwo(nameplate)
 
 		if nameplate == _G.ElvNP_Player then
 			NP:Update_Fader(nameplate)
@@ -820,7 +817,7 @@ local optionsTable = {
 	'ShowAll'
 }
 
-if E.TBC then
+if E.Wrath then
 	tinsert(optionsTable, 'NameplateMaxDistanceSlider')
 end
 

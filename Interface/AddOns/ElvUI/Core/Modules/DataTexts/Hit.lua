@@ -14,7 +14,7 @@ local displayString, lastPanel = ''
 local function OnEvent(self)
 	lastPanel = self
 
-	local hitRating = (E.Classic and GetHitModifier()) or GetCombatRatingBonus(E.myclass == 'HUNTER' and CR_HIT_RANGED or CR_HIT_MELEE)
+	local hitRating = (E.Classic and GetHitModifier()) or GetCombatRatingBonus(E.myclass == 'HUNTER' and CR_HIT_RANGED or CR_HIT_MELEE) or 0
 	if E.global.datatexts.settings.Hit.NoLabel then
 		self.text:SetFormattedText(displayString, hitRating)
 	else
@@ -31,4 +31,4 @@ local function ValueColorUpdate(hex)
 end
 E.valueColorUpdateFuncs[ValueColorUpdate] = true
 
-DT:RegisterDatatext('Hit', STAT_CATEGORY_ENHANCEMENTS, {'COMBAT_RATING_UPDATE'}, OnEvent, nil, nil, nil, nil, STAT_HIT_CHANCE, nil, ValueColorUpdate)
+DT:RegisterDatatext('Hit', STAT_CATEGORY_ENHANCEMENTS, { 'UNIT_STATS', 'UNIT_AURA' }, OnEvent, nil, nil, nil, nil, STAT_HIT_CHANCE, nil, ValueColorUpdate)

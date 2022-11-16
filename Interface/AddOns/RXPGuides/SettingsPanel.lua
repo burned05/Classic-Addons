@@ -3,47 +3,276 @@ local addonName, addon = ...
 local _G = _G
 
 local AceConfig = LibStub("AceConfig-3.0")
+local LibDBIcon = LibStub("LibDBIcon-1.0")
+local LibDataBroker = LibStub("LibDataBroker-1.1")
+local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 
-SLASH_RXPG1 = "/rxp"
-SLASH_RXPG2 = "/rxpg"
-SLASH_RXPG3 = "/rxpguides"
-local importString = ""
-local previousFrame = 0
-local buffer = {}
-local importFrame
-local ProcessBuffer
+local fmt, tostr, next, GetTime = string.format, tostring, next, GetTime
 
-_G.SlashCmdList["RXPG"] = function(_)
-    _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
-    _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
+local importCache = {
+    bufferString = "",
+    displayString = "",
+    bufferData = {},
+    lastBuffer = 0,
+    widget = nil,
+    workerFrame = addon.RXPFrame,
+    lastBNetQuery = GetTime()
+}
+
+-- Alias addon.locale.Get
+local L = addon.locale.Get
+
+addon.settings = addon:NewModule("Settings", "AceConsole-3.0")
+
+if not addon.settings.gui then
+    addon.settings.gui = {selectedDeleteGuide = "", importStatusHistory = {}}
 end
 
-if not addon.settings then
-    addon.settings = {gui = {}, extras = {}}
-else
-    if not addon.settings.gui then addon.settings.gui = {} end
-    if not addon.settings.extras then addon.settings.extras = {} end
+function addon.settings.ChatCommand(input)
+    if not input then
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
+    end
+
+    input = input:trim()
+    if input == "import" then
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.settings.gui.import)
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.settings.gui.import)
+    elseif input == "debug" then
+        addon.settings.db.profile.debug = not addon.settings.db.profile.debug
+    elseif input == "splits" then
+        addon.tracker:ToggleLevelSplits()
+    elseif input == "show" or input == "hide" or input == "toggle" then
+        addon.settings.ToggleActive()
+    elseif input == "bug" or input == "feedback" then
+        addon.comms.OpenBugReport()
+    elseif input == "help" then
+        addon.comms.PrettyPrint(_G.HELP .. "\n" ..
+                                    addon.help["What are command the line options?"])
+    else
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
+        _G.InterfaceOptionsFrame_OpenToCategory(addon.RXPOptions)
+    end
 end
 
-addon.settings.gui.selectedDeleteGuide = ""
-
-function addon.settings.InitializeSettings()
+function addon.settings:InitializeSettings()
     -- New character settings format
     -- Only set defaults for enabled = true
     local settingsDBDefaults = {
         profile = {
             enableTracker = true,
             enableLevelUpAnnounceSolo = true,
-            enableLevelUpAnnounceGroup = true
+            enableLevelUpAnnounceGroup = true,
+            enableFlyStepAnnouncements = true,
+            alwaysSendBranded = true,
+            checkVersions = true,
+            enableLevelingReportInspections = true,
+            levelSplitsHistory = 10,
+            levelSplitsFontSize = 11,
+            levelSplitsOpacity = 0.9,
+            enableMinimapButton = true,
+            minimap = {minimapPos = 146},
+
+            --
+            enableQuestAutomation = true,
+            enableFPAutomation = true,
+            enableBindAutomation = true,
+            enableGossipAutomation = true,
+            showUnusedGuides = true,
+            SoM = 1,
+            anchorOrientation = "top",
+
+            -- Sliders
+            arrowScale = 1,
+            arrowText = 9,
+            windowScale = 1,
+            numMapPins = 7,
+            worldMapPinScale = 1,
+            distanceBetweenPins = 1,
+            worldMapPinBackgroundOpacity = 0.35,
+            batchSize = 5,
+            phase = 6,
+            xprate = 1,
+            guideFontSize = 9,
+            activeItemsScale = 1,
+
+            showEnabled = true,
+
+            -- Targeting
+            enableTargetMacro = true,
+            notifyOnTargetUpdates = true,
+            enableTargetAutomation = true,
+            enableFriendlyTargeting = true,
+            enableTargetMarking = true,
+            enableEnemyTargeting = true,
+            enableEnemyMarking = true,
+            showTargetingOnProximity = true,
+            soundOnFind = 3175
         }
     }
 
-    addon.settings.db = LibStub("AceDB-3.0"):New("RXPCSettings",
-                                                 settingsDBDefaults)
+    self.db = LibStub("AceDB-3.0"):New("RXPCSettings", settingsDBDefaults)
 
-    addon.settings.CreateOptionsPanel()
-    addon.settings.CreateImportOptionsPanel()
-    addon.settings.CreateExtrasOptionsPanel()
+    self.db.RegisterCallback(self, "OnProfileChanged", "RefreshProfile")
+    self.db.RegisterCallback(self, "OnProfileCopied", "RefreshProfile")
+    self.db.RegisterCallback(self, "OnProfileReset", "RefreshProfile")
+
+    self:CreateAceOptionsPanel()
+    self:CreateImportOptionsPanel()
+    self:MigrateSettings()
+    self:UpdateMinimapButton()
+
+    self:RegisterChatCommand("rxp", self.ChatCommand)
+    self:RegisterChatCommand("rxpg", self.ChatCommand)
+    self:RegisterChatCommand("rxpguides", self.ChatCommand)
+end
+
+function addon.settings:MigrateSettings()
+    if not RXPData or not RXPCData then return end
+
+    local d = addon.settings.db.profile.debug
+    local db = addon.settings.db.profile
+    local pp = addon.comms.PrettyPrint
+    local function n(t, v)
+        if d then pp(fmt("Migrating %s = %s", t, tostr(v))) end
+    end
+
+    db.minimap.show = nil
+
+    if RXPData.disableQuestAutomation ~= nil then
+        n("disableQuestAutomation", RXPData.disableQuestAutomation)
+        db.enableQuestAutomation = not RXPData.disableQuestAutomation
+        RXPData.disableQuestAutomation = nil
+    end
+
+    if RXPData.disableTrainerAutomation ~= nil then
+        n("disableTrainerAutomation", RXPData.disableTrainerAutomation)
+        db.enableTrainerAutomation = not RXPData.disableTrainerAutomation
+        RXPData.disableTrainerAutomation = nil
+    end
+
+    if RXPData.disableFPAutomation ~= nil then
+        n("disableFPAutomation", RXPData.disableFPAutomation)
+        db.enableFPAutomation = not RXPData.disableFPAutomation
+        RXPData.disableFPAutomation = nil
+    end
+
+    if RXPData.hideMiniMapPins ~= nil then
+        n("hideMiniMapPins", RXPData.hideMiniMapPins)
+        db.hideMiniMapPins = RXPData.hideMiniMapPins
+        RXPData.hideMiniMapPins = nil
+    end
+
+    if RXPData.hideUnusedGuides ~= nil then
+        n("hideUnusedGuides", RXPData.hideUnusedGuides)
+        db.showUnusedGuides = not RXPData.hideUnusedGuides
+        RXPData.hideUnusedGuides = nil
+    end
+
+    -- TODO autoLoadGuides -> autoLoadStartingGuides
+
+    if RXPCData.disableArrow ~= nil then
+        n("disableArrow", RXPCData.disableArrow)
+        db.disableArrow = RXPCData.disableArrow
+        RXPCData.disableArrow = nil
+    end
+
+    if RXPCData.disableItemWindow ~= nil then
+        n("disableItemWindow", RXPCData.disableItemWindow)
+        db.disableItemWindow = RXPCData.disableItemWindow
+        RXPCData.disableItemWindow = nil
+    end
+
+    if RXPCData.hideWindow ~= nil then
+        n("hideWindow", RXPCData.hideWindow)
+        db.hideGuideWindow = RXPCData.hideWindow
+        RXPCData.hideWindow = nil
+    end
+
+    if RXPData.lockFrames ~= nil then
+        n("lockFrames", RXPData.lockFrames)
+        db.lockFrames = RXPData.lockFrames
+        RXPData.lockFrames = nil
+    end
+
+    if RXPCData.frameHeight ~= nil then
+        n("frameHeight", RXPCData.frameHeight)
+        db.frameHeight = RXPCData.frameHeight
+        RXPCData.frameHeight = nil
+    end
+
+    if RXPData.mapCircle ~= nil then
+        n("mapCircle", RXPData.mapCircle)
+        db.mapCircle = RXPData.mapCircle
+        RXPData.mapCircle = nil
+    end
+
+    if RXPCData.hardcore ~= nil then
+        n("hardcore", RXPCData.hardcore)
+        db.hardcore = RXPCData.hardcore
+        RXPCData.hardcore = nil
+    end
+
+    if RXPCData.northrendLM ~= nil then
+        n("northrendLM", RXPCData.northrendLM)
+        db.northrendLM = RXPCData.northrendLM
+        RXPCData.northrendLM = nil
+    end
+
+    if RXPData.arrowSize ~= nil then
+        n("arrowSize", RXPData.arrowSize)
+        db.arrowScale = RXPData.arrowSize
+        RXPData.arrowSize = nil
+    end
+
+    if RXPData.arrowText ~= nil then
+        n("arrowText", RXPData.arrowText)
+        db.arrowText = RXPData.arrowText
+        RXPData.arrowText = nil
+    end
+
+    if RXPData.windowSize ~= nil then
+        n("windowSize", RXPData.windowSize)
+        db.windowScale = RXPData.windowSize
+        RXPData.windowSize = nil
+    end
+
+    if RXPData.numMapPins ~= nil then
+        n("numMapPins", RXPData.numMapPins)
+        db.numMapPins = RXPData.numMapPins
+        RXPData.numMapPins = nil
+    end
+
+    if RXPData.worldMapPinScale ~= nil then
+        n("worldMapPinScale", RXPData.worldMapPinScale)
+        db.worldMapPinScale = RXPData.worldMapPinScale
+        RXPData.worldMapPinScale = nil
+    end
+
+    if RXPData.distanceBetweenPins ~= nil then
+        n("distanceBetweenPins", RXPData.distanceBetweenPins)
+        db.distanceBetweenPins = RXPData.distanceBetweenPins
+        RXPData.distanceBetweenPins = nil
+    end
+
+    if RXPData.worldMapPinBackgroundOpacity ~= nil then
+        n("worldMapPinBackgroundOpacity", RXPData.worldMapPinBackgroundOpacity)
+        db.worldMapPinBackgroundOpacity = RXPData.worldMapPinBackgroundOpacity
+        RXPData.worldMapPinBackgroundOpacity = nil
+    end
+
+    if RXPData.anchorOrientation ~= nil then
+        n("anchorOrientation", RXPData.anchorOrientation)
+        db.anchorOrientation = RXPData.anchorOrientation == 1 and "top" or
+                                   "bottom"
+        RXPData.anchorOrientation = nil
+    end
+
+    if RXPCData.xprate ~= nil then
+        n("xprate", RXPCData.xprate)
+        db.xprate = RXPCData.xprate
+        RXPCData.xprate = nil
+    end
 end
 
 local function GetProfileOption(info)
@@ -54,415 +283,33 @@ local function SetProfileOption(info, value)
     addon.settings.db.profile[info[#info]] = value
 end
 
-function addon.settings.CreateOptionsPanel()
-    addon.RXPOptions = CreateFrame("Frame", "RXPOptions")
-    addon.RXPOptions.name = "RXP Guides"
-    _G.InterfaceOptions_AddCategory(addon.RXPOptions)
-
-    addon.RXPOptions.title = addon.RXPOptions:CreateFontString(nil, "ARTWORK",
-                                                               "GameFontNormalLarge")
-    addon.RXPOptions.title:SetPoint("TOPLEFT", 16, -16)
-    addon.RXPOptions.title:SetText("RestedXP Guides")
-
-    addon.RXPOptions.subtext = addon.RXPOptions:CreateFontString(nil, "ARTWORK",
-                                                                 "GameFontHighlightSmall")
-    addon.RXPOptions.subtext:SetPoint("TOPLEFT", addon.RXPOptions.title,
-                                      "BOTTOMLEFT", 0, -8)
-    addon.RXPOptions.subtext:SetText(addon.versionText)
-
-    addon.RXPOptions.icon = addon.RXPOptions:CreateTexture()
-    addon.RXPOptions.icon:SetTexture("Interface/AddOns/" .. addonName ..
-                                         "/Textures/rxp_logo-64")
-    addon.RXPOptions.icon:SetPoint("TOPRIGHT", -5, -5)
-
-    -- panel.icon:SetSize(64,64)
-    local index = 0
-    local options = {}
-    local button = CreateFrame("CheckButton", "$parentQuestTurnIn",
-                               addon.RXPOptions, "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    index = index + 1
-    button:SetPoint("TOPLEFT", addon.RXPOptions.title, "BOTTOMLEFT", 0, -25)
-    button:SetScript("PostClick", function(self)
-        RXPData.disableQuestAutomation = not self:GetChecked()
-    end)
-    button:SetChecked(not RXPData.disableQuestAutomation)
-    button.Text:SetText("Quest auto accept/turn in")
-    button.tooltip =
-        "Holding the Control key modifier also toggles the quest the quest auto accept feature on and off"
-
-    button = CreateFrame("CheckButton", "$parentTrainer", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.disableTrainerAutomation = not self:GetChecked()
-    end)
-    button:SetChecked(not RXPData.disableTrainerAutomation)
-    button.Text:SetText("Trainer automation")
-    button.tooltip =
-        "Allows the guide to buy useful leveling spells automatically"
-
-    button = CreateFrame("CheckButton", "$parentFP", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.disableFPAutomation = not self:GetChecked()
-    end)
-    button:SetChecked(not RXPData.disableFPAutomation)
-    button.Text:SetText("Flight Path automation")
-    button.tooltip =
-        "Allows the guide to automatically fly you to your destination"
-
-    button = CreateFrame("CheckButton", "$parentArrow", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        local checkbox = self:GetChecked()
-        addon.arrowFrame:SetShown(addon.currentGuide and checkbox)
-        RXPData.disableArrow = not checkbox
-    end)
-    button:SetChecked(not RXPData.disableArrow)
-    button.Text:SetText("Enable waypoint arrow")
-    button.tooltip = "Show/Hide the waypoint arrow"
-
-    button = CreateFrame("CheckButton", "$parentMiniMapPin", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.hideMiniMapPins = self:GetChecked()
-        addon.UpdateMap()
-    end)
-    button:SetChecked(RXPData.hideMiniMapPins)
-    button.Text:SetText("Hide Mini Map Pins")
-    -- button.tooltip = ""
-
-    button = CreateFrame("CheckButton", "$parentUnusedGuides", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.hideUnusedGuides = not self:GetChecked()
-        addon.RXPFrame.GenerateMenuTable()
-    end)
-    button:SetChecked(not RXPData.hideUnusedGuides)
-    button.Text:SetText("Show unused guides")
-    button.tooltip =
-        "Displays guides that are not applicable for your class/race such as starting zones for other races"
-
-    button = CreateFrame("CheckButton", "$parentAutoLoad", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.autoLoadGuides = self:GetChecked()
-    end)
-    button:SetChecked(RXPData.autoLoadGuides)
-    button.Text:SetText("Auto load starting zone guides")
-    button.tooltip =
-        "Automatically picks a suitable guide whenever you log in for the first time on a character"
-    --
-    button = CreateFrame("CheckButton", "$parentHideWindow", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        local hide = self:GetChecked()
-        RXPCData.hideWindow = hide
-        addon.RXPFrame:SetShown(not hide)
-    end)
-    button:SetChecked(RXPCData.hideWindow)
-    button.Text:SetText("Hide Window")
-    button.tooltip = "Hides the main window"
-
-    button = CreateFrame("CheckButton", "$parentLock", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick",
-                     function(self) RXPData.lockFrames = self:GetChecked() end)
-    button:SetChecked(RXPData.lockFrames)
-    button.Text:SetText("Lock Frames")
-    button.tooltip =
-        "Disable dragging/resizing, use alt+left click on the main window to resize it"
-    --
-    button = CreateFrame("CheckButton", "$parentShowUpcoming", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        if addon.currentGuide and addon.currentGuide.hidewindow then
-            return
-        end
-        local show = self:GetChecked()
-        if show then
-            addon.RXPFrame:SetHeight(addon.height)
-            RXPCData.frameHeight = addon.height
-        else
-            addon.RXPFrame:SetHeight(10)
-            RXPCData.frameHeight = 10
-        end
-        addon.updateBottomFrame = true
-    end)
-    button:SetChecked(addon.RXPFrame.BottomFrame:GetHeight() >= 35)
-    button.Text:SetText("Show step list")
-    button.tooltip =
-        "Show/Hide the bottom frame listing all the steps of the current guide"
-    --
-    button = CreateFrame("CheckButton", "$parentHideCompleted",
-                         addon.RXPOptions, "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.hideCompletedSteps = self:GetChecked()
-        addon.RXPFrame.ScrollFrame.ScrollBar:SetValue(0)
-    end)
-    button:SetChecked(RXPData.hideCompletedSteps)
-    button.Text:SetText("Hide completed steps")
-    button.tooltip =
-        "Only shows current and future steps on the step list window"
-    --
-    button = CreateFrame("CheckButton", "$parentMapCircle", addon.RXPOptions,
-                         "ChatConfigCheckButtonTemplate");
-    table.insert(options, button)
-    button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-    index = index + 1
-    button:SetScript("PostClick", function(self)
-        RXPData.mapCircle = self:GetChecked()
-        addon.updateMap = true
-    end)
-    button:SetChecked(RXPData.mapCircle)
-    button.Text:SetText("Highlight active map pins")
-    button.tooltip = "Show a targeting circle around active map pins"
-    --[[
-    if QuestieLoader then
-        button = CreateFrame("CheckButton", "$parentSkipPreReqs", addon.RXPOptions, "ChatConfigCheckButtonTemplate");
-        table.insert(options,button)
-        button:SetPoint("TOPLEFT",options[index],"BOTTOMLEFT",0,0)
-        index = index + 1
-        button:SetScript("PostClick",function(self)
-            RXPData.skipMissingPreReqs = self:GetChecked()
-        end)
-        button:SetChecked(RXPData.skipMissingPreReqs)
-        button.Text:SetText("Skip quests with missing pre-requisites")
-        button.tooltip = "Automatically skip tasks in which you don't have the required quest pre-requisites\n(Requires Questie)"
-    end]]
-    --
-    if _G.unitscan_targets then
-        button = CreateFrame("CheckButton", "$parentUnitscan", addon.RXPOptions,
-                             "ChatConfigCheckButtonTemplate");
-        table.insert(options, button)
-        button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-        index = index + 1
-        button:SetScript("PostClick", function(self)
-            RXPData.disableUnitscan = not self:GetChecked()
-        end)
-        button:SetChecked(not RXPData.disableUnitscan)
-        button.Text:SetText("Unitscan integration")
-        button.tooltip =
-            "Automatically adds important npcs to your unitscan list"
+function addon.settings:ProcessImportBox()
+    if not importCache.workerFrame:IsShown() then
+        importCache.workerFrame:Show()
     end
 
-    if addon.game == "CLASSIC" then
-        button = CreateFrame("CheckButton", "$parentHC", addon.RXPOptions,
-                             "ChatConfigCheckButtonTemplate");
-        addon.hardcoreButton = button
-        table.insert(options, button)
-        button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-        index = index + 1
-        button:SetScript("PostClick", function(self)
-            RXPCData.hardcore = self:GetChecked()
-            addon.RenderFrame()
-        end)
-        button:SetChecked(RXPCData.hardcore)
-        button.Text:SetText("Hardcore mode")
-        button.tooltip = "Adjust the leveling routes to the deathless ruleset"
+    if not addon.settings.db.profile.showEnabled then self.ToggleActive() end
 
-        button = CreateFrame("CheckButton", "$parentSoM", addon.RXPOptions,
-                             "ChatConfigCheckButtonTemplate");
-        table.insert(options, button)
-        button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-        index = index + 1
-        button:SetScript("PostClick", function(self)
-            RXPCData.SoM = self:GetChecked()
-            addon.RXPFrame.GenerateMenuTable()
-            addon.ReloadGuide()
-        end)
-        button:SetChecked(RXPCData.SoM)
-        button.Text:SetText("Season of Mastery")
-        button.tooltip =
-            "Adjust the leveling routes to the Season of Mastery changes (40/100% quest xp)"
-    elseif addon.gameVersion > 30000 then
-        button = CreateFrame("CheckButton", "$parentNorthrendLM",
-                             addon.RXPOptions, "ChatConfigCheckButtonTemplate");
-        table.insert(options, button)
-        button:SetPoint("TOPLEFT", options[index], "BOTTOMLEFT", 0, 0)
-        index = index + 1
-        button:SetScript("PostClick", function(self)
-            RXPCData.northrendLM = self:GetChecked()
-            addon.ReloadGuide()
-        end)
-        button:SetChecked(RXPCData.northrendLM)
-        button.Text:SetText("Northrend Loremaster")
-        button.tooltip =
-            "Adjust the routes to include almost every quest in the Northrend zones"
-    end
-
-    local SliderUpdate = function(self, value)
-        self.ref[self.key] = value
-        local updateFunc = self.updateFunc or string.format
-        self.Text:SetText(updateFunc(self.defaultText, value))
-        addon.RXPFrame:SetScale(RXPData.windowSize)
-        local size = RXPData.arrowSize
-        addon.arrowFrame:SetSize(32 * size, 32 * size)
-        addon.arrowFrame.text:SetFont(addon.font, RXPData.arrowText)
-        RXPData.numMapPins = math.floor(RXPData.numMapPins)
-        addon.updateMap = true
-        if (self.key == "phase" or self.key == "xprate") and addon.currentGuide then
-            addon.ReloadGuide()
-            addon.RXPFrame.GenerateMenuTable()
-        end
-        addon.RXPFrame.SetStepFrameAnchor()
-    end
-
-    local CreateSlider = function(ref, key, smin, smax, text, tooltip, anchor,
-                                  x, y, steps, minText, maxText, updateFunc)
-        local slider, dvalue
-
-        slider = CreateFrame("Slider", "$parentArrowSlider", addon.RXPOptions,
-                             "OptionsSliderTemplate")
-        slider:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", x, y)
-        slider:SetOrientation('HORIZONTAL')
-        if steps then
-            slider:SetValueStep(steps)
-            slider:SetStepsPerPage(steps)
-            slider:SetObeyStepOnDrag(true)
-        end
-        slider:SetThumbTexture(
-            "Interface/Buttons/UI-SliderBar-Button-Horizontal")
-        slider.ref = ref
-        slider.key = key
-        dvalue = ref[key] or smin
-
-        slider.defaultText = text
-        slider.tooltipText = tooltip
-        slider:SetScript("OnValueChanged", SliderUpdate)
-
-        slider:SetMinMaxValues(smin, smax)
-        SliderUpdate(slider, dvalue)
-        slider:SetValue(dvalue)
-
-        slider.Low:SetText(minText or tostring(smin));
-        slider.High:SetText(maxText or tostring(smax));
-
-        slider.updateFunc = updateFunc
-
-        return slider
-    end
-    local slider
-    slider = CreateSlider(RXPData, "arrowSize", 0.2, 2, "Arrow Scale: %.2f",
-                          "Scale of the Waypoint Arrow", addon.RXPOptions.title,
-                          315, -25, 0.05)
-    slider = CreateSlider(RXPData, "arrowText", 5, 20, "Arrow Text Size: %d",
-                          "Size of the waypoint arrow text", slider, 0, -25, 1)
-    slider = CreateSlider(RXPData, "windowSize", 0.2, 2, "Window Scale: %.2f",
-                          "Scale of the Main Window, use alt+left click on the main window to resize it",
-                          slider, 0, -25, 0.05)
-    slider = CreateSlider(RXPData, "numMapPins", 1, 20,
-                          "Number of Map Pins: %d",
-                          "Number of map pins shown on the world map", slider,
-                          0, -25, 1, "1", "20")
-    slider = CreateSlider(RXPData, "worldMapPinScale", 0.05, 1,
-                          "Map Pin Scale: %.2f",
-                          "Adjusts the size of the world map pins", slider, 0,
-                          -25, 0.05, "0.05", "1")
-    slider = CreateSlider(RXPData, "distanceBetweenPins", 0.05, 2,
-                          "Distance Between Pins: %.2f",
-                          "If two or more steps are very close together, this addon will group them into a single pin on the map. Adjust this range to determine how close together two steps must be to form a group.",
-                          slider, 0, -25, 0.05, "0.05", "2")
-    slider = CreateSlider(RXPData, "worldMapPinBackgroundOpacity", 0, 1,
-                          "Map Pin Background Opacity: %.2f",
-                          "The opacity of the black circles on the map and mini map",
-                          slider, 0, -25, 0.05, "0", "1")
-    slider = CreateSlider(RXPData, "anchorOrientation", -1, 1,
-                          "Current step frame anchor",
-                          "Sets the current step frame to grow from bottom to top or top to bottom by default",
-                          slider, 0, -25, 2, "Bottom", "Top")
-
-    slider = CreateSlider(RXPData, "batchSize", 1, 100,
-                          "Batching window size: %d ms",
-                          "Adjusts the batching window tolerance, used for hearthstone batching",
-                          slider, 0, -25, 1, "1", "100")
-
-    if addon.game == "CLASSIC" then
-        slider = CreateSlider(RXPCData, "phase", 1, 6, "Content phase: %d",
-                              "Adjusts the guide routes to match the content phase\nPhase 2: Dire Maul quests\nPhase 3: 100% quest XP (SoM)\nPhase 4: ZG/Silithus quests\nPhase 5: AQ quests\nPhase 6: Eastern Plaguelands quests",
-                              slider, 0, -25, 1, "1", "6")
-    elseif addon.gameVersion < 40000 then
-        slider = CreateSlider(RXPCData, "xprate", 1, 1.5,
-                              "Experience rates: %.1fx",
-                              "Adjusts the guide routes to match increased xp rate bonuses",
-                              slider, 0, -25, 0.5, "1x", "1.5x")
-    end
-    --[[
-    if addon.farmGuides > 0 then
-        local GApanel = CreateFrame("Frame", "RXPGAOptions")
-        GApanel.name = "Gold Assistant"
-        GApanel.parent = "RXP Guides"
-        _G.InterfaceOptions_AddCategory(GApanel)
-
-        GApanel.title = GApanel:CreateFontString(nil, "ARTWORK",
-                                                 "GameFontNormalLarge")
-        GApanel.title:SetPoint("TOPLEFT", 16, -16)
-        GApanel.title:SetText("RestedXP Gold Assistant")
-
-        GApanel.subtext = GApanel:CreateFontString(nil, "ARTWORK",
-                                                   "GameFontHighlightSmall")
-        GApanel.subtext:SetPoint("TOPLEFT", GApanel.title, "BOTTOMLEFT", 0, -8)
-        GApanel.subtext:SetText(addon.versionText)
-
-        GApanel.icon = GApanel:CreateTexture()
-        GApanel.icon:SetTexture("Interface/AddOns/" .. addonName ..
-                                    "/Textures/rxp_logo-64")
-        GApanel.icon:SetPoint("TOPRIGHT", -5, -5)
-
-    end]]
-
-end
-
-function addon.settings.ImportBoxValidate()
-
-    local guidesLoaded, errorMsg = addon.RXPG.ImportString(importString,
-                                                           addon.RXPFrame)
-    if guidesLoaded then
-        addon.settings.gui.selectedDeleteGuide = "mustReload"
+    local guidesLoaded, errorMsg = addon.RXPG.ImportString(
+                                       importCache.bufferString,
+                                       importCache.workerFrame)
+    if guidesLoaded and not errorMsg then
+        self.gui.selectedDeleteGuide = ""
         return true
     else
-        importFrame.textFrame:SetScript('OnUpdate', ProcessBuffer)
-        return errorMsg or "Failed to Import Guides: Invalid Import String"
+        local relog = ""
+        if not RXPData.cache then
+            relog = "\n" .. L("Please restart your game client and try again")
+        end
+
+        return false, errorMsg or
+                   (L("Failed to Import Guides: Invalid Import String") .. relog)
     end
 end
 
 function addon.settings.GetImportedGuides()
-    local display = {empty = ""}
+    local display = {[""] = ""}
     local importedGuidesFound = false
-
-    if addon.settings.gui.selectedDeleteGuide == "mustReload" then
-        return {mustReload = "Must reload UI"}
-    end
 
     for _, guide in ipairs(addon.guides) do
         if guide.imported or guide.cache then
@@ -485,15 +332,37 @@ function addon.settings.GetImportedGuides()
 
 end
 
-function addon.settings.CreateImportOptionsPanel()
+function addon.settings:UpdateImportStatusHistory(data, ...)
+    if type(data) == "table" then
+        self.gui.importStatusHistory = data
+    elseif type(data) == "string" then
+        tinsert(self.gui.importStatusHistory, 1, fmt(data, ...))
+    end
+
+    AceConfigRegistry:NotifyChange(addon.title .. "/Import")
+end
+
+function addon.settings:CreateImportOptionsPanel()
+    local function notOnline()
+        if not RXPData.cache and GetTime() - importCache.lastBNetQuery > 5 then
+            if addon.settings.db.profile.debug then
+                addon.comms.PrettyPrint("Battle.net not cached, querying")
+            end
+            importCache.lastBNetQuery = GetTime()
+            _, RXPData.cache = _G[addon.RXPG.DeserializeTable(addon.base)]()
+        end
+
+        return not RXPData.cache
+    end
+
     local importOptionsTable = {
         type = "group",
-        name = "RestedXP Guide Import",
-        handler = addon.settings,
+        name = fmt("RestedXP %s - %s", L("Guide Import"), addon.versionText),
+        handler = self,
         args = {
-            buffer = { -- Buffer hacked in right-aligned icon
+            buffer = {
                 order = 1,
-                name = "Paste encoded strings",
+                name = L("Paste encoded strings"),
                 type = "description",
                 width = "full",
                 fontSize = "medium"
@@ -501,174 +370,222 @@ function addon.settings.CreateImportOptionsPanel()
             importBox = {
                 order = 10,
                 type = 'input',
-                name = 'Guides to import',
+                name = L('Guides to import'),
                 width = "full",
                 multiline = 5,
-                -- usage = "Usage string",
+                get = function()
+                    -- Prevent auto clearing on NotifyChange
+                    return importCache.bufferString:sub(1, 500)
+                end,
+                validate = function()
+                    local status, errorMsg = self:ProcessImportBox()
+                    importCache.bufferString = ""
+                    importCache.bufferData = {}
 
-                validate = function(_, val)
-                    return addon.settings.ImportBoxValidate(val)
-                end
+                    -- Gets disabled on paste, re-enable after processing completes
+                    importCache.widget.obj.editBox:Enable()
+                    if errorMsg then
+                        self:UpdateImportStatusHistory(errorMsg)
+                        return errorMsg
+                    end
+                    return status
+                end,
+                disabled = function() return notOnline() end
             },
             currentGuides = {
                 order = 11,
                 type = 'select',
                 style = 'dropdown',
-                name = "Currently loaded imported guides",
+                name = L("Currently loaded imported guides"),
                 width = 'full',
                 values = function()
-                    return addon.settings.GetImportedGuides()
+                    return self.GetImportedGuides()
                 end,
                 disabled = function()
-                    return addon.settings.gui.selectedDeleteGuide ==
-                               "mustReload" or
-                               addon.settings.gui.selectedDeleteGuide == "none" or
-                               not addon.settings.gui.selectedDeleteGuide
+                    return next(addon.db.profile.guides) == nil or
+                               not self.gui.selectedDeleteGuide
                 end,
                 get = function()
-                    return addon.settings.gui.selectedDeleteGuide
+                    return self.gui.selectedDeleteGuide
                 end,
                 set = function(_, value)
-                    addon.settings.gui.selectedDeleteGuide = value
+                    self.gui.selectedDeleteGuide = value
                 end
             },
             deleteSelectedGuide = {
                 order = 12,
                 type = 'execute',
-                name = "Delete imported guide",
-                confirm = function(_, key)
-                    if not addon.settings.gui.selectedDeleteGuide or
-                        addon.settings.gui.selectedDeleteGuide == "none" then
+                name = L("Delete imported guide"),
+                confirm = function()
+                    if next(addon.db.profile.guides) == nil or
+                        not self.gui.selectedDeleteGuide then
                         return false
                     end
-                    return string.format("Remove %s?",
-                                         addon.settings.gui.selectedDeleteGuide)
+                    return string.format(L("Remove") .. " %s?",
+                                         self.gui.selectedDeleteGuide)
                 end,
                 disabled = function()
-                    return addon.settings.gui.selectedDeleteGuide ==
-                               "mustReload" or
-                               addon.settings.gui.selectedDeleteGuide == "none" or
-                               not addon.settings.gui.selectedDeleteGuide
+                    return next(addon.db.profile.guides) == nil or
+                               not self.gui.selectedDeleteGuide or
+                               self.gui.selectedDeleteGuide == "" or
+                               self.gui.selectedDeleteGuide == "none"
                 end,
-                func = function(_)
-                    if addon.db.profile.guides[addon.settings.gui
-                        .selectedDeleteGuide] then
-                        addon.db.profile.guides[addon.settings.gui
-                            .selectedDeleteGuide] = nil
+                func = function()
+                    if addon.RXPG.RemoveGuide(self.gui.selectedDeleteGuide) then
+                        addon.db.profile.guides[self.gui.selectedDeleteGuide] =
+                            nil
                     end
-
-                    addon.settings.gui.selectedDeleteGuide = "mustReload"
                 end
             },
-            purge = {
+            purgeAll = {
                 order = 13,
                 type = 'execute',
-                name = "Purge All Data",
-                confirm = function(_, key)
-                    return string.format("This action will remove ALL guides from the database\nAre you sure?")
+                name = L("Purge All Data"),
+                confirm = function()
+                    return L(
+                               "This action will remove ALL guides from the database\nAre you sure?")
                 end,
                 disabled = function()
-                    return addon.settings.gui.selectedDeleteGuide ==
-                               "mustReload"
+                    return next(addon.db.profile.guides) == nil
                 end,
-                func = function(_)
-                    addon.db.profile.guides = {}
-                    addon.settings.gui.selectedDeleteGuide = "mustReload"
-                end
+                func = function() addon.db.profile.guides = {} end
             },
-            reloadGuides = {
+            reloadUi = {
                 order = 14,
-                name = "Reload guides and UI",
+                name = L("Reload guides and UI"),
                 type = 'execute',
-                func = function() _G.ReloadUI() end,
-                disabled = function()
-                    return addon.settings.gui.selectedDeleteGuide ~=
-                               "mustReload"
+                func = function() _G.ReloadUI() end
+            },
+            loadStatusBox = {
+                order = 90,
+                name = _G.HISTORY,
+                type = 'group',
+                inline = true,
+                hidden = function()
+                    return next(self.gui.importStatusHistory) == nil
+                end,
+                args = {
+                    loadHistory = {
+                        order = 1,
+                        name = function()
+                            return table.concat(self.gui.importStatusHistory,
+                                                '\n')
+                        end,
+                        type = "description",
+                        width = "full",
+                        fontSize = "medium"
+                    }
+                }
+            },
+            debugData = {
+                order = 91,
+                name = _G.BINDING_HEADER_DEBUG,
+                type = "header",
+                width = "full",
+                hidden = function()
+                    return not addon.settings.db.profile.debug
                 end
             },
+            battleNetID = {
+                order = 91.1,
+                name = function()
+                    local _, bt = BNGetInfo()
+                    return fmt("Battle.net ID: %s", bt or 'Offline')
+                end,
+                type = "description",
+                width = "full",
+                fontSize = "small",
+                hidden = function()
+                    return not addon.settings.db.profile.debug
+                end
+            }
         }
     }
 
-    AceConfig:RegisterOptionsTable("RXP Guides/Import", importOptionsTable)
+    AceConfig:RegisterOptionsTable(addon.title .. "/Import", importOptionsTable)
 
-    addon.settings.gui.import = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
-                                    "RXP Guides/Import", "Import", "RXP Guides")
+    self.gui.import = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
+                          addon.title .. "/Import", L("Import"), addon.title)
 
     -- Ace3 ConfigDialog doesn't support embedding icons in header
     -- Directly references Ace3 built frame object
-    -- Hackery ahead
 
-    importFrame = addon.settings.gui.import.obj.frame
-    importFrame.icon = importFrame:CreateTexture()
-    importFrame.icon:SetTexture("Interface\\AddOns\\" .. addonName ..
-                                    "\\Textures\\rxp_logo-64")
-    importFrame.icon:SetPoint("TOPRIGHT", -5, -5)
+    local iconFrameParent = self.gui.import.obj.frame
+    iconFrameParent.icon = iconFrameParent:CreateTexture()
+    iconFrameParent.icon:SetTexture("Interface\\AddOns\\" .. addonName ..
+                                        "\\Textures\\rxp_logo-64")
+    iconFrameParent.icon:SetPoint("TOPRIGHT", -5, -5)
 
-    importFrame.text = importFrame:CreateFontString(nil, "OVERLAY")
-    importFrame.text:ClearAllPoints()
-    importFrame.text:SetPoint("CENTER", importFrame, 1, 1)
-    importFrame.text:SetJustifyH("LEFT")
-    importFrame.text:SetJustifyV("CENTER")
-    importFrame.text:SetTextColor(1, 1, 1)
-    importFrame.text:SetFont(addon.font, 14)
-    importFrame.text:SetText("")
-    addon.RXPG.LoadText = importFrame.text
+    if notOnline() then
+        self:UpdateImportStatusHistory(L(
+                                           "Battle.net unreachable, please exit your client, restart Battle.net, and try again"))
+    end
 
-
-    local function EditBoxHook(self)
-        if importFrame:IsShown() then
-            self.isMaxBytesSet = true
-            self:SetMaxBytes(1)
-        elseif self.isMaxBytesSet then
-            self.isMaxBytesSet = false
-            self:SetMaxBytes(0)
+    local function EditBoxHook(this)
+        if this:IsShown() then
+            -- Prevent double paste input lag
+            this:SetText("")
+            this.isMaxBytesSet = true
+            this:SetMaxBytes(1)
+        elseif this.isMaxBytesSet then
+            this.isMaxBytesSet = false
+            this:SetMaxBytes(0)
         end
     end
 
-    function ProcessBuffer(self)
-        self:SetScript('OnUpdate', nil)
-        self = importFrame.textFrame
-        if #buffer > 16 then
-            importString = table.concat(buffer)
-            self:ClearHistory()
-            self:SetMaxBytes(0)
-            self:Insert(importString:sub(1, 500))
-            self:ClearFocus()
-            buffer = {}
+    local function ProcessBuffer(this)
+        this:SetScript('OnUpdate', nil)
+        importCache.bufferString = table.concat(importCache.bufferData)
+        this:SetMaxBytes(0)
+        if #importCache.bufferString > 500 then
+            addon.settings:UpdateImportStatusHistory(L(
+                                                         "Loaded %d characters into import buffer, %d shown"),
+                                                     #importCache.bufferString,
+                                                     500)
         else
-            -- self:ClearHistory()
-            self:SetText(" ")
-            self:SetMaxBytes(1)
+            addon.settings:UpdateImportStatusHistory(L(
+                                                         "Loaded %d characters into import buffer"),
+                                                     #importCache.bufferString)
         end
+        this:ClearFocus()
+        importCache.bufferData = {}
     end
 
-    local function PasteHook(self, char)
-        if not importFrame:IsShown() then return end
-
+    local function PasteHook(this, char)
         local time = GetTime()
-        if previousFrame ~= time then
-            previousFrame = time
-            importFrame.textFrame = self
-            importFrame:SetScript('OnUpdate', ProcessBuffer)
+        if this:IsEnabled() then
+            -- Disable input while processing paste
+            this:Disable()
+        end
+        if importCache.lastBuffer ~= time then
+            importCache.lastBuffer = time
+            this:SetScript('OnUpdate', ProcessBuffer)
         end
 
-        table.insert(buffer, char)
+        tinsert(importCache.bufferData, char)
     end
 
-    local isHooked = {}
+    self.gui.import.obj.frame:HookScript("OnShow", function()
+        -- Prevent hooking multiple times on show
+        if importCache.widget then return end
 
-    importFrame:HookScript("OnShow", function(self)
         local n = 1
-        local editBox = true
+        local inputWidget = true
 
-        while editBox do
-            -- editBox = _G["AceGUI-3.0EditBox" .. n]
-            editBox = _G["MultiLineEditBox" .. n .. "ScrollFrame"]
-            if not isHooked[n] and editBox then
-                editBox = editBox.obj.editBox
-                isHooked[n] = true
+        while inputWidget do
+            inputWidget = _G["MultiLineEditBox" .. n .. "ScrollFrame"]
+
+            if inputWidget and inputWidget.obj.label:GetText() ==
+                L('Guides to import') then
+                importCache.widget = inputWidget
+                inputWidget.obj.button:SetText(L("Import")) -- TODO locale
+                local editBox = inputWidget.obj.editBox
+
                 editBox:HookScript("OnEditFocusGained", EditBoxHook)
                 editBox:HookScript("OnChar", PasteHook)
+                -- Prevent Accept button from being disabled by programatic text update
+                editBox:SetScript("OnTextSet", nil)
+                break
             end
             n = n + 1
         end
@@ -676,101 +593,1143 @@ function addon.settings.CreateImportOptionsPanel()
 
 end
 
-function addon.settings.CreateExtrasOptionsPanel()
-    local extraOptionsTable = {
+function addon.settings:CreateAceOptionsPanel()
+    local function isNotAdvanced()
+        return not self.db.profile.enableBetaFeatures
+    end
+
+    local function requiresReload()
+        return L("This requires a reload to take effect, continue?")
+    end
+
+    local optionsWidth = 1.08
+
+    local optionsTable = {
         type = "group",
-        name = "RestedXP Extras",
+        name = fmt("%s - %s", addon.title, addon.versionText),
         get = GetProfileOption,
         set = SetProfileOption,
+        childGroups = "tab",
         args = {
-            buffer = { -- Buffer hacked in right-aligned icon
-                order = 1,
-                name = "Optional extras",
-                type = "description",
-                width = "full",
-                fontSize = "medium"
-            },
-            trackerOptionsHeader = {
-                name = "Leveling Tracker",
-                type = "header",
-                width = "full",
-                order = 2
-            },
-            enableTracker = {
-                name = "Enable leveling tracker",
-                type = "toggle",
+            discordButton = {
+                order = 1.0,
+                name = L("Join Discord"), -- TODO locale
+                type = "execute",
                 width = "normal",
-                order = 3
+                func = function()
+                    addon.url = "https://discord.gg/restedxp"
+                    _G.StaticPopup_Show("RXP_Link")
+                    addon.url = nil
+                end
             },
-            enableTrackerReport = {
-                name = "Enable leveling report",
-                type = "toggle",
+            feedbackButton = {
+                order = 1.1,
+                name = L("Open Feedback Form"),
+                type = "execute",
                 width = "normal",
-                order = 4
-            }, -- TODO add reload UI if changes made
-            commsOptionsHeader = {
-                name = "Announcements",
-                type = "header",
-                width = "full",
-                order = 5
+                func = addon.comms.OpenBugReport
             },
-            enableLevelUpAnnounceSolo = {
-                name = "Level up (Emote)",
-                type = "toggle",
-                order = 6
+            generalSettings = {
+                type = "group",
+                name = _G.GENERAL,
+                order = 2,
+                args = {
+                    guideHeader = {
+                        name = _G.GUIDE,
+                        type = "header",
+                        width = "full",
+                        order = 1.1
+                    },
+                    showUnusedGuides = {
+                        name = L("Show unused guides"),
+                        desc = L(
+                            "Displays guides that are not applicable for your class/race such as starting zones for other races"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.2,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame.GenerateMenuTable()
+                        end
+                    },
+                    autoLoadStartingGuides = {
+                        name = L("Auto load starting zone guides"),
+                        desc = L(
+                            "Automatically picks a suitable guide whenever you log in for the first time on a character"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.3,
+                        hidden = true, -- TODO, Impossible situation with character-specific settings
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame.GenerateMenuTable()
+                        end
+                    },
+                    lockFrames = {
+                        name = L("Lock Frames"),
+                        desc = L(
+                            "Disable dragging/resizing, use alt+left click on the main window to resize it"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.5
+                    },
+                    showStepList = { -- Not actually a direct setting, indirectly frameHeight
+                        name = L("Show step list"),
+                        desc = L(
+                            "Show/Hide the bottom frame listing all the steps of the current guide"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.6,
+                        get = function()
+                            return addon.RXPFrame.BottomFrame:GetHeight() >= 35
+                        end,
+                        set = function(info, value)
+                            if addon.currentGuide and
+                                addon.currentGuide.hidewindow then
+                                return
+                            end
+
+                            if value then
+                                addon.RXPFrame:SetHeight(addon.height)
+                                addon.settings.db.profile.frameHeight =
+                                    addon.height
+                            else
+                                addon.RXPFrame:SetHeight(10)
+                                addon.settings.db.profile.frameHeight = 10
+                            end
+                            addon.updateBottomFrame = true
+                        end
+                    },
+                    hideCompletedSteps = {
+                        name = L("Hide completed steps"),
+                        desc = L(
+                            "Only shows current and future steps on the step list window"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.7,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame.ScrollFrame.ScrollBar:SetValue(0)
+                        end
+                    },
+                    skipMissingPreReqs = {
+                        name = L("Skip quests with missing pre-requisites"),
+                        desc = L(
+                            "Automatically skip tasks in which you don't have the required quest pre-requisites\n(Requires Questie)"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.8,
+                        hidden = true or not _G.QuestieLoader, -- Not used
+                        disabled = true -- Not used
+                    },
+                    anchorOrientation = {
+                        name = L("Current step frame anchor"),
+                        desc = L(
+                            "Sets the current step frame to grow from bottom to top or top to bottom"),
+                        type = "select",
+                        values = {top = "Top", bottom = "Bottom"},
+                        sorting = {"top", "bottom"},
+                        width = optionsWidth,
+                        order = 1.81,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame.SetStepFrameAnchor()
+                        end
+                    },
+                    xprate = {
+                        name = L("Experience rates"),
+                        desc = L(
+                            "Adjusts the guide routes to match increased xp rate bonuses"),
+                        type = "range",
+                        width = "normal",
+                        order = 1.82,
+                        min = 1,
+                        max = 1.5,
+                        step = 0.05,
+                        confirm = function()
+                            return L(
+                                       "Notice: Changing experience rates beyond 1x may cause some chapters to become hidden and certain steps may automatically skip as you out level them") -- TODO locale
+                        end,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.ReloadGuide()
+                            addon.RXPFrame.GenerateMenuTable()
+                            addon.settings.db.profile.xpRateOverriden = true
+                        end,
+                        hidden = addon.gameVersion < 30000 or addon.gameVersion >
+                            40000
+                    },
+                    northrendLM = {
+                        name = L("Northrend Loremaster"),
+                        desc = L(
+                            "Adjust the routes to include almost every quest in the Northrend zones"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.90,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.ReloadGuide()
+                        end,
+                        hidden = addon.gameVersion < 30000
+                    },
+                    hideInRaid = {
+                        name = L("Autohide in Raids"), -- TODO locale
+                        desc = L(
+                            "Automatically hide when in a raid, and unhide when you leave a raid"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.91,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            if value then
+                                addon:RegisterEvent("GROUP_JOINED",
+                                                    addon.HideInRaid)
+                                addon:RegisterEvent("GROUP_FORMED",
+                                                    addon.HideInRaid)
+                                addon:RegisterEvent("GROUP_LEFT")
+
+                                -- Check if reloading in raid
+                                addon.HideInRaid()
+                            else
+                                addon:UnregisterEvent("GROUP_JOINED")
+                                addon:UnregisterEvent("GROUP_FORMED")
+                                addon:UnregisterEvent("GROUP_LEFT")
+                            end
+                        end
+                    },
+                    interfaceHeader = {
+                        name = _G.UIOPTIONS_MENU,
+                        type = "header",
+                        width = "full",
+                        order = 2
+                    },
+                    hideGuideWindow = {
+                        name = L("Hide Window"),
+                        desc = L("Hides the main window"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame:SetShown(not value)
+                        end
+                    },
+                    showEnabled = {
+                        name = L("Show all Enabled Frames"),
+                        desc = L("Toggles all addon frames on or off"), -- TODO locale
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.11,
+                        set = function(info, value)
+                            self.ToggleActive()
+                        end
+                    },
+                    disableItemWindow = {
+                        name = L("Hide Active Item window"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.2,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.UpdateItemFrame()
+                        end
+                    },
+                    windowScale = {
+                        name = L("Window Scale"),
+                        desc = L(
+                            "Scale of the Main Window, use alt+left click on the main window to resize it"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 2.3,
+                        min = 0.2,
+                        max = 2,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RXPFrame:SetScale(value)
+                        end
+                    },
+                    guideFontSize = {
+                        name = L("Guide Font Size"), -- TODO locale
+                        desc = L("Change font size of the Guide Window"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 2.4,
+                        min = 9,
+                        max = 18,
+                        step = 1,
+                        confirm = requiresReload,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            _G.ReloadUI()
+                        end
+                    },
+                    activeItemsScale = {
+                        name = L("Active Item Scale"), -- TODO locale
+                        desc = L("Scale of the Active Item frame"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 2.5,
+                        min = 0.8,
+                        max = 3,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.activeItemFrame:SetScale(value)
+                        end
+                    },
+                    automationHeader = {
+                        name = L("Automation"), -- TODO locale
+                        type = "header",
+                        width = "full",
+                        order = 3.1
+                    },
+                    enableQuestAutomation = {
+                        name = L("Quest auto accept/turn in"),
+                        desc = L(
+                            "Holding the Control key modifier also toggles the quest auto accept feature on and off"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.2
+                    },
+                    enableTrainerAutomation = {
+                        name = L("Trainer automation"),
+                        desc = L(
+                            "Allows the guide to buy useful leveling spells automatically"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.3
+                    },
+                    enableFPAutomation = {
+                        name = L("Flight Path automation"),
+                        desc = L(
+                            "Allows the guide to automatically fly you to your destination"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.4
+                    },
+                    enableBindAutomation = {
+                        name = L("Inkeeper Bind automation"), -- TODO locale
+                        desc = L(
+                            "Allows the guide to automatically set your home at an Innkeeper"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.5
+                    },
+                    enableGossipAutomation = {
+                        name = L("Skip Gossip"), -- TODO locale
+                        desc = L(
+                            "Allows the guide to automatically skip gossip for NPCs"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.6
+                    },
+                    mapHeader = {
+                        name = _G.MAP_OPTIONS_TEXT,
+                        type = "header",
+                        width = "full",
+                        order = 4.1
+                    },
+                    hideMiniMapPins = {
+                        name = L("Hide Mini Map Pins"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 4.2,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    mapCircle = {
+                        name = L("Highlight active map pins"),
+                        desc = L(
+                            "Show a targeting circle around active map pins"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 4.3,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    enableMinimapButton = {
+                        name = L("Enable Minimap Button"),
+                        desc = L("Add main options menu to minimap"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 4.4,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            if value then
+                                LibDBIcon:Show(addonName)
+                            else
+                                LibDBIcon:Hide(addonName)
+                            end
+                        end
+                    },
+                    numMapPins = {
+                        name = L("Number of Map Pins"),
+                        desc = L("Number of map pins shown on the world map"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 4.5,
+                        min = 1,
+                        max = 20,
+                        step = 1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    worldMapPinScale = {
+                        name = L("Map Pin Scale"),
+                        desc = L("Adjusts the size of the world map pins"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 4.6,
+                        min = 0.05,
+                        max = 1,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    distanceBetweenPins = {
+                        name = L("Distance Between Pins"),
+                        desc = L(
+                            "If two or more steps are very close together, this addon will group them into a single pin on the map. Adjust this range to determine how close together two steps must be to form a group."),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 4.7,
+                        min = 0.05,
+                        max = 2,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    worldMapPinBackgroundOpacity = {
+                        name = L("Map Pin Background Opacity"),
+                        desc = L(
+                            "The opacity of the black circles on the map and mini map"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 4.8,
+                        min = 0,
+                        max = 1,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.updateMap = true
+                        end
+                    },
+                    arrowHeader = {
+                        name = L("Waypoint Arrow"), -- TODO locale
+                        type = "header",
+                        width = "full",
+                        order = 5
+                    },
+                    disableArrow = {
+                        name = L("Hide waypoint arrow"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 5.1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.UpdateArrow(addon.arrowFrame)
+                        end
+                    },
+                    arrowScale = {
+                        name = L("Arrow Scale"),
+                        desc = L("Scale of the Waypoint Arrow"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 5.2,
+                        min = 0.2,
+                        max = 2,
+                        step = 0.05,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.arrowFrame:SetSize(32 * value, 32 * value)
+                        end
+                    },
+                    arrowText = {
+                        name = L("Arrow Text Size"),
+                        desc = L("Size of the waypoint arrow text"),
+                        type = "range",
+                        width = optionsWidth,
+                        order = 5.3,
+                        min = 5,
+                        max = 20,
+                        step = 1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.arrowFrame.text:SetFont(addon.font, value,
+                                                          "OUTLINE")
+                        end
+                    },
+                    resetArrowPosition = {
+                        order = 5.4,
+                        name = L("Reset Arrow Position"), -- TODO locale
+                        type = "execute",
+                        width = optionsWidth,
+                        func = function()
+                            addon.ResetArrowPosition()
+                        end
+                    }
+                }
             },
-            enableLevelUpAnnounceGroup = {
-                name = "Level up (Group)",
-                type = "toggle",
-                order = 7
+            targeting = {
+                type = "group",
+                name = _G.BINDING_HEADER_TARGETING,
+                order = 4,
+                args = {
+                    macroHeader = {
+                        name = fmt("%s%s", L("Targeting Macro"),
+                                   addon.targeting:CanCreateMacro() and '' or
+                                       ' - ' .. L("Macro capacity reached")), -- TODO locale
+                        type = "header",
+                        width = "full",
+                        order = 1
+                    },
+                    enableTargetMacro = {
+                        name = L("Create Targeting Macro"), -- TODO locale
+                        desc = L("Automatically create a targeting macro"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.1,
+                        disabled = not addon.targeting:CanCreateMacro()
+                    },
+                    notifyOnTargetUpdates = {
+                        name = L("Notify on new target"), -- TODO locale
+                        desc = L("Notify when a new target is loaded"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 1.2,
+                        disabled = not addon.targeting:CanCreateMacro() or
+                            not self.db.profile.enableTargetAutomation
+                    },
+                    proximityHeader = {
+                        name = _G.TRACKER_SORT_PROXIMITY,
+                        type = "header",
+                        width = "full",
+                        order = 2
+                    },
+                    enableTargetAutomation = {
+                        name = L("Target Automation"), -- TODO locale
+                        desc = L("Automatically scan nearby targets"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.1
+                    },
+                    enableFriendlyTargeting = {
+                        name = L("Scan Friendly Targets"), -- TODO locale
+                        desc = L("Scan for friendly targets"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.2,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation
+                        end
+                    },
+                    enableTargetMarking = {
+                        name = L("Mark Friendly Targets"), -- TODO locale
+                        desc = L(
+                            "Mark friendly targets with star, circle, diamond, and triangle"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.21,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation or
+                                       not self.db.profile.enableTargetMarking
+                        end
+                    },
+                    enableEnemyTargeting = {
+                        name = L("Scan Enemy Targets"), -- TODO locale
+                        desc = L("Scan for enemy targets"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.3,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation
+                        end
+                    },
+                    enableEnemyMarking = {
+                        name = L("Mark Enemy Targets"), -- TODO locale
+                        desc = L(
+                            "Mark enemy targets with skull, cross, square, and moon"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.31,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation or
+                                       not self.db.profile.enableEnemyMarking
+                        end
+                    },
+                    showTargetingOnProximity = {
+                        name = L("Only show when in range"), -- TODO locale
+                        desc = L(
+                            "Check if targets are nearby\nWarning: This relies on ADDON_ACTION_FORBIDDEN errors from TargetUnit() to function."),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 2.32,
+                        confirm = requiresReload,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            _G.ReloadUI()
+                        end,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation
+                        end
+                    },
+                    hideActiveTargetsBackground = {
+                        name = L("Hide Targets Background"),
+                        desc = L("Make background transparent"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 2.33,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.targeting:RenderTargetFrameBackground()
+                        end,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation
+                        end
+                    },
+                    alertHeader = {
+                        name = _G.COMMUNITIES_NOTIFICATION_SETTINGS,
+                        type = "header",
+                        width = "full",
+                        order = 3
+                    },
+                    flashOnFind = {
+                        name = L("Flash Client Icon"), -- TODO locale
+                        desc = L(
+                            "Flashes the game icon on taskbar when enemy target found"),
+                        type = "toggle",
+                        width = optionsWidth,
+                        order = 3.1,
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation or
+                                       not self.db.profile
+                                           .showTargetingOnProximity
+                        end
+                    },
+                    soundOnFind = {
+                        name = L("Play Sound"), -- TODO locale
+                        desc = L("Sends sound on enemy target found"),
+                        type = "select",
+                        width = optionsWidth,
+                        order = 3.2,
+                        values = {
+                            ["none"] = "none",
+                            [3175] = "Map Ping",
+                            [11773] = "War Drums",
+                            [8959] = "Raid Warning",
+                            [5274] = "Auction Window Open",
+                            [17318] = "LFG Dungeon Ready",
+                            [9378] = "PVP Flag Taken",
+                            [8960] = _G.QUEUED_STATUS_READY_CHECK_IN_PROGRESS,
+                            [9374] = "PVP Flag Captured",
+                            [9375] = "PVP Warning",
+                            [180461] = "Fel Reaver"
+                        },
+                        disabled = function()
+                            return not self.db.profile.enableTargetAutomation or
+                                       not self.db.profile
+                                           .showTargetingOnProximity
+                        end
+                    },
+                    testSoundOnFind = {
+                        order = 3.3,
+                        type = 'execute',
+                        name = _G.EVENTTRACE_BUTTON_PLAY,
+                        disabled = function()
+                            return self.db.profile.soundOnFind == "none"
+                        end,
+                        func = function()
+                            PlaySound(self.db.profile.soundOnFind, "master")
+                        end
+                    }
+                }
             },
-            enableLevelUpAnnounceGuild = {
-                name = "Level up (Guild)",
-                type = "toggle",
-                order = 8
+            levelTrackerFeatures = {
+                type = "group",
+                name = L("Leveling Tracker"),
+                order = 5,
+                args = {
+                    enableTracker = {
+                        name = L("Enable Leveling Tracker"),
+                        type = "toggle",
+                        width = "full",
+                        order = 1,
+                        confirm = requiresReload,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            _G.ReloadUI()
+                        end
+                    },
+                    openTrackerReportOnCharOpen = {
+                        name = L(
+                            "Always Open Leveling Report With Character Panel"),
+                        desc = L(
+                            "Enables the RestedXP Leveling Report when you open your character panel"),
+                        type = "toggle",
+                        width = "full",
+                        order = 1.1,
+                        confirm = requiresReload,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            _G.ReloadUI()
+                        end
+                    },
+                    enableLevelingReportInspections = {
+                        name = L("Enable Leveling Report Inspections") ..
+                            " (Beta)",
+                        desc = L(
+                            "Send or receive inspection requests for other Leveling Reports"),
+                        type = "toggle",
+                        width = "full",
+                        order = 1.2,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:SetupInspections()
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile.enableTracker
+                        end,
+                        hidden = isNotAdvanced
+                    },
+                    splitsOptionsHeader = {
+                        name = L("Level Splits"),
+                        type = "header",
+                        width = "full",
+                        order = 2
+                    },
+                    enablelevelSplits = {
+                        name = L("Enable Level Splits"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 2.1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            if value then
+                                addon.tracker:CreateLevelSplits()
+                                addon.tracker.levelSplits:Show()
+                            else
+                                addon.tracker.levelSplits:Hide()
+                            end
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile.enableTracker
+                        end
+                    },
+                    compareNextLevelSplit = {
+                        name = L("Compare Next Level"),
+                        desc = L("When comparing, show next level's time"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 2.2,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:UpdateLevelSplits("full")
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile.enableTracker
+                        end
+                    },
+                    hideSplitsBackground = {
+                        name = L("Hide Splits Background"),
+                        desc = L("Make background transparent"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 2.3,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:RenderSplitsBackground()
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile.enableTracker
+                        end
+                    },
+                    levelSplitsHistory = {
+                        name = L("Level Splits History"),
+                        desc = L("Historical levels to show"),
+                        type = "range",
+                        width = "normal",
+                        order = 2.4,
+                        min = 1,
+                        max = GetMaxPlayerLevel(),
+                        step = 1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:UpdateLevelSplits("full")
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile
+                                       .enablelevelSplits
+                        end
+                    },
+                    levelSplitsFontSize = {
+                        name = L("Level Splits Font Size"),
+                        type = "range",
+                        width = "normal",
+                        order = 2.5,
+                        min = 9,
+                        max = 17, -- Formatting gets wonky >=18
+                        step = 1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:UpdateLevelSplits("full")
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile
+                                       .enablelevelSplits
+                        end
+                    },
+                    levelSplitsOpacity = {
+                        name = L("Level Splits Opacity"),
+                        desc = L(
+                            "Lower number to make Level Splits more transparent"),
+                        type = "range",
+                        width = "normal",
+                        order = 2.6,
+                        min = 0.1,
+                        max = 1,
+                        step = 0.1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.tracker:UpdateLevelSplits("full")
+                        end,
+                        disabled = function()
+                            return not addon.settings.db.profile
+                                       .enablelevelSplits
+                        end
+                    }
+                }
             },
-            enableCollectStepAnnouncements = {
-                name = "Collect step updates",
-                type = "toggle",
-                order = 9
+            communications = {
+                type = "group",
+                name = L("Communications"),
+                order = 4,
+                args = {
+                    commsLevelUpOptionsHeader = {
+                        name = L("Announcements"),
+                        type = "header",
+                        width = "full",
+                        order = 1
+                    },
+                    enableLevelUpAnnounceSolo = {
+                        name = L("Announce Level Ups (Emote)"),
+                        desc = L("Make a public emote when you level up"),
+                        type = "toggle",
+                        width = "full",
+                        order = 6
+                    },
+                    enableLevelUpAnnounceGroup = {
+                        name = L("Announce Level Ups (Party Chat)"),
+                        desc = L("Announce in party chat when you level up"),
+                        type = "toggle",
+                        width = "full",
+                        order = 7
+                    },
+                    enableLevelUpAnnounceGuild = {
+                        name = L("Announce Level Ups (Guild Chat)"),
+                        desc = L("Announce in guild chat when you level up"),
+                        type = "toggle",
+                        width = "full",
+                        order = 8
+                    },
+                    groupCoordinationHeader = {
+                        name = L("Group coordination"),
+                        type = "header",
+                        width = "full",
+                        order = 9
+                    },
+                    alwaysSendBranded = {
+                        name = L(
+                            "Send announcements without another RXP user in group"),
+                        desc = L(
+                            "Without this checked we will only send announcements if another RestedXP User is in your group"),
+                        type = "toggle",
+                        width = "full",
+                        order = 10
+                    },
+                    enableCompleteStepAnnouncements = {
+                        name = L("Announce when Quest Step is completed"),
+                        desc = L(
+                            "Announce in party chat when you complete certain quests (.complete)"),
+                        type = "toggle",
+                        width = "full",
+                        order = 11
+                    },
+                    enableCollectStepAnnouncements = {
+                        name = L("Announce when all Step items are collected"),
+                        desc = L(
+                            "Announce in party chat when you collect all the items relevant to a quest (.collect)"),
+                        type = "toggle",
+                        width = "full",
+                        order = 12
+                    },
+                    enableFlyStepAnnouncements = {
+                        name = L("Announce Flying Step timers"),
+                        desc = L(
+                            "Announce in party chat where you're flying and how long until you arrive"),
+                        type = "toggle",
+                        width = "full",
+                        order = 13
+                    },
+                    checkVersions = {
+                        name = L("Enable Addon Version Checks"),
+                        desc = L(
+                            "Advertises and compares addon versions with all RXP users in party"),
+                        type = "toggle",
+                        width = "full",
+                        order = 14
+                    },
+                    ignoreQuestieConflicts = {
+                        name = L("Ignore Questie announcements"),
+                        desc = L(
+                            "Send quest and collect step announcements even if Questie is enabled"),
+                        type = "toggle",
+                        width = "full",
+                        order = 15,
+                        hidden = not _G.Questie
+                    }
+                }
             },
-            enableCompleteStepAnnouncements = {
-                name = "Completed step updates",
-                type = "toggle",
-                order = 10
+            helpPanel = {
+                type = "group",
+                name = _G.HELP_LABEL,
+                order = 9,
+                args = {}
             },
-            enableFlyStepAnnouncements = {
-                name = "Flying step updates",
-                type = "toggle",
-                order = 11
-            },
-            ignoreQuestieConflicts = {
-                name = "Ignore Questie",
-                type = "toggle",
-                order = 12,
-                hidden = not _G.Questie
-            },
-            alwaysSendBranded = {
-                name = "Send without RXP group",
-                type = "toggle",
-                order = 13
+            advancedSettings = {
+                type = "group",
+                name = L("Advanced Settings"),
+                order = 10,
+                args = {
+                    enableBetaFeatures = {
+                        name = L("Enable Beta Features"),
+                        desc = L(
+                            "Enables new features, forces reload to take effect"),
+                        type = "toggle",
+                        width = "full",
+                        order = 1,
+                        confirm = requiresReload,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            _G.ReloadUI()
+                        end
+                    },
+                    debug = {
+                        name = L("Enable Debug"),
+                        type = "toggle",
+                        width = "full",
+                        order = 1.1
+                    },
+                    batchSize = {
+                        name = L("Batching window size (ms)"),
+                        desc = L(
+                            "Adjusts the batching window tolerance, used for hearthstone batching"),
+                        type = "range",
+                        width = "normal",
+                        order = 2.1,
+                        min = 1,
+                        max = 100,
+                        step = 1
+                    },
+                    phase = {
+                        name = L("Content phase"),
+                        desc = L(
+                            "Adjusts the guide routes to match the content phase\nPhase 2: Dire Maul quests\nPhase 3: 100% quest XP (SoM)\nPhase 4: ZG/Silithus quests\nPhase 5: AQ quests\nPhase 6: Eastern Plaguelands quests"),
+                        type = "range",
+                        width = "normal",
+                        order = 2.2,
+                        min = 1,
+                        max = 6,
+                        step = 1,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.ReloadGuide()
+                            addon.RXPFrame.GenerateMenuTable()
+                        end,
+                        hidden = addon.game ~= "CLASSIC"
+                    },
+                    hardcore = {
+                        name = L("Hardcore mode"),
+                        desc = L(
+                            "Adjust the leveling routes to the deathless ruleset"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 4,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            addon.RenderFrame()
+                        end,
+                        hidden = addon.game ~= "CLASSIC"
+                    },
+                    SoM = {
+                        name = L("Season of Mastery"),
+                        desc = L(
+                            "Adjust the leveling routes to the Season of Mastery changes (40/100% quest xp)"),
+                        type = "toggle",
+                        width = "normal",
+                        order = 5,
+                        set = function(info, value)
+                            addon.settings.db.profile.xpRateOverriden = true
+                            SetProfileOption(info, value)
+                            addon.RXPFrame.GenerateMenuTable()
+                            addon.ReloadGuide()
+                        end,
+                        hidden = addon.game ~= "CLASSIC"
+                    }
+                }
             }
         }
     }
 
-    AceConfig:RegisterOptionsTable("RXP Guides/Extras", extraOptionsTable)
+    -- Build FAQ items
+    local faqBatch = 2
+    for q, a in pairs(addon.help) do
+        optionsTable.args.helpPanel.args[faqBatch .. "q"] = {
+            order = faqBatch + 0.1,
+            name = q,
+            type = "header",
+            width = "full"
+        }
 
-    addon.settings.gui.extras = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
-                                    "RXP Guides/Extras", "Extras", "RXP Guides")
+        optionsTable.args.helpPanel.args[faqBatch .. "a"] = {
+            order = faqBatch + 0.2,
+            name = a,
+            type = "description",
+            width = "full",
+            fontSize = "medium"
+        }
+        faqBatch = faqBatch + 1
+    end
+
+    AceConfig:RegisterOptionsTable(addon.title, optionsTable)
+
+    if addon.settings.db.profile.enableBetaFeatures then
+        optionsTable.args.profiles =
+            LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+        optionsTable.args.profiles.order = 20
+    end
+
+    addon.RXPOptions = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(
+                           addon.title)
 
     -- Ace3 ConfigDialog doesn't support embedding icons in header
     -- Directly references Ace3 built frame object
     -- Hackery ahead
 
-    local extrasFrame = addon.settings.gui.extras.obj.frame
-    extrasFrame.icon = extrasFrame:CreateTexture()
-    extrasFrame.icon:SetTexture("Interface\\AddOns\\" .. addonName ..
-                                    "\\Textures\\rxp_logo-64")
-    extrasFrame.icon:SetPoint("TOPRIGHT", -5, -5)
+    local f = addon.RXPOptions.obj.frame
+    f.icon = f:CreateTexture()
+    f.icon:SetTexture("Interface\\AddOns\\" .. addonName ..
+                          "\\Textures\\rxp_logo-64")
+    f.icon:SetPoint("TOPRIGHT", -5, -5)
 
+end
+
+local function buildMinimapMenu()
+    local menu = {}
+    addon.RXPFrame.GenerateMenuTable(menu)
+
+    table.insert(menu, #menu, {
+        text = addon.settings.db.profile.showEnabled and _G.HIDE or _G.SHOW,
+        notCheckable = 1,
+        func = addon.settings.ToggleActive
+    })
+
+    return menu
+end
+
+function addon.settings:UpdateMinimapButton()
+    if not addon.settings.db.profile.enableMinimapButton then return end
+
+    if not addon.settings.minimapFrame then
+        addon.settings.minimapFrame = CreateFrame("Frame", "RXP_MMMenuFrame",
+                                                  UIParent,
+                                                  "UIDropDownMenuTemplate")
+    end
+
+    local minimapButton = LibDataBroker:NewDataObject(addonName, {
+        type = "data source",
+        label = addonName,
+        icon = "Interface/AddOns/" .. addonName .. "/Textures/rxp_logo-64",
+        tocname = addonName,
+        OnClick = function(_, button)
+            if button == "RightButton" then
+                _G.EasyMenu(buildMinimapMenu(), addon.settings.minimapFrame,
+                            "cursor", 0, 0, "MENU")
+            else
+                addon.settings.ToggleActive()
+            end
+        end,
+        OnTooltipShow = function(tooltip)
+            tooltip:AddLine(addon.title)
+            tooltip:AddLine("|cff909090Left Click: |cffffcc00Toggle Guide|r")
+            tooltip:AddLine("|cff909090Right Click: |cffffcc00Show Menu|r")
+        end
+    })
+
+    LibDBIcon:Register(addonName, minimapButton, self.db.profile.minimap);
+end
+
+function addon.settings.ToggleActive()
+    addon.settings.db.profile.showEnabled =
+        not addon.settings.db.profile.showEnabled
+
+    for _, frame in pairs(addon.enabledFrames) do
+        if frame.IsFeatureEnabled() then
+            frame:SetShown(addon.settings.db.profile.showEnabled)
+        end
+    end
+
+end
+
+function addon.settings:DetectXPRate(heirloomCheck)
+    if addon.settings.db.profile.xpRateOverriden then return end
+
+    local UnitBuff = UnitBuff
+
+    local function CheckBuff(buffId)
+        local id
+
+        for i = 1, 40 do
+            id = select(10, UnitBuff("player", i))
+            if not id then return false end
+
+            if id == buffId then return true end
+        end
+    end
+
+    if addon.gameVersion < 20000 then
+        addon.settings.db.profile.SoM = CheckBuff(362859) -- SoM
+    end
+
+    -- TODO heirloomCheck for periodic checking
+    if heirloomCheck then
+        if addon.currentGuide and addon.currentGuide.name then
+            addon:LoadGuide(addon.currentGuide, 'onLoad')
+        else
+            addon.ReloadGuide()
+        end
+    end
+
+    addon.RXPFrame.GenerateMenuTable()
+end
+
+function addon.settings:RefreshProfile()
+    if addon.currentGuide and addon.currentGuide.name then
+        addon:LoadGuide(addon.currentGuide)
+    else
+        addon.ReloadGuide()
+    end
+    addon.updateMap = true
+    addon.RXPFrame.GenerateMenuTable()
+    addon.RXPFrame.SetStepFrameAnchor()
 end

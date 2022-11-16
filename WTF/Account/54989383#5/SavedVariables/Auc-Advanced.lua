@@ -1,11 +1,19 @@
 
 AucAdvancedConfig = {
+	["version"] = 1,
 	["profile.Default"] = {
 		["configator.left"] = 666.666748046875,
 		["core"] = {
 			["matcher"] = {
 				["matcherlist"] = {
 					"Undercut", -- [1]
+				},
+			},
+		},
+		["stat"] = {
+			["sales"] = {
+				["upgraded32"] = true,
+				["ignoredsigs"] = {
 				},
 			},
 		},
@@ -23,43 +31,35 @@ AucAdvancedConfig = {
 				},
 			},
 			["ahwindowcontrol"] = {
-				["ahframeanchors"] = "TOPLEFT:TOPLEFT:10.0:-99.7",
-			},
-		},
-		["stat"] = {
-			["sales"] = {
-				["ignoredsigs"] = {
-				},
-				["upgraded32"] = true,
+				["ahframeanchors"] = "TOPLEFT:TOPLEFT:0.0:-110.6",
 			},
 		},
 		["configator.top"] = 825.0001220703125,
 	},
-	["version"] = 1,
 	["users.Grobbulus.Powertoast"] = "Default",
 }
 AucAdvancedData = {
-	["Stats"] = {
-	},
 	["UtilSearchUiData"] = {
-		["Version"] = 1,
-		["Current"] = {
-			["snatch.itemsList"] = {
-			},
-		},
 		["Global"] = {
 			["configator.left"] = 616.6666259765625,
 			["configator.top"] = 849.9998168945312,
 		},
+		["Current"] = {
+			["snatch.itemsList"] = {
+			},
+		},
+		["Version"] = 1,
 		["SavedSearches"] = {
 		},
+	},
+	["Stats"] = {
 	},
 }
 AucAdvancedServers = {
 	["KnownRealms"] = {
 		["Grobbulus"] = {
-			["Login"] = 1659771218,
-			["Alliance"] = 1659727030,
+			["Login"] = 1668050235,
+			["Alliance"] = 1667441041,
 		},
 	},
 	["Version"] = 2,

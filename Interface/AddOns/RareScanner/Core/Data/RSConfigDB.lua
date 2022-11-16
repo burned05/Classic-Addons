@@ -637,6 +637,14 @@ function RSConfigDB.GetMMinimapButtonDB()
 	return private.db.display.minimapButton
 end
 
+function RSConfigDB.IsShowingWorldmapButton()
+	return private.db.display.worldmapButton
+end
+
+function RSConfigDB.SetShowingWorldmapButton(value)
+	private.db.display.worldmapButton = value
+end
+
 ---============================================================================
 -- Loot in general
 ---============================================================================
@@ -986,6 +994,14 @@ end
 
 function RSConfigDB.SetWorldMapTooltipsScale(value)
 	private.db.map.tooltipsScale = value
+end
+
+function RSConfigDB.IsShowingTooltipsAchievements()
+	return private.db.map.tooltipsAchievements
+end
+
+function RSConfigDB.SetShowingTooltipsAchievements(value)
+	private.db.map.tooltipsAchievements = value
 end
 
 function RSConfigDB.IsShowingTooltipsNotes()

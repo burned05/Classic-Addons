@@ -14,7 +14,8 @@ step << !Gnome !Dwarf
     +You have selected a guide meant for Gnomes and Dwarves. You should choose the same starter zone that you start in
 step
     >>Delete your Hearthstone
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk	
     .accept 179 >> Accept Dwarven Outfitters
 step << Warrior
 #sticky
@@ -43,42 +44,50 @@ step << Paladin/Warrior
     .goto Dun Morogh,30.0,71.5
     .vendor >>vendor trash
 step << Paladin
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3107 >> Accept Consecrated Rune
 step << Gnome Warrior
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3112 >> Accept Simple Memorandum
 step << Dwarf Warrior
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3106 >> Accept Simple Rune
 step << Mage
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3114 >> Accept Glyphic Memorandum
 step << Priest
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3110 >> Accept Hallowed Rune
 step << Gnome Rogue
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3113 >> Accept Encrypted Memorandum
 step << Dwarf Rogue
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3109 >> Accept Encrypted Rune
 step << !Dwarf !Gnome
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
 step
@@ -214,10 +223,12 @@ step << !Paladin !Mage
     .xp 4 >> Grind to 4
 step << !Paladin !Mage
     #requires TrollTroggs
-.turnin 182 >> Turn in The Troll Cave
+    .goto Dun Morogh,25.1,75.7
+    .turnin 182 >> Turn in The Troll Cave
     .accept 218 >> Accept The Stolen Journal
 step << Paladin/Mage
-.turnin 182 >> Turn in The Troll Cave
+    .goto Dun Morogh,25.1,75.7
+    .turnin 182 >> Turn in The Troll Cave
     .accept 218 >> Accept The Stolen Journal
 step << !Paladin !Mage
     .goto Dun Morogh,25.0,76.0
@@ -445,10 +456,10 @@ step << Druid/Shaman
     .collect 2495,1 --Collect Walking Stick
 step << Warrior/Rogue
     .goto Dun Morogh,45.3,51.9
-    .train 2018 >>Train Blacksmithing. You'll get mining later which will allow you to craft Sharpening Stones (+2 weapon damage for 1 hour). You can skip Blacksmithing if you wish
+    .train 2018 >>Train Blacksmithing. You'll get mining later which will allow you to craft Sharpening Stones (+2 weapon damage for 1 hour). You should stop making these around level 20.
 step << Paladin
     .goto Dun Morogh,45.3,51.9
-    .train 2018 >>Train Blacksmithing. You'll get mining later which will allow you to craft Weightstones (+2 weapon damage for 1 hour). You can skip Blacksmithing if you wish
+    .train 2018 >>Train Blacksmithing. You'll get mining later which will allow you to craft Weightstones (+2 weapon damage for 1 hour). You should stop making these around level 20.
 step
     .goto Dun Morogh,46.0,51.7
     .accept 400 >> Accept Tools for Steelgrill
@@ -598,6 +609,7 @@ step << Warrior/Paladin/Rogue
     .goto Dun Morogh,50.2,50.4
 .train 2580 >>Go inside the house. Train Mining, cast Find Minerals
 step << Warrior/Paladin/Rogue
+    .isOnQuest 313
     .goto Dun Morogh,49.6,48.6
     .turnin 313 >> Turn in The Grizzled Den
 step << Warrior/Paladin/Rogue
@@ -706,6 +718,7 @@ step
 .goto Wetlands,9.5,59.7
     .fp Menethil >> Get the Menethil Harbor flight path
 step
+    #completewith next
 .hs >> Hearth to Kharanos
 step
 .goto Dun Morogh,47.4,52.5
@@ -713,6 +726,7 @@ step
     .complete 384,2 --Collect Rhapsody Malt (x1)
     .collect 2686,1 --Collect Thunder Ale (x1)
 step
+    .isOnQuest 310
     .goto Dun Morogh,47.6,52.4,10 >>Go in the room behind the innkeeper
 step
     >>Go downstairs, then talk to Jarven, and give him the Thunder Ale
@@ -744,7 +758,7 @@ step << Warrior
 .goto Dun Morogh,47.4,52.6
     .train 284 >>Train Heroic Strike r2
     .train 1715 >>Train Hamstring
-step << Warrior/Rogue/Paladin
+step << Warrior/Rogue/Paladin tbc
     .istrained 3273
 .money <0.0095
     .goto Dun Morogh,47.2,52.6
@@ -825,6 +839,7 @@ step
     .complete 412,2 --Collect Gyromechanic Gear (x8)
     .complete 412,1 --Collect Restabilization Cog (x8)
 step
+    .isOnQuest 287
     .goto Dun Morogh,24.5,50.8,30 >>Enter the cave
 step
     .goto Dun Morogh,22.1,50.3,40,0
@@ -838,8 +853,11 @@ step
     .goto Dun Morogh,23.0,52.2
     .complete 287,2 --Fully explore Frostmane Hold
 step
+    .goto Dun Morogh,23.0,52.2
     .xp 9 >> Grind to level 9
 step
+    .isOnQuest 287
+    .goto Dun Morogh,46.7,53.8
 .deathskip >> Die and respawn at the Spirit Healer
 step
     .goto Dun Morogh,46.7,53.8
@@ -963,14 +981,19 @@ step
     .goto Dun Morogh,83.9,39.2
     .turnin 417 >> Turn in A Pilot's Revenge
 step
+    .isOnQuest 413
     .goto Dun Morogh,81.2,42.7,15 >>Go back through the tunnel
 step
     .goto Dun Morogh,79.6,50.7,50,0
 .goto Dun Morogh,82.3,53.5,25,0
     .goto Dun Morogh,86.3,48.8
-    .turnin 413 >> Turn in Shimmer Stout
+    .turnin -413 >> Turn in Shimmer Stout
+step
+    .isQuestTurnedIn 413
+    .goto Dun Morogh,86.3,48.8
     .accept 414 >> Accept Stout to Kadrell
 step
+    .isOnQuest 414
 .goto Dun Morogh,86.2,51.3,20 >>Go through the tunnel
 step << Mage/Rogue
     .goto Loch Modan,22.1,73.1
@@ -1015,8 +1038,6 @@ step << Mage
 step << Rogue tbc
     .goto Loch Modan,35.5,48.4
     .home >> Set your Hearthstone to Thelsamar
-step << Paladin/Warrior/Priest
-
 step << Mage
     .goto Loch Modan,34.8,48.6
     .vendor >> Buy max 3 6 slot bags
@@ -1267,6 +1288,9 @@ step << Mage
 step
     .goto Ironforge,39.5,57.5
     .turnin 291 >> Turn in The Reports
+step << Warrior/Rogue
+    .goto Ironforge,62.0,88.8
+    .collect 25873,1 >> Buy a Keen Throwing Knife from Brenwyn Wintersteel. Equip it.
 step << Warrior
     #sticky
     .goto Ironforge,65.9,88.4
@@ -1314,7 +1338,7 @@ step << Rogue
 step << Rogue
     .goto StormwindClassic,57.6,57.1
     .vendor >> Buy a Cutlass from Gunther and equip it
-step << Rogue
+step << Rogue tbc
     #sticky
     #completewith next
 .hs >> Hearth to Thelsamar
@@ -1346,6 +1370,10 @@ step << tbc
 step << tbc
     #label Darkshore1
     .zone Darkshore >>Get onto the boat when it comes. Take it to Darkshore
+step << Warlock wotlk/Rogue wotlk
+    #xprate <1.5
+    .goto StormwindClassic,52.61,65.71
+    .home >> Set your Hearthstone to Stormwind City
 step << wotlk
     .goto StormwindNew,21.8,56.2
     .zone Darkshore >> Head to the Stormwind Harbor and take the boat to Darkshore
@@ -1366,8 +1394,9 @@ step << !Gnome !Dwarf
 .goto Dun Morogh,29.9,71.2
     +You have selected a guide meant for Gnomes and Dwarves. You should choose the same starter zone that you start in
 step
-    >>Delete your Hearthstone
-    .goto Dun Morogh,29.9,71.2
+    >>Delete your Hearthstone << tbc
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .accept 179 >> Accept Dwarven Outfitters
 step << tbc
     #sticky
@@ -1407,7 +1436,8 @@ step << tbc
     .goto Dun Morogh,28.6,66.1
     .turnin 1599 >> Turn in Beginnings
 step
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >> Turn in Dwarven Outfitters
     .accept 233 >> Accept Coldridge Valley Mail Delivery
     .accept 3115 >> Accept Tainted Memorandum
@@ -2819,14 +2849,16 @@ step << !Gnome !Dwarf
 .goto Dun Morogh,29.9,71.2
     +You have selected a guide meant for Gnomes and Dwarves. You should choose the same starter zone that you start in
 step
-    .goto Dun Morogh,29.9,71.2
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     >>Speak to Sten Stoutarm
     .accept 179 >>Accept Dwarven Outfitters
 step
     .goto Dun Morogh,29.0,74.4
     .complete 179,1 --Tough Wolf Meat (8)
 step
-    .goto Dun Morogh,29.9,71.3
+    .goto Dun Morogh,29.93,71.20 << tbc
+    .goto Dun Morogh,29.87,71.87 << wotlk
     .turnin 179 >>Turn in Dwarven Outfitters
     .accept 233 >>Accept Coldridge Valley Mail Delivery
     .accept 3108 >>Accept Etched Rune
@@ -3399,6 +3431,7 @@ step << wotlk
     .trainer >>Train Crossbows at the trade district
 step << wotlk
     >>Head to the Stormwind Harbor
+    .goto StormwindNew,21.8,56.2
     .zone Darkshore >> Take the boat to Darkshore
 step << tbc
 .goto Ironforge,77.0,51.0,40 >>Go back into Ironforge

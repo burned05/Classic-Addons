@@ -187,9 +187,13 @@ do
 		input:SetMultiLine(true)
 		input:EnableMouse(true)
 		input:SetAutoFocus(false)
-		input:SetMaxBytes(nil)
-		input:SetScript("OnMouseUp", input.HighlightText)
-		input:SetScript("OnEscapePressed", input.ClearFocus)
+		input:SetMaxBytes(0)
+		input:SetScript("OnMouseUp", function(self)
+			self:HighlightText()
+		end)
+		input:SetScript("OnEscapePressed", function(self)
+			self:ClearFocus()
+		end)
 		input:HighlightText()
 		input:SetFocus()
 		scrollFrame:SetScrollChild(input)
@@ -717,7 +721,7 @@ do
 					heroic		= mod.addon.minExpansion < 5 and RAID_DIFFICULTY3 or PLAYER_DIFFICULTY2,
 					heroic25	= RAID_DIFFICULTY4,
 					mythic		= PLAYER_DIFFICULTY6,
-					challenge	= mod.addon.minExpansion < 6 and CHALLENGE_MODE and not mod.upgradedMPlus or (PLAYER_DIFFICULTY6 .. "+"),
+					challenge	= (mod.addon.minExpansion < 6 and not mod.upgradedMPlus) and CHALLENGE_MODE or (PLAYER_DIFFICULTY6 .. "+"),
 					timewalker	= PLAYER_DIFFICULTY_TIMEWALKER
 				}
 				if (mod.addon.type == "PARTY" or mod.addon.type == "SCENARIO") or -- Fixes dungeons being labled incorrectly
@@ -726,7 +730,6 @@ do
 					statTypes.normal = PLAYER_DIFFICULTY1
 					statTypes.heroic = PLAYER_DIFFICULTY2
 				end
-
 
 				local lastArea = 0
 
@@ -768,7 +771,6 @@ do
 				end
 			end
 		end
-		_G["DBM_GUI_OptionsFrame"]:DisplayFrame(panel.frame)
 	end
 
 	local category = {}
@@ -781,7 +783,7 @@ do
 		for _, addon in ipairs(DBM.AddOns) do
 			local cat = addon.category:upper()
 			if not category[cat] then
-				category[cat] = DBM_GUI:CreateNewPanel(_G["EXPANSION_NAME" .. (tIndexOf(expansions, cat) or 99) - 1] or L.TabCategory_OTHER, nil, cat == expansions[GetExpansionLevel() + 1])
+				category[cat] = DBM_GUI:CreateNewPanel(_G["EXPANSION_NAME" .. (tIndexOf(expansions, cat) or 99) - 1] or cat == "AFFIXES" and L.TabCategory_AFFIXES or L.TabCategory_OTHER, nil, cat == expansions[GetExpansionLevel() + 1])
 			end
 
 			if not addon.panel then
@@ -800,6 +802,7 @@ do
 							self:Hide()
 							self.headline:Hide()
 							CreateBossModTab(self.modid, self.modid.panel)
+							_G["DBM_GUI_OptionsFrame"]:DisplayFrame(self.modid.panel.frame)
 						end
 					end)
 					button:SetPoint("CENTER", 0, -20)

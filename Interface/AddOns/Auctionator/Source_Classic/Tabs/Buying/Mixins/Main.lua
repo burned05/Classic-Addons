@@ -10,6 +10,7 @@ function AuctionatorBuyFrameMixin:Init()
     Auctionator.Buying.Events.AuctionFocussed,
     Auctionator.Buying.Events.StacksUpdated,
     Auctionator.AH.Events.ThrottleUpdate,
+    Auctionator.AH.Events.ScanResultsUpdate,
   })
   Auctionator.EventBus:RegisterSource(self, "AuctionatorBuyFrameMixin")
   self.SearchResultsListing:Init(self.SearchDataProvider)
@@ -21,6 +22,8 @@ end
 function AuctionatorBuyFrameMixin:Reset()
   self.selectedAuctionData = nil
   self.lastCancelData = nil
+  self.gotCompleteResults = true
+  self.SearchDataProvider.onSearchEnded()
   self.SearchDataProvider:Reset()
   self.HistoryDataProvider:Reset()
 
@@ -34,10 +37,18 @@ end
 
 function AuctionatorBuyFrameMixin:OnShow()
   FrameUtil.RegisterFrameForEvents(self, BUY_EVENTS)
+  self.LoadAllPagesButton:Hide()
 end
 
 function AuctionatorBuyFrameMixin:OnHide()
   FrameUtil.UnregisterFrameForEvents(self, BUY_EVENTS)
+
+  self.SearchDataProvider:EndAnyQuery()
+end
+
+function AuctionatorBuyFrameMixin:DoRefresh()
+  self.SearchDataProvider:SetRequestAllResults(false)
+  self.SearchDataProvider:RefreshQuery()
 end
 
 local function CountOwnedAuctions(auctionType)
@@ -83,6 +94,9 @@ function AuctionatorBuyFrameMixin:ReceiveEvent(eventName, eventData, ...)
     end
   elseif self:IsVisible() and eventName == Auctionator.AH.Events.ThrottleUpdate then
     self:UpdateButtons()
+  elseif self:IsVisible() and eventName == Auctionator.AH.Events.ScanResultsUpdate then
+    self.gotCompleteResults = ...
+    self:UpdateButtons()
   end
 end
 
@@ -90,7 +104,9 @@ function AuctionatorBuyFrameMixin:UpdateButtons()
   self.CancelButton:SetEnabled(self.selectedAuctionData ~= nil and self.selectedAuctionData.isOwned and self.selectedAuctionData.numStacks > 0 and Auctionator.AH.IsNotThrottled())
   self.BuyButton:Disable()
 
-  self.BuyButton:SetEnabled(self.selectedAuctionData ~= nil and not self.selectedAuctionData.isOwned and GetMoney() >= self.selectedAuctionData.stackPrice)
+  self.BuyButton:SetEnabled(self.selectedAuctionData ~= nil and not self.selectedAuctionData.isOwned and self.selectedAuctionData.stackPrice ~= nil and GetMoney() >= self.selectedAuctionData.stackPrice)
+
+  self.LoadAllPagesButton:SetShown(not self.SearchDataProvider:GetRequestAllResults() and not self.gotCompleteResults and self.SearchResultsListing:IsShown())
 end
 
 function AuctionatorBuyFrameMixin:GetOwnerAuctionIndex()
@@ -125,6 +141,12 @@ function AuctionatorBuyFrameMixin:LoadForCancelling()
   self:UpdateButtons()
 end
 
+function AuctionatorBuyFrameMixin:LoadAllPages()
+  self.SearchDataProvider:SetRequestAllResults(true)
+  self.LoadAllPagesButton:Hide()
+  self.SearchDataProvider:RefreshQuery()
+end
+
 function AuctionatorBuyFrameMixin:ToggleHistory()
   self.HistoryResultsListing:SetShown(not self.HistoryResultsListing:IsShown())
   self.SearchResultsListing:SetShown(not self.SearchResultsListing:IsShown())
@@ -133,6 +155,7 @@ function AuctionatorBuyFrameMixin:ToggleHistory()
   else
     self.HistoryButton:SetText(AUCTIONATOR_L_HISTORY)
   end
+  self:UpdateButtons()
 end
 
 function AuctionatorBuyFrameMixin:CancelFocussed()
@@ -142,7 +165,7 @@ function AuctionatorBuyFrameMixin:CancelFocussed()
       Auctionator.Utilities.Message(AUCTIONATOR_L_ERROR_REOPEN_AUCTION_HOUSE)
     end
     self:Reset()
-    self.SearchDataProvider:RefreshQuery()
+    self:DoRefresh()
   else
     Auctionator.EventBus:Fire(self, Auctionator.Cancelling.Events.RequestCancel, self.selectedAuctionData)
   end
@@ -160,8 +183,8 @@ AuctionatorBuyFrameMixinForShopping = CreateFromMixins(AuctionatorBuyFrameMixin)
 function AuctionatorBuyFrameMixinForShopping:Init()
   AuctionatorBuyFrameMixin.Init(self)
   Auctionator.EventBus:Register(self, {
-    Auctionator.Buying.Events.Show,
-    Auctionator.ShoppingLists.Events.ListSearchStarted,
+    Auctionator.Buying.Events.ShowForShopping,
+    Auctionator.Shopping.Events.ListSearchStarted,
   })
 end
 
@@ -171,6 +194,8 @@ function AuctionatorBuyFrameMixinForShopping:OnShow()
   self:GetParent().ResultsListing:Hide()
   self:GetParent().ExportCSV:Hide()
   self:GetParent().ShoppingResultsInset:Hide()
+  self.wasParentLoadAllPagesVisible = self:GetParent().LoadAllPagesButton:IsShown()
+  self:GetParent().LoadAllPagesButton:Hide()
 end
 
 function AuctionatorBuyFrameMixinForShopping:OnHide()
@@ -181,16 +206,16 @@ function AuctionatorBuyFrameMixinForShopping:OnHide()
   self:GetParent().ResultsListing:Show()
   self:GetParent().ExportCSV:Show()
   self:GetParent().ShoppingResultsInset:Show()
+  self:GetParent().LoadAllPagesButton:SetShown(self.wasParentLoadAllPagesVisible)
 end
 
 function AuctionatorBuyFrameMixinForShopping:ReceiveEvent(eventName, eventData, ...)
-  if eventName == Auctionator.Buying.Events.Show then
+  if eventName == Auctionator.Buying.Events.ShowForShopping then
     self:Show()
 
     self:Reset()
 
     if #eventData.entries > 0 then
-      self.SearchDataProvider:SetRequestAllResults(Auctionator.Config.Get(Auctionator.Config.Options.SHOPPING_SHOW_ALL_RESULTS))
       self.SearchDataProvider:SetQuery(eventData.entries[1].itemLink)
       self.HistoryDataProvider:SetItemLink(eventData.entries[1].itemLink)
     else
@@ -198,7 +223,15 @@ function AuctionatorBuyFrameMixinForShopping:ReceiveEvent(eventName, eventData, 
       self.HistoryDataProvider:SetItemLink(nil)
     end
     self.SearchDataProvider:SetAuctions(eventData.entries)
-  elseif eventName == Auctionator.ShoppingLists.Events.ListSearchStarted then
+
+    self.SearchDataProvider:SetRequestAllResults(false)
+    if not eventData.complete and #eventData.entries < Auctionator.Constants.MaxResultsPerPage then
+      self.SearchDataProvider:RefreshQuery()
+    else
+      self.gotCompleteResults = eventData.complete
+      self:UpdateButtons()
+    end
+  elseif eventName == Auctionator.Shopping.Events.ListSearchStarted then
     self:Hide()
   else
     AuctionatorBuyFrameMixin.ReceiveEvent(self, eventName, eventData, ...)
@@ -211,7 +244,16 @@ function AuctionatorBuyFrameMixinForSelling:Init()
   AuctionatorBuyFrameMixin.Init(self)
   Auctionator.EventBus:Register(self, {
     Auctionator.Selling.Events.RefreshBuying,
+    Auctionator.Selling.Events.StartFakeBuyLoading,
+    Auctionator.Selling.Events.StopFakeBuyLoading,
+    Auctionator.Selling.Events.AuctionCreated,
   })
+end
+
+function AuctionatorBuyFrameMixinForSelling:Reset()
+  AuctionatorBuyFrameMixin.Reset(self)
+
+  self.waitingOnNewAuction = false
 end
 
 function AuctionatorBuyFrameMixinForSelling:OnShow()
@@ -227,12 +269,34 @@ function AuctionatorBuyFrameMixinForSelling:ReceiveEvent(eventName, eventData, .
 
     self.HistoryDataProvider:SetItemLink(eventData.itemLink)
     self.SearchDataProvider:SetQuery(eventData.itemLink)
-    self.SearchDataProvider:SetRequestAllResults(Auctionator.Config.Get(Auctionator.Config.Options.SELLING_SHOW_ALL_RESULTS))
+    self.SearchDataProvider:SetRequestAllResults(Auctionator.Config.Get(Auctionator.Config.Options.SELLING_ALWAYS_LOAD_MORE))
     self.SearchDataProvider:RefreshQuery()
 
     self.RefreshButton:Enable()
     self.HistoryButton:Enable()
+  elseif eventName == Auctionator.Selling.Events.StartFakeBuyLoading then
+    -- Used so that it is clear something is loading, even if the search can't
+    -- be sent yet.
+    self.HistoryDataProvider:SetItemLink(eventData.itemLink)
+    self.SearchDataProvider:SetQuery(eventData.itemLink)
+    self.SearchDataProvider.onSearchStarted()
+  elseif eventName == Auctionator.Selling.Events.StopFakeBuyLoading then
+    self.SearchDataProvider.onSearchEnded()
+    self:Reset()
+    self.RefreshButton:Disable()
+    self.HistoryButton:Disable()
+  elseif eventName == Auctionator.Selling.Events.AuctionCreated then
+    self.waitingOnNewAuction = true
   else
     AuctionatorBuyFrameMixin.ReceiveEvent(self, eventName, eventData, ...)
+  end
+end
+
+function AuctionatorBuyFrameMixinForSelling:OnEvent(eventName, ...)
+  AuctionatorBuyFrameMixin.OnEvent(self, eventName, ...)
+
+  if eventName == "AUCTION_OWNED_LIST_UPDATE" and self.waitingOnNewAuction then
+    self.waitingOnNewAuction = false
+    self.SearchDataProvider:PurgeAndReplaceOwnedAuctions(Auctionator.AH.DumpAuctions("owner"))
   end
 end

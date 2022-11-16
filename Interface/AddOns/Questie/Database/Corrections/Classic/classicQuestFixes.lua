@@ -377,6 +377,7 @@ function QuestieQuestFixes:Load()
             [questKeys.triggerEnd] = {"Cleanse the Wildmane Well", {[zoneIDs.MULGORE]={{42.75, 14.16}}}},
         },
         [769] = {
+            [questKeys.preQuestSingle] = {},
             [questKeys.requiredSkill] = {165,10},
         },
         [770] = {
@@ -401,10 +402,10 @@ function QuestieQuestFixes:Load()
             [questKeys.startedBy] = {{3204},nil,{4903}},
         },
         [834] = {
-            [questKeys.requiredRaces] = raceIDs.ALL, -- #1665
+            [questKeys.requiredRaces] = raceIDs.NONE, -- #1665
         },
         [835] = {
-            [questKeys.requiredRaces] = raceIDs.ALL, -- #1665
+            [questKeys.requiredRaces] = raceIDs.NONE, -- #1665
         },
         [836] = {
             [questKeys.triggerEnd] = {"Escort OOX-09/HL to the shoreline beyond Overlook Cliff", {[zoneIDs.THE_HINTERLANDS]={{79.14,61.36}}}},
@@ -622,7 +623,7 @@ function QuestieQuestFixes:Load()
             [questKeys.specialFlags] = 1, -- #1348
         },
         [1198] = {
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [1204] = {
             [questKeys.preQuestSingle] = {}, -- #938
@@ -749,8 +750,14 @@ function QuestieQuestFixes:Load()
         [1471] = {
             [questKeys.exclusiveTo] = {1504}, -- #1542
         },
+        [1472] = {
+            [questKeys.exclusiveTo] = {},
+        },
         [1473] = {
             [questKeys.exclusiveTo] = {1501},
+        },
+        [1474] = {
+            [questKeys.exclusiveTo] = {1513},
         },
         [1477] = {
             [questKeys.exclusiveTo] = {1395}, -- #1727
@@ -776,6 +783,12 @@ function QuestieQuestFixes:Load()
         },
         [1506] = {
             [questKeys.exclusiveTo] = {1478}, -- #1427
+        },
+        [1507] = {
+            [questKeys.exclusiveTo] = {},
+        },
+        [1513] = {
+            [questKeys.exclusiveTo] = {1474},
         },
         [1516] = {
             [questKeys.exclusiveTo] = {1519},
@@ -946,8 +959,11 @@ function QuestieQuestFixes:Load()
         [1950] = {
             [questKeys.triggerEnd] = {"Secret phrase found", {[zoneIDs.THOUSAND_NEEDLES]={{79.56,75.65}}}},
         },
+        [1954] = {
+            [questKeys.preQuestSingle] = {},
+        },
         [1955] = {
-            [questKeys.triggerEnd] = {"Kill the Demon of the Orb", {[zoneIDs.DUSTWALLOW_MARSH]={{45.6,57,2}}}},
+            [questKeys.triggerEnd] = {"Kill the Demon of the Orb", {[zoneIDs.DUSTWALLOW_MARSH]={{45.6,57.2}}}},
         },
         [1959] = {
             [questKeys.startedBy] = {{2128,3049,5880,7311},nil,nil},
@@ -1329,6 +1345,9 @@ function QuestieQuestFixes:Load()
         [4134] = {
             [questKeys.preQuestSingle] = {}, -- #1859
         },
+        [4136] = {
+            [questKeys.preQuestSingle] = {}, -- #4459
+        },
         [4143] = {
             [questKeys.zoneOrSort] = 1477,
         },
@@ -1577,6 +1596,7 @@ function QuestieQuestFixes:Load()
         },
         [5211] = {
             [questKeys.preQuestSingle] = {}, -- #983
+            [questKeys.extraObjectives] = {{nil, ICON_TYPE_SLAY, l10n("Slay ghouls to free Darrowshire spirits"), 0, {{"monster", 8530}, {"monster", 8531}, {"monster", 8532}}}},
         },
         [5214] = {
             [questKeys.name] = "The Great Ezra Grimm",
@@ -1624,31 +1644,31 @@ function QuestieQuestFixes:Load()
         },
         [5402] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5403] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5404] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5405] = {
             [questKeys.startedBy] = {{11039},nil,nil},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5406] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5407] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5408] = {
             [questKeys.preQuestSingle] = {5401,5503,5405},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [5421] = {
             [questKeys.questLevel] = 25,
@@ -1657,7 +1677,7 @@ function QuestieQuestFixes:Load()
             [questKeys.zoneOrSort] = sortKeys.SEASONAL,
         },
         [5503] = {
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
             [questKeys.startedBy] = {{10839},nil,nil},
         },
         [5508] = {
@@ -1844,6 +1864,12 @@ function QuestieQuestFixes:Load()
         },
         [5930] = {
             [questKeys.triggerEnd] = {"Seek out the Great Bear Spirit and learn what it has to share with you about the nature of the bear.", {[zoneIDs.MOONGLADE]={{39.25,27.73}}}},
+        },
+        [5931] = {
+            [questKeys.extraObjectives] = {{nil, ICON_TYPE_TALK, l10n("Talk to Silva Fil'naveth to fly back to Darnassus"), 0, {{"monster", 11800}}}},
+        },
+        [5932] = {
+            [questKeys.extraObjectives] = {{nil, ICON_TYPE_TALK, l10n("Talk to Bunthen Plainswind to fly back to Thunder Bluff"), 0, {{"monster", 11798}}}},
         },
         [5943] = {
             [questKeys.triggerEnd] = {"Escort Gizelton Caravan past Mannoroc Coven", {[zoneIDs.DESOLACE]={{55.69,67.79}}}},
@@ -2842,6 +2868,9 @@ function QuestieQuestFixes:Load()
         [8620] = {
             [questKeys.requiredSourceItems] = {21103,21104,21105,21106,21107,21108,21109,21110},
         },
+        [8729] = {
+            [questKeys.extraObjectives] = {{nil, ICON_TYPE_EVENT, l10n("Use Arcanite Buoy"),0,{{"object", 180669}}}},
+        },
         [8733] = {
             [questKeys.preQuestSingle] = {8555}, -- #2365
         },
@@ -2894,12 +2923,12 @@ function QuestieQuestFixes:Load()
             [questKeys.exclusiveTo] = {8747,8748,8749,8750,8751,8752,8753,8754,8755,8756}, --invoker exalted
         },
         [8767] = {
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
             [questKeys.requiredClasses] = classIDs.NONE,
             [questKeys.exclusiveTo] = {8788},
         },
         [8788] = {
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
             [questKeys.requiredClasses] = classIDs.NONE,
             [questKeys.exclusiveTo] = {8767},
         },
@@ -3405,7 +3434,7 @@ function QuestieQuestFixes:Load()
             [questKeys.triggerEnd] = {"Investigate a circle", {[zoneIDs.TIRISFAL_GLADES] = {{60.4,61.7}}}},
         },
         [9319] = {
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [9322] = {
             [questKeys.requiredLevel] = 1,
@@ -3415,7 +3444,7 @@ function QuestieQuestFixes:Load()
         },
         [9386] = {
             [questKeys.preQuestSingle] = {9319},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
             [questKeys.specialFlags] = 1,
         },
         [9415] = {
@@ -3441,6 +3470,7 @@ function QuestieQuestFixes:Load()
             [questKeys.requiredClasses] = classIDs.WARLOCK,
             [questKeys.objectivesText] = {"Bring the hearts of Avelina Lilly and Isaac Pearson to Carendin Halgar in the Temple of the Damned."},
             [questKeys.objectives] = {nil,nil,{{190179},{190180}},nil,nil},
+            [questKeys.preQuestSingle] = {1472},
             [questKeys.exclusiveTo] = {65610},
             [questKeys.zoneOrSort] = sortKeys.WARLOCK,
         },
@@ -3565,7 +3595,7 @@ function QuestieQuestFixes:LoadFactionFixes()
         },
         [7562] = {
             [questKeys.startedBy] = {{5753,5815},nil,nil},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [8151] = {
             [questKeys.startedBy] = {{3039,3352},nil,nil},
@@ -3635,7 +3665,7 @@ function QuestieQuestFixes:LoadFactionFixes()
         },
         [7562] = {
             [questKeys.startedBy] = {{5520,6382},nil,nil},
-            [questKeys.requiredRaces] = raceIDs.ALL,
+            [questKeys.requiredRaces] = raceIDs.NONE,
         },
         [8151] = {
             [questKeys.startedBy] = {{4205,5116,5516},nil,nil},

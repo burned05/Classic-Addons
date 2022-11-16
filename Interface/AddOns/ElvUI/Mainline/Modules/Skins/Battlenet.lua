@@ -2,7 +2,7 @@ local E, L, V, P, G = unpack(ElvUI)
 local S = E:GetModule('Skins')
 
 local _G = _G
-local select = select
+local next = next
 
 function S:BattleNetFrames()
 	if not (E.private.skins.blizzard.enable and E.private.skins.blizzard.misc) then return end
@@ -17,13 +17,15 @@ function S:BattleNetFrames()
 		skins[i]:SetTemplate('Transparent')
 	end
 
-	local ReportFrame = _G.PlayerReportFrame
+	local ReportFrame = _G.ReportFrame
 	ReportFrame:StripTextures()
 	ReportFrame:SetTemplate('Transparent')
-	ReportFrame.Comment:StripTextures()
-	S:HandleEditBox(ReportFrame.Comment)
+	S:HandleCloseButton(ReportFrame.CloseButton)
+	S:HandleDropDownBox(ReportFrame.ReportingMajorCategoryDropdown)
 	S:HandleButton(ReportFrame.ReportButton)
-	S:HandleButton(ReportFrame.CancelButton)
+	S:HandleEditBox(ReportFrame.Comment)
+
+	-- Fill me with LOVE <3
 
 	local ReportCheatingDialog = _G.ReportCheatingDialog
 	ReportCheatingDialog:StripTextures()
@@ -37,8 +39,7 @@ function S:BattleNetFrames()
 	BattleTagInviteFrame:StripTextures()
 	BattleTagInviteFrame:SetTemplate('Transparent')
 
-	for i=1, BattleTagInviteFrame:GetNumChildren() do
-		local child = select(i, BattleTagInviteFrame:GetChildren())
+	for _, child in next, { BattleTagInviteFrame:GetChildren() } do
 		if child:IsObjectType('Button') then
 			S:HandleButton(child)
 		end

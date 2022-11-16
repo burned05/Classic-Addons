@@ -38,19 +38,35 @@ local MAX_CRAFT_LEVEL = 4
 -- ============================================================================
 
 function ProfessionScanner.OnInitialize()
-	private.db = Database.NewSchema("CRAFTING_RECIPES")
-		:AddUniqueStringField("craftString")
-		:AddNumberField("index")
-		:AddStringField("name")
-		:AddNumberField("categoryId")
-		:AddStringField("difficulty")
-		:AddNumberField("rank")
-		:AddNumberField("numSkillUps")
-		:AddNumberField("level")
-		:AddNumberField("currentExp")
-		:AddNumberField("nextExp")
-		:AddNumberField("stepExp")
-		:Commit()
+	if not TSM.IsWowClassic() then
+		private.db = Database.NewSchema("CRAFTING_RECIPES")
+			:AddUniqueStringField("craftString")
+			:AddNumberField("index")
+			:AddStringField("name")
+			:AddNumberField("categoryId")
+			:AddNumberField("difficulty")
+			:AddNumberField("rank")
+			:AddNumberField("numSkillUps")
+			:AddNumberField("level")
+			:AddNumberField("currentExp")
+			:AddNumberField("nextExp")
+			:AddNumberField("stepExp")
+			:Commit()
+	else
+		private.db = Database.NewSchema("CRAFTING_RECIPES")
+			:AddUniqueStringField("craftString")
+			:AddNumberField("index")
+			:AddStringField("name")
+			:AddNumberField("categoryId")
+			:AddStringField("difficulty")
+			:AddNumberField("rank")
+			:AddNumberField("numSkillUps")
+			:AddNumberField("level")
+			:AddNumberField("currentExp")
+			:AddNumberField("nextExp")
+			:AddNumberField("stepExp")
+			:Commit()
+	end
 	TSM.Crafting.ProfessionState.RegisterUpdateCallback(private.ProfessionStateUpdate)
 	if TSM.IsWowClassic() then
 		Event.Register("CRAFT_UPDATE", private.OnTradeSkillUpdateEvent)
@@ -197,7 +213,7 @@ function private.ScanProfession()
 	end
 
 	local professionName = TSM.Crafting.ProfessionState.GetCurrentProfession()
-	if not professionName then
+	if not professionName or not TSM.Crafting.ProfessionUtil.IsDataStable() then
 		-- profession hasn't fully opened yet
 		private.QueueProfessionScan()
 		return
@@ -208,9 +224,9 @@ function private.ScanProfession()
 		-- TODO: check and clear filters on classic
 	else
 		local hadFilter = false
-		if C_TradeSkillUI.GetOnlyShowUnlearnedRecipes() then
-			C_TradeSkillUI.SetOnlyShowLearnedRecipes(true)
-			C_TradeSkillUI.SetOnlyShowUnlearnedRecipes(false)
+		if C_TradeSkillUI.GetShowUnlearned() then
+			C_TradeSkillUI.SetShowLearned(true)
+			C_TradeSkillUI.SetShowUnlearned(false)
 			hadFilter = true
 		end
 		if C_TradeSkillUI.GetOnlyShowMakeableRecipes() then
@@ -262,6 +278,7 @@ function private.ScanProfession()
 				name, _, skillType = GetCraftInfo(i)
 				if skillType ~= "header" then
 					hash = Math.CalculateHash(name)
+					hash = Math.CalculateHash(GetCraftIcon(i), hash)
 					for j = 1, GetCraftNumReagents(i) do
 						local _, _, quantity = GetCraftReagentInfo(i, j)
 						hash = Math.CalculateHash(ItemString.Get(GetCraftReagentItemLink(i, j)), hash)
@@ -272,6 +289,7 @@ function private.ScanProfession()
 				name, skillType = GetTradeSkillInfo(i)
 				if skillType ~= "header" then
 					hash = Math.CalculateHash(name)
+					hash = Math.CalculateHash(GetTradeSkillIcon(i), hash)
 					for j = 1, GetTradeSkillNumReagents(i) do
 						local _, _, quantity = GetTradeSkillReagentInfo(i, j)
 						hash = Math.CalculateHash(ItemString.Get(GetTradeSkillReagentItemLink(i, j)), hash)
@@ -348,8 +366,8 @@ function private.ScanProfession()
 				-- TODO: show unlearned recipes in the TSM UI
 				-- There's a Blizzard bug where First Aid duplicates spellIds, so check that this is the right index
 				if info and info.index == index and info.learned and not hasHigherRank and (not level or level <= unlockedLevel) then
-					local numSkillUps = info.difficulty == "optimal" and info.numSkillUps or 1
-					private.db:BulkInsertNewRow(craftString, index, info.name, info.categoryID, info.difficulty, rank, numSkillUps, level or 1, info.currentRecipeExperience or -1, info.nextLevelRecipeExperience or -1, info.earnedExperience or -1)
+					local numSkillUps = info.relativeDifficulty == Enum.TradeskillRelativeDifficulty.Optimal and info.numSkillUps or 1
+					private.db:BulkInsertNewRow(craftString, index, info.name, info.categoryID, info.relativeDifficulty, rank, numSkillUps, level or 1, info.currentRecipeExperience or -1, info.nextLevelRecipeExperience or -1, info.earnedExperience or -1)
 					private.recipeInfoCache[craftString] = private.recipeInfoCache[spellId]
 				else
 					inactiveCraftStrings[craftString] = true
@@ -415,18 +433,27 @@ function private.ScanRecipe(professionName, craftString)
 	assert(itemLink, "Invalid craft: "..tostring(craftString))
 
 	-- get the itemString and craft name
-	local itemString, craftName = nil, nil
+	local itemString, craftName, indirectSpellId = nil, nil, nil
 	if strfind(itemLink, "enchant:") then
-		if TSM.IsWowClassic() then
+		if TSM.IsWowClassic() and not TSM.IsWowWrathClassic() then
 			return true
 		else
 			-- result of craft is not an item
-			itemString = ProfessionInfo.GetIndirectCraftResult(spellId)
+			if TSM.IsWowWrathClassic() then
+				indirectSpellId = strmatch(itemLink, "enchant:(%d+)")
+				indirectSpellId = indirectSpellId and tonumber(indirectSpellId)
+				if not indirectSpellId then
+					return true
+				end
+			else
+				indirectSpellId = spellId
+			end
+			itemString = ProfessionInfo.GetIndirectCraftResult(indirectSpellId)
 			if not itemString then
 				-- we don't care about this craft
 				return true
 			end
-			craftName = GetSpellInfo(spellId)
+			craftName = GetSpellInfo(indirectSpellId)
 		end
 	elseif strfind(itemLink, "item:") then
 		-- result of craft is item
@@ -447,7 +474,7 @@ function private.ScanRecipe(professionName, craftString)
 
 	-- get the result number
 	local numResult = nil
-	local isEnchant = professionName == GetSpellInfo(7411) and strfind(itemLink, "enchant:")
+	local isEnchant, vellumable = TSM.Crafting.ProfessionUtil.IsEnchant(craftString)
 	if isEnchant then
 		numResult = 1
 	else
@@ -496,8 +523,8 @@ function private.ScanRecipe(professionName, craftString)
 		matQuantities[matItemString] = quantity
 	end
 	-- if this is an enchant, add a vellum to the list of mats
-	if isEnchant then
-		local matItemString = ProfessionInfo.GetVellumItemString()
+	if isEnchant and vellumable then
+		local matItemString = ProfessionInfo.GetVellumItemString(indirectSpellId)
 		TSM.db.factionrealm.internalData.mats[matItemString] = TSM.db.factionrealm.internalData.mats[matItemString] or {}
 		matQuantities[matItemString] = 1
 	end
@@ -524,23 +551,23 @@ function private.GetOptionalMats(spellId, level)
 	if TSM.IsWowClassic() then
 		return nil
 	end
-	local optionalMats = C_TradeSkillUI.GetOptionalReagentInfo(spellId, level)
-	if not optionalMats or #optionalMats == 0 then
-		return nil
-	end
-	for i, info in ipairs(optionalMats) do
-		if info.requiredSkillRank > private.GetCurrentCategorySkillLevel(private.recipeInfoCache[spellId].categoryID) then
-			return nil
-		else
-			-- process the options
-			assert(#info.options > 0)
-			-- sort the optional mats by itemId
-			sort(info.options)
-			local matList = table.concat(info.options, ",")
-			TSM.Crafting.ProfessionUtil.StoreOptionalMatText(matList, info.slotText)
-			optionalMats[i] = "o:"..i..":"..matList
+	local optionalMats = nil
+	local info = C_TradeSkillUI.GetRecipeSchematic(spellId, false, level)
+	optionalMats = {}
+	local options = TempTable.Acquire()
+	local skillLevel = private.GetCurrentCategorySkillLevel(private.recipeInfoCache[spellId].categoryID)
+	for _, data in ipairs(info.reagentSlotSchematics) do
+		if data.reagentType == Enum.CraftingReagentType.Optional and data.slotInfo.requiredSkillRank <= skillLevel then
+			wipe(options)
+			for _, craftingReagent in ipairs(data.reagents) do
+				tinsert(options, craftingReagent.itemID)
+			end
+			local matList = table.concat(options, ",")
+			TSM.Crafting.ProfessionUtil.StoreOptionalMatText(matList, data.slotInfo.slotText or OPTIONAL_REAGENT_POSTFIX)
+			optionalMats[data.dataSlotIndex] = "o:"..data.dataSlotIndex..":"..matList
 		end
 	end
+	TempTable.Release(options)
 	return optionalMats
 end
 

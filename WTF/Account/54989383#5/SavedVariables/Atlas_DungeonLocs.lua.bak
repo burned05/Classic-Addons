@@ -1,0 +1,11 @@
+
+Atlas_DungeonLocsDB = {
+	["profileKeys"] = {
+		["Powertoast - Grobbulus"] = "Default",
+		["Powerbanker - Grobbulus"] = "Default",
+	},
+	["profiles"] = {
+		["Default"] = {
+		},
+	},
+}

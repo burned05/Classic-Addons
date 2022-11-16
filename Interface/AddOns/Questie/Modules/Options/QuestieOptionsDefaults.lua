@@ -4,17 +4,17 @@ local QuestieOptionsDefaults = QuestieLoader:CreateModule("QuestieOptionsDefault
 function QuestieOptionsDefaults:Load()
     return {
         global = {
-            clusterLevelHotzone = 70,
+            clusterLevelHotzone = 50,
             enableIconLimit = false,
             iconLimit = 200,
-            availableScale = 1.3,
+            availableScale = 1.2,
             eventScale = 1.35,
             lootScale = 1,
             iconFadeLevel = 0.3,
             trackerLocked = true,
             monsterScale = 1,
             objectScale = 1,
-            globalScale = 0.7,
+            globalScale = 0.6,
             globalMiniMapScale = 0.7,
             fadeLevel = 20,
             fadeOverPlayer = true,
@@ -40,7 +40,7 @@ function QuestieOptionsDefaults:Load()
             dbmHUDShowLoot = false,
             dbmHUDShowInteract = true,
             mapShowHideEnabled = true,
-            nameplateTargetFrameEnabled = false,
+            nameplateTargetFrameEnabled = true,
             nameplateTargetFrameX = -30,
             nameplateTargetFrameY = 25,
             nameplateTargetFrameScale = 1.7,
@@ -96,13 +96,12 @@ function QuestieOptionsDefaults:Load()
             trackerFontSizeObjective = 10,
             trackerFontObjective = 'Friz Quadrata TT',
             trackerQuestPadding = 4,
+            trackerFontOutline = nil,
             trackerBackdropAlpha = 1,
             --trackerReset = QuestieTracker:ResetLocation()
-            trackerEnabled = true,
             globalTrackerLocation = true,
             showQuestXpAtMaxLevel = true,
             questieTLoc = "char",
-
         },
         char = {
             minLevelFilter = GetQuestGreenRange("player"), -- Raised the default to allow more quests to be shown
@@ -128,7 +127,7 @@ function QuestieOptionsDefaults:Load()
             autocomplete = false,
             autoModifier = "shift",
             acceptTrivial = false,
-            questAnnounceChannel = "group",
+            questAnnounceChannel = "party",
             questAnnounceItems = true,
             questAnnounceAccepted = false,
             questAnnounceAbandoned = false,
@@ -146,6 +145,6 @@ function QuestieOptionsDefaults:Load()
             showQuestsInNpcTooltip = true,
             ldbDisplayText = "Questie"
         },
-        profile = {minimap = {hide = false}}
+        profile = { minimap = { hide = false } }
     }
 end

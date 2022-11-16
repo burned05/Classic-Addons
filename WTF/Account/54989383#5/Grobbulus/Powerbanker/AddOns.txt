@@ -24,3 +24,4 @@ weizPVP: disabled
 TomTom: disabled
 Attune: disabled
 Auctionator: enabled
+Leatrix_Plus: enabled

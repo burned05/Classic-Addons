@@ -10,21 +10,7 @@ WoWProCharDB = {
 	},
 	["Trades"] = {
 	},
-	["EnablePetBattles"] = true,
-	["EnableFlight"] = true,
-	["EnableGrailQuestName"] = false,
-	["Enabled"] = true,
 	["EnableGrailQuestObsolete"] = false,
-	["EnableRares"] = true,
-	["Tradeskills"] = {
-	},
-	["EnableGrailBreadcrumbs"] = false,
-	["Taxi"] = {
-	},
-	["GuideVersion"] = {
-	},
-	["EnableTreasures"] = true,
-	["DebugLevel"] = 0,
 	["completedQIDs"] = {
 		[106] = true,
 		[54] = true,
@@ -47,22 +33,22 @@ WoWProCharDB = {
 		[21] = true,
 		[3102] = true,
 		[114] = false,
-		[1097] = false,
+		[1598] = false,
 		[83] = false,
-		[59] = false,
-		[239] = false,
-		[332] = false,
+		[47] = true,
+		[86] = true,
+		[15] = true,
 		[84] = true,
 		[3103] = false,
-		[2158] = true,
+		[107] = true,
 		[35] = false,
-		[85] = true,
+		[332] = false,
 		[5261] = true,
-		[15] = true,
+		[59] = false,
 		[18] = true,
 		[5624] = false,
 		[3104] = false,
-		[5545] = false,
+		[45] = false,
 		[71] = false,
 		[87] = true,
 		[52] = false,
@@ -72,17 +58,20 @@ WoWProCharDB = {
 		[3105] = false,
 		[333] = false,
 		[37] = false,
-		[45] = false,
-		[107] = true,
+		[239] = false,
+		[5545] = false,
 		[61] = true,
-		[86] = true,
-		[47] = true,
-		[1598] = false,
+		[85] = true,
+		[2158] = true,
+		[1097] = false,
 	},
-	["AutoHideInsideInstancesNotify"] = true,
-	["AutoHideInCombat"] = false,
-	["BuildingLocations"] = {
+	["Rank"] = {
 	},
+	["EnableGrailQuestName"] = false,
+	["GuideStack"] = {
+		"BC-Human", -- [1]
+	},
+	["Enabled"] = true,
 	["Guide"] = {
 		["BC-Human"] = {
 			["total"] = 222,
@@ -90,7 +79,6 @@ WoWProCharDB = {
 			["skipped"] = {
 			},
 			["done"] = false,
-			["progress"] = 82,
 			["completion"] = {
 				"Player level exceeds step limit", -- [1]
 				"AutoCompleteQuestUpdate: AutoComplete", -- [2]
@@ -196,14 +184,26 @@ WoWProCharDB = {
 				[105] = "autoarrival=2",
 				[241] = false,
 			},
+			["progress"] = 82,
 		},
 		["hearth"] = "Goldshire",
 	},
-	["GuideStack"] = {
-		"BC-Human", -- [1]
+	["Tradeskills"] = {
 	},
+	["BuildingLocations"] = {
+	},
+	["Taxi"] = {
+	},
+	["GuideVersion"] = {
+	},
+	["EnableTreasures"] = true,
+	["EnableFlight"] = true,
+	["AutoHideInsideInstancesNotify"] = true,
+	["AutoHideInCombat"] = false,
+	["DebugLevel"] = 0,
+	["EnableGrailBreadcrumbs"] = false,
+	["EnablePetBattles"] = true,
 	["skippedQIDs"] = {
 	},
-	["Rank"] = {
-	},
+	["EnableRares"] = true,
 }

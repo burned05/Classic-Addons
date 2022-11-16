@@ -2,45 +2,23 @@
 ElvCharacterDB = {
 	["ConvertKeybindings"] = true,
 	["ChatEditHistory"] = {
-		"haha like it?", -- [1]
-		"I typically put Power in front of everything, mostly as an identifier", -- [2]
-		"gotcha gotcha", -- [3]
-		"Like \"Interium\"", -- [4]
-		";)", -- [5]
-		"/wa", -- [6]
+		"Like \"Interium\"", -- [1]
+		"And I'm terrible at names so like", -- [2]
+		"/wa", -- [3]
+		"haha like it?", -- [4]
+		"I was a fan of Grand Master PowerBater too though", -- [5]
+		"oh yea, that's a good one", -- [6]
 		"Dude, right? At least you have that excuse. Powertheory sounds edgelord so it gets made fun of all the time, but it's actually like a 3rd evolution of a name.", -- [7]
-		"And I'm terrible at names so like", -- [8]
-		"Oh yea, for sure. My fave.", -- [9]
-		"I was a fan of Grand Master PowerBater too though", -- [10]
+		"I typically put Power in front of everything, mostly as an identifier", -- [8]
+		";)", -- [9]
+		"Oh yea, for sure. My fave.", -- [10]
 		"Oh yea, what's the name again?", -- [11]
-		"oh yea, that's a good one", -- [12]
+		"gotcha gotcha", -- [12]
 		"surprised you got that", -- [13]
 		"/played", -- [14]
 		"/p THX", -- [15]
 	},
 	["ChatHistoryLog"] = {
-		{
-			"how much to tower?", -- [1]
-			"Fairhammer", -- [2]
-			"", -- [3]
-			"1. LookingForGroup", -- [4]
-			"Fairhammer", -- [5]
-			"", -- [6]
-			26, -- [7]
-			1, -- [8]
-			"LookingForGroup", -- [9]
-			0, -- [10]
-			3946, -- [11]
-			"Player-4647-02F7E821", -- [12]
-			0, -- [13]
-			false, -- [14]
-			false, -- [15]
-			false, -- [16]
-			false, -- [17]
-			[52] = "|cfff48cbaFairhammer|r",
-			[51] = 1659453715,
-			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [1]
 		{
 			"are all AH's connected in the main citys?", -- [1]
 			"Shiftyshot", -- [2]
@@ -62,7 +40,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Shiftyshot|r",
 			[51] = 1659453718,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [2]
+		}, -- [1]
 		{
 			"LF2M MGT N NEED DPS", -- [1]
 			"Iyungwiraa-Grobbulus", -- [2]
@@ -84,7 +62,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaIyungwiraa|r",
 			[51] = 1659453720,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [3]
+		}, -- [2]
 		{
 			"LF1M Tank RFK", -- [1]
 			"Airgoggles-Grobbulus", -- [2]
@@ -106,7 +84,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aAirgoggles|r",
 			[51] = 1659453724,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [4]
+		}, -- [3]
 		{
 			"no", -- [1]
 			"Chrístopher", -- [2]
@@ -128,7 +106,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aChrístopher|r",
 			[51] = 1659453726,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [5]
+		}, -- [4]
 		{
 			"LFM [Colossal Menace (10132)]", -- [1]
 			"Pregnantdad-Grobbulus", -- [2]
@@ -150,7 +128,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Pregnantdad|r",
 			[51] = 1659453729,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [6]
+		}, -- [5]
 		{
 			"yes", -- [1]
 			"Baictear", -- [2]
@@ -172,7 +150,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dBaictear|r",
 			[51] = 1659453730,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [7]
+		}, -- [6]
 		{
 			"no", -- [1]
 			"Ralphlaurenx-Grobbulus", -- [2]
@@ -194,7 +172,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaRalphlaurenx|r",
 			[51] = 1659453732,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [8]
+		}, -- [7]
 		{
 			"63 Rogue LFG SP, UB or MT (NHC)", -- [1]
 			"Seniorstabs-Grobbulus", -- [2]
@@ -216,7 +194,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Seniorstabs|r",
 			[51] = 1659453734,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [9]
+		}, -- [8]
 		{
 			"LF2M DPS ZF, i have a mallet ", -- [1]
 			"Holygrailz-Grobbulus", -- [2]
@@ -238,7 +216,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaHolygrailz|r",
 			[51] = 1659453735,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [10]
+		}, -- [9]
 		{
 			"there are neutral ones", -- [1]
 			"Chrístopher-Grobbulus", -- [2]
@@ -260,7 +238,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aChrístopher|r",
 			[51] = 1659453735,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [11]
+		}, -- [10]
 		{
 			"no", -- [1]
 			"Loafgrief", -- [2]
@@ -282,7 +260,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffLoafgrief|r",
 			[51] = 1659453735,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [12]
+		}, -- [11]
 		{
 			"LFM NEED 1 DPS ELE/ENCH FOR HYJAL GDKP STARTING NOW {STAR} 24/25  https://discord.gg/AXDkYatyWa", -- [1]
 			"Lucieloria-Grobbulus", -- [2]
@@ -304,7 +282,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Lucieloria|r",
 			[51] = 1659453735,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [13]
+		}, -- [12]
 		{
 			"LF 1 tank 2 dps Sethekk Halls N Pst", -- [1]
 			"Chimeryn", -- [2]
@@ -326,7 +304,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Chimeryn|r",
 			[51] = 1659453737,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [14]
+		}, -- [13]
 		{
 			"no", -- [1]
 			"Ministerbert-Grobbulus", -- [2]
@@ -348,7 +326,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaMinisterbert|r",
 			[51] = 1659453737,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [15]
+		}, -- [14]
 		{
 			"yes", -- [1]
 			"Cruxer", -- [2]
@@ -370,7 +348,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaCruxer|r",
 			[51] = 1659453741,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [16]
+		}, -- [15]
 		{
 			"yes", -- [1]
 			"Lillychan-Grobbulus", -- [2]
@@ -392,7 +370,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edLillychan|r",
 			[51] = 1659453742,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [17]
+		}, -- [16]
 		{
 			"LF JC CRAFTER |cffa335ee|Hitem:34363::::::::70:::::::::|h[Ring of Flowing Life]|h|r", -- [1]
 			"Reÿ", -- [2]
@@ -414,7 +392,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffReÿ|r",
 			[51] = 1659453743,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [18]
+		}, -- [17]
 		{
 			"Slab Exp Run Service, Pst Price , 68-73 Mobs, Have wa", -- [1]
 			"Gimertimix-Grobbulus", -- [2]
@@ -436,7 +414,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaGimertimix|r",
 			[51] = 1659453744,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [19]
+		}, -- [18]
 		{
 			"lock lfg H MGT", -- [1]
 			"Spockrock", -- [2]
@@ -458,7 +436,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edSpockrock|r",
 			[51] = 1659453745,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [20]
+		}, -- [19]
 		{
 			"lol", -- [1]
 			"Loafgrief-Grobbulus", -- [2]
@@ -480,7 +458,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffLoafgrief|r",
 			[51] = 1659453746,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [21]
+		}, -- [20]
 		{
 			"wait....no", -- [1]
 			"Cruxer-Grobbulus", -- [2]
@@ -502,7 +480,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaCruxer|r",
 			[51] = 1659453747,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [22]
+		}, -- [21]
 		{
 			"LF Tank or Heal, N Slabs", -- [1]
 			"Cecaelia-Grobbulus", -- [2]
@@ -524,7 +502,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aCecaelia|r",
 			[51] = 1659453752,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [23]
+		}, -- [22]
 		{
 			"YES", -- [1]
 			"Toastywaffle-Grobbulus", -- [2]
@@ -546,7 +524,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aToastywaffle|r",
 			[51] = 1659453752,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [24]
+		}, -- [23]
 		{
 			"LFM SLABS BOOST CARRY 50++ MOBS/RUNS ( 2 MAGES ) PM FOR PRICE LVL 65-69 CAN Summon 60K-70k exp 1/3", -- [1]
 			"Selmaris-Grobbulus", -- [2]
@@ -568,7 +546,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSelmaris|r",
 			[51] = 1659453753,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [25]
+		}, -- [24]
 		{
 			"lmfao", -- [1]
 			"Baictear-Grobbulus", -- [2]
@@ -590,7 +568,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dBaictear|r",
 			[51] = 1659453755,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [26]
+		}, -- [25]
 		{
 			"most of them except the goblin ones", -- [1]
 			"Axeljero-Grobbulus", -- [2]
@@ -612,7 +590,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaAxeljero|r",
 			[51] = 1659453756,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [27]
+		}, -- [26]
 		{
 			"Slab Exp Service , Pst Price, 12-14 mins clear , 68-73mobs, have afk ", -- [1]
 			"Villámdé-Grobbulus", -- [2]
@@ -634,7 +612,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaVillámdé|r",
 			[51] = 1659453758,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [28]
+		}, -- [27]
 		{
 			"LF1M DPS ZF, i have a mallet ", -- [1]
 			"Holygrailz-Grobbulus", -- [2]
@@ -656,7 +634,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaHolygrailz|r",
 			[51] = 1659453758,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [29]
+		}, -- [28]
 		{
 			"WTS [Pattern: Carapace of Sun and Shadow] [Design: Amulet of Flowing Life]", -- [1]
 			"Winstong-Grobbulus", -- [2]
@@ -678,7 +656,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaWinstong|r",
 			[51] = 1659453758,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [30]
+		}, -- [29]
 		{
 			"no and yes", -- [1]
 			"Macheton", -- [2]
@@ -700,7 +678,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edMacheton|r",
 			[51] = 1659453759,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [31]
+		}, -- [30]
 		{
 			"INVITE LAYER 2", -- [1]
 			"Sûñt-Grobbulus", -- [2]
@@ -722,7 +700,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSûñt|r",
 			[51] = 1659453763,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [32]
+		}, -- [31]
 		{
 			"LFM SLABS SERVICE ||Req Lvl 65-69|| 68-72 mobs||Smooth Run|n AFK||pst.. :)", -- [1]
 			"Ðaenerys", -- [2]
@@ -744,7 +722,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaÐaenerys|r",
 			[51] = 1659453765,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [33]
+		}, -- [32]
 		{
 			"LFM Normal Mech need Healer, can summon", -- [1]
 			"Poglord-Grobbulus", -- [2]
@@ -766,7 +744,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Poglord|r",
 			[51] = 1659453765,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [34]
+		}, -- [33]
 		{
 			"LFM heals heroic ramps", -- [1]
 			"Crispyjanks-Grobbulus", -- [2]
@@ -788,7 +766,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dCrispyjanks|r",
 			[51] = 1659453765,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [35]
+		}, -- [34]
 		{
 			"somtimes maybe", -- [1]
 			"Tiggin", -- [2]
@@ -810,7 +788,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaTiggin|r",
 			[51] = 1659453766,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [36]
+		}, -- [35]
 		{
 			"LF DPS for ULD", -- [1]
 			"Drilth", -- [2]
@@ -832,7 +810,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaDrilth|r",
 			[51] = 1659453767,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [37]
+		}, -- [36]
 		{
 			"LF1M Gnomer Tank", -- [1]
 			"Amarisana-Grobbulus", -- [2]
@@ -854,7 +832,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaAmarisana|r",
 			[51] = 1659453770,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [38]
+		}, -- [37]
 		{
 			"LF1 HEAL ZG mount run g2g", -- [1]
 			"Budussi-Grobbulus", -- [2]
@@ -876,7 +854,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaBudussi|r",
 			[51] = 1659453770,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [39]
+		}, -- [38]
 		{
 			"SW/DARN/IF are connected", -- [1]
 			"Lillychan-Grobbulus", -- [2]
@@ -898,7 +876,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edLillychan|r",
 			[51] = 1659453771,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [40]
+		}, -- [39]
 		{
 			"LF enchanter to link +100 health to chest", -- [1]
 			"Seaga-Grobbulus", -- [2]
@@ -920,7 +898,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaSeaga|r",
 			[51] = 1659453773,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [41]
+		}, -- [40]
 		{
 			"is god even real", -- [1]
 			"Macheton-Grobbulus", -- [2]
@@ -942,7 +920,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edMacheton|r",
 			[51] = 1659453775,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [42]
+		}, -- [41]
 		{
 			"hell no", -- [1]
 			"Ralphlaurenx-Grobbulus", -- [2]
@@ -964,7 +942,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaRalphlaurenx|r",
 			[51] = 1659453779,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [43]
+		}, -- [42]
 		{
 			"LF|cffffd000|Henchant:27984|h[Enchanting: Enchant Weapon - Mongoose]|h|r", -- [1]
 			"Niziy", -- [2]
@@ -986,7 +964,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Niziy|r",
 			[51] = 1659453784,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [44]
+		}, -- [43]
 		{
 			"LFM NEED 1 DPS ELE/ENCH FOR HYJAL GDKP STARTING NOW {STAR} 24/25  https://discord.gg/AXDkYatyWa", -- [1]
 			"Lucieloria-Grobbulus", -- [2]
@@ -1008,7 +986,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Lucieloria|r",
 			[51] = 1659453786,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [45]
+		}, -- [44]
 		{
 			"DPS LF BRD", -- [1]
 			"Thordrict-Grobbulus", -- [2]
@@ -1030,7 +1008,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaThordrict|r",
 			[51] = 1659453790,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [46]
+		}, -- [45]
 		{
 			"sorry i mean heavens no! Kappa", -- [1]
 			"Ralphlaurenx-Grobbulus", -- [2]
@@ -1052,7 +1030,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaRalphlaurenx|r",
 			[51] = 1659453791,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [47]
+		}, -- [46]
 		{
 			"LF2M ZF, need tank/dps", -- [1]
 			"Obikadobi-Grobbulus", -- [2]
@@ -1074,7 +1052,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffObikadobi|r",
 			[51] = 1659453791,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [48]
+		}, -- [47]
 		{
 			"LF2M dps AOE for Shattered Halls (n) spam pst!! *mage/lock/ele sham*", -- [1]
 			"Bigbeast-Grobbulus", -- [2]
@@ -1096,7 +1074,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aBigbeast|r",
 			[51] = 1659453792,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [49]
+		}, -- [48]
 		{
 			"LF2M dps [Colossal Menace (10132)]", -- [1]
 			"Pregnantdad-Grobbulus", -- [2]
@@ -1118,7 +1096,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Pregnantdad|r",
 			[51] = 1659453795,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [50]
+		}, -- [49]
 		{
 			"LF1M Tank RFK", -- [1]
 			"Airgoggles-Grobbulus", -- [2]
@@ -1140,7 +1118,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aAirgoggles|r",
 			[51] = 1659453795,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [51]
+		}, -- [50]
 		{
 			"no but there is a green jesus named thrall", -- [1]
 			"Baictear-Grobbulus", -- [2]
@@ -1162,7 +1140,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dBaictear|r",
 			[51] = 1659453796,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [52]
+		}, -- [51]
 		{
 			"LF3M TANK/HEALS RAMPS N ", -- [1]
 			"Strategy", -- [2]
@@ -1184,7 +1162,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edStrategy|r",
 			[51] = 1659453796,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [53]
+		}, -- [52]
 		{
 			" INVITE LAYER 2", -- [1]
 			"Sûñt-Grobbulus", -- [2]
@@ -1206,7 +1184,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSûñt|r",
 			[51] = 1659453797,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [54]
+		}, -- [53]
 		{
 			"63 Rogue LFG SP, UB or MT (NHC)", -- [1]
 			"Seniorstabs-Grobbulus", -- [2]
@@ -1228,7 +1206,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Seniorstabs|r",
 			[51] = 1659453797,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [55]
+		}, -- [54]
 		{
 			"true... Thral is orc jesus", -- [1]
 			"Ralphlaurenx-Grobbulus", -- [2]
@@ -1250,7 +1228,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaRalphlaurenx|r",
 			[51] = 1659453804,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [56]
+		}, -- [55]
 		{
 			"Slab Exp Service , Pst Price, 12-14 mins clear , 68-73mobs, have afk ", -- [1]
 			"Villámdé-Grobbulus", -- [2]
@@ -1272,7 +1250,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaVillámdé|r",
 			[51] = 1659453808,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [57]
+		}, -- [56]
 		{
 			"praise orc jesus and his teachings", -- [1]
 			"Ralphlaurenx-Grobbulus", -- [2]
@@ -1294,7 +1272,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaRalphlaurenx|r",
 			[51] = 1659453816,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [58]
+		}, -- [57]
 		{
 			"WTB Port to shatt", -- [1]
 			"Illisa-Grobbulus", -- [2]
@@ -1316,7 +1294,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Illisa|r",
 			[51] = 1659453821,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [59]
+		}, -- [58]
 		{
 			"I think youre thinking of the dude on the frozen beans package", -- [1]
 			"Thefnpaladin-Grobbulus", -- [2]
@@ -1338,7 +1316,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaThefnpaladin|r",
 			[51] = 1659453821,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [60]
+		}, -- [59]
 		{
 			"Lf enchater for minor speed to boots", -- [1]
 			"Seaga-Grobbulus", -- [2]
@@ -1360,7 +1338,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaSeaga|r",
 			[51] = 1659453822,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [61]
+		}, -- [60]
 		{
 			"LF3M Uld need 1 heal 2 dps", -- [1]
 			"Drilth-Grobbulus", -- [2]
@@ -1382,7 +1360,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaDrilth|r",
 			[51] = 1659453832,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [62]
+		}, -- [61]
 		{
 			"LF2M ZF, need tank/dps", -- [1]
 			"Obikadobi-Grobbulus", -- [2]
@@ -1404,7 +1382,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffObikadobi|r",
 			[51] = 1659453836,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [63]
+		}, -- [62]
 		{
 			"pst me inv for tower inv", -- [1]
 			"Morfias-Grobbulus", -- [2]
@@ -1426,7 +1404,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaMorfias|r",
 			[51] = 1659453837,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [64]
+		}, -- [63]
 		{
 			"HEALER LF SOMETHING TO DO HEROICs/RAIDS", -- [1]
 			"Dotürn", -- [2]
@@ -1448,7 +1426,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffDotürn|r",
 			[51] = 1659453838,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [65]
+		}, -- [64]
 		{
 			"LF1M Tank Gnomer", -- [1]
 			"Amarisana-Grobbulus", -- [2]
@@ -1470,7 +1448,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaAmarisana|r",
 			[51] = 1659453838,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [66]
+		}, -- [65]
 		{
 			"why do they call it xbox 360? bc you do a 360 and walk away", -- [1]
 			"Ethernetz", -- [2]
@@ -1492,7 +1470,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edEthernetz|r",
 			[51] = 1659453841,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [67]
+		}, -- [66]
 		{
 			"LFM SLABS BOOST CARRY 50++ MOBS/RUNS ( 2 MAGES ) PM FOR PRICE LVL 65-69 CAN Summon 60K-70k exp 1/3", -- [1]
 			"Selmaris-Grobbulus", -- [2]
@@ -1514,7 +1492,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSelmaris|r",
 			[51] = 1659453842,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [68]
+		}, -- [67]
 		{
 			"LFM heals heroic ramps", -- [1]
 			"Crispyjanks-Grobbulus", -- [2]
@@ -1536,7 +1514,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dCrispyjanks|r",
 			[51] = 1659453842,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [69]
+		}, -- [68]
 		{
 			"mrs butterworth?", -- [1]
 			"Stealthshot-Grobbulus", -- [2]
@@ -1558,7 +1536,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Stealthshot|r",
 			[51] = 1659453842,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [70]
+		}, -- [69]
 		{
 			"LF1M dps RFK", -- [1]
 			"Airgoggles-Grobbulus", -- [2]
@@ -1580,7 +1558,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aAirgoggles|r",
 			[51] = 1659453843,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [71]
+		}, -- [70]
 		{
 			"him?", -- [1]
 			"Stealthshot-Grobbulus", -- [2]
@@ -1602,7 +1580,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Stealthshot|r",
 			[51] = 1659453846,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [72]
+		}, -- [71]
 		{
 			"{diamond} LFM PURE BUYER SWP TRASH GDKP ! all item incluede patterns / gems / mote / gear Fast run ~{diamond}", -- [1]
 			"Snowmighty-Grobbulus", -- [2]
@@ -1624,7 +1602,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSnowmighty|r",
 			[51] = 1659453850,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [73]
+		}, -- [72]
 		{
 			"lock lfg n bf or ramps", -- [1]
 			"Flaxwrath", -- [2]
@@ -1646,7 +1624,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edFlaxwrath|r",
 			[51] = 1659453856,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [74]
+		}, -- [73]
 		{
 			"lf heal for heroic sv", -- [1]
 			"Onionn", -- [2]
@@ -1668,7 +1646,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dOnionn|r",
 			[51] = 1659453857,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [75]
+		}, -- [74]
 		{
 			"lf heal for heroic sv", -- [1]
 			"Onionn-Grobbulus", -- [2]
@@ -1690,7 +1668,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dOnionn|r",
 			[51] = 1659453857,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [76]
+		}, -- [75]
 		{
 			"LFM Hyjal gdkp Friday 8/5 @6:30pm ST! Need tier BUYERS of all specs. All carries also welcome to join disc and signup. Verify on discord to see MH channel: https://discord.gg/9gXHnzQTRU", -- [1]
 			"Taterman-Grobbulus", -- [2]
@@ -1712,7 +1690,7 @@ ElvCharacterDB = {
 			[52] = "|cffff7c0aTaterman|r",
 			[51] = 1659453857,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [77]
+		}, -- [76]
 		{
 			"LFM NEED 1 DPS ELE/ENCH FOR HYJAL GDKP STARTING NOW {STAR} 24/25  https://discord.gg/AXDkYatyWa", -- [1]
 			"Lucieloria-Grobbulus", -- [2]
@@ -1734,7 +1712,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Lucieloria|r",
 			[51] = 1659453858,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [78]
+		}, -- [77]
 		{
 			"63 Rogue LFG SP, UB or MT (NHC)", -- [1]
 			"Seniorstabs-Grobbulus", -- [2]
@@ -1756,7 +1734,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Seniorstabs|r",
 			[51] = 1659453859,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [79]
+		}, -- [78]
 		{
 			"invite layer 2  please", -- [1]
 			"Haliani-Grobbulus", -- [2]
@@ -1778,7 +1756,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Haliani|r",
 			[51] = 1659453861,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [80]
+		}, -- [79]
 		{
 			"NEED ALL FOR SP/UB N ", -- [1]
 			"Belladryn-Grobbulus", -- [2]
@@ -1800,7 +1778,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edBelladryn|r",
 			[51] = 1659453865,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [81]
+		}, -- [80]
 		{
 			"LF1M DPS ZF, i have a mallet ", -- [1]
 			"Holygrailz-Grobbulus", -- [2]
@@ -1822,7 +1800,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaHolygrailz|r",
 			[51] = 1659453869,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [82]
+		}, -- [81]
 		{
 			"LF2M DPS/HEALS RAMPS N ", -- [1]
 			"Strategy-Grobbulus", -- [2]
@@ -1844,7 +1822,7 @@ ElvCharacterDB = {
 			[52] = "|cff8787edStrategy|r",
 			[51] = 1659453871,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [83]
+		}, -- [82]
 		{
 			"rogue lf1m 2s", -- [1]
 			"Backstaberer-Grobbulus", -- [2]
@@ -1866,7 +1844,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Backstaberer|r",
 			[51] = 1659453877,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [84]
+		}, -- [83]
 		{
 			"{star}LF Buyer SWP Trash GDKP fastest and smoothest run on server geared group.. gonna be a big chance with quick run.. come get what you want (UNDER 2 MIN){star}", -- [1]
 			"Audriz-Grobbulus", -- [2]
@@ -1888,7 +1866,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaAudriz|r",
 			[51] = 1659453883,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [85]
+		}, -- [84]
 		{
 			"LF DPS H RAMP {star} {moon}", -- [1]
 			"Frankmoody-Grobbulus", -- [2]
@@ -1910,7 +1888,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaFrankmoody|r",
 			[51] = 1659453886,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [86]
+		}, -- [85]
 		{
 			"LFG Tank MT n", -- [1]
 			"Onlyhope-Grobbulus", -- [2]
@@ -1932,7 +1910,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaOnlyhope|r",
 			[51] = 1659453888,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [87]
+		}, -- [86]
 		{
 			"LF2M ZF, need tank/dps", -- [1]
 			"Obikadobi-Grobbulus", -- [2]
@@ -1954,7 +1932,7 @@ ElvCharacterDB = {
 			[52] = "|cffffffffObikadobi|r",
 			[51] = 1659453891,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [88]
+		}, -- [87]
 		{
 			"lf 1 dps sethekk halls n", -- [1]
 			"Chimeryn-Grobbulus", -- [2]
@@ -1976,7 +1954,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Chimeryn|r",
 			[51] = 1659453893,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [89]
+		}, -- [88]
 		{
 			"pst me \"inv\" for auto invite to towers", -- [1]
 			"Morfias-Grobbulus", -- [2]
@@ -1998,7 +1976,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaMorfias|r",
 			[51] = 1659453896,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [90]
+		}, -- [89]
 		{
 			"DPS LFG ST", -- [1]
 			"Gleeshy-Grobbulus", -- [2]
@@ -2020,7 +1998,7 @@ ElvCharacterDB = {
 			[52] = "|cffc69b6dGleeshy|r",
 			[51] = 1659453899,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [91]
+		}, -- [90]
 		{
 			"LFM Normal Mech need Healer, can summon", -- [1]
 			"Poglord-Grobbulus", -- [2]
@@ -2042,7 +2020,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Poglord|r",
 			[51] = 1659453900,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [92]
+		}, -- [91]
 		{
 			"LF Tank or Heal and 1 DPS for N Slabs", -- [1]
 			"Nahadin", -- [2]
@@ -2064,7 +2042,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaNahadin|r",
 			[51] = 1659453903,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [93]
+		}, -- [92]
 		{
 			"WTS Pattern: Carapace of Sun and Shadow", -- [1]
 			"Inyourheart-Grobbulus", -- [2]
@@ -2086,7 +2064,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaInyourheart|r",
 			[51] = 1659453906,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [94]
+		}, -- [93]
 		{
 			"INVITE LAYER 2", -- [1]
 			"Sûñt-Grobbulus", -- [2]
@@ -2108,7 +2086,7 @@ ElvCharacterDB = {
 			[52] = "|cff3fc6eaSûñt|r",
 			[51] = 1659453910,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [95]
+		}, -- [94]
 		{
 			"LF3M Uld need 1 heal 2 dps", -- [1]
 			"Drilth-Grobbulus", -- [2]
@@ -2130,7 +2108,7 @@ ElvCharacterDB = {
 			[52] = "|cfff48cbaDrilth|r",
 			[51] = 1659453913,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [96]
+		}, -- [95]
 		{
 			"LFM NEED 1 DPS ELE/ENCH FOR HYJAL GDKP STARTING NOW {STAR} 24/25  https://discord.gg/AXDkYatyWa", -- [1]
 			"Lucieloria-Grobbulus", -- [2]
@@ -2152,7 +2130,7 @@ ElvCharacterDB = {
 			[52] = "|cffaad372Lucieloria|r",
 			[51] = 1659453913,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [97]
+		}, -- [96]
 		{
 			"3 horde ganking people south of honor hold by the buzzards", -- [1]
 			"Bsharp", -- [2]
@@ -2174,7 +2152,7 @@ ElvCharacterDB = {
 			[52] = "|cfffff468Bsharp|r",
 			[51] = 1659453914,
 			[50] = "CHAT_MSG_CHANNEL",
-		}, -- [98]
+		}, -- [97]
 		{
 			"WTS DMT BUFF(TIPS APPRECIATE)+Summon (10G) {moon} Full Cleared, Slipkk Frozen Safe. Eye and Hyena friendly.", -- [1]
 			"Aftertrue-Grobbulus", -- [2]
@@ -2195,6 +2173,28 @@ ElvCharacterDB = {
 			false, -- [17]
 			[52] = "|cffaad372Aftertrue|r",
 			[51] = 1659453915,
+			[50] = "CHAT_MSG_CHANNEL",
+		}, -- [98]
+		{
+			"LFM MAGE FB+PET SWP GDKP TRASH FARM", -- [1]
+			"Valainie-Grobbulus", -- [2]
+			"", -- [3]
+			"1. LookingForGroup", -- [4]
+			"Valainie", -- [5]
+			"", -- [6]
+			26, -- [7]
+			1, -- [8]
+			"LookingForGroup", -- [9]
+			0, -- [10]
+			434, -- [11]
+			"Player-4647-0314A1E2", -- [12]
+			0, -- [13]
+			false, -- [14]
+			false, -- [15]
+			false, -- [16]
+			false, -- [17]
+			[52] = "|cff3fc6eaValainie|r",
+			[51] = 1660570904,
 			[50] = "CHAT_MSG_CHANNEL",
 		}, -- [99]
 	},

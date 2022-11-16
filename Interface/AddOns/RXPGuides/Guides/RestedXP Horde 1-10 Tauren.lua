@@ -27,7 +27,7 @@ step << Warrior/Shaman
     .goto Mulgore,45.6,74.0,30,0
 step << Warrior/Shaman
     .goto Mulgore,45.3,76.5
-    .vendor >> vendor trash
+    .vendor >> Vendor trash.
 step << Warrior
     .goto Mulgore,44.0,76.1
     .train 6673 >>Train Battle Shout
@@ -64,7 +64,7 @@ step
     .accept 750 >>Accept The Hunt Continues
 step << Hunter
     .goto Mulgore,45.3,76.5
-    .vendor >>vendor trash. Buy 1000 bullets (5 stacks)
+    .vendor >>Vendor trash. Buy 1000 bullets (5 stacks)
 step
     .goto Mulgore,44.2,76.1
     .turnin 753 >>Turn in A Humble Task
@@ -77,10 +77,14 @@ step << Hunter
     .turnin 3092 >>Turn in Etched Note
 step << Warrior
     .goto Mulgore,44.7,77.9
-    .vendor >>vendor trash
+    .vendor >>Vendor trash.
 step << Druid/Shaman
     .goto Mulgore,44.7,77.9
-    .vendor >>vendor trash. Do NOT buy water
+    .vendor >>Vendor trash. Do NOT buy water
+step
+    #completewith next
+    >>En route to next quest, grind mobs until level 3. This is to reach level 4 and train after.
+    .xp 3 >> Grind to level 3.
 step
     #completewith next
     >>Kill Cougars for their Pelts
@@ -119,7 +123,7 @@ step << Shaman
     .accept 780 >>Accept The Battleboars
 step
     .goto Mulgore,45.3,76.5
-    .vendor >> vendor trash
+    .vendor >> Vendor trash
 step << Druid
     .goto Mulgore,45.1,75.9
     .turnin 3094 >>Turn in Verdant Note
@@ -132,6 +136,7 @@ step << Shaman
     .goto Mulgore,44.7,76.2
     .accept 1519 >>Accept Call of Earth
 step
+    >>Talk to Windfeather. She patrols around the camp
     .goto Mulgore,45.0,76.4
     .accept 3376 >>Accept Break Sharptusk!
 step << Hunter
@@ -141,41 +146,45 @@ step << Warrior
     .goto Mulgore,44.0,76.1
     .trainer >> Train your class spells
 step
+    #completewith nomoreboar
+    .xp 4+1800 >>Grind Bristlebacks until you've reached 1800+/2100xp to hit level 6 and train at Bloodhoof Village.
+step
     .goto Mulgore,58.2,85.0
-    >>Kill Battleboars outside the cave for Flanks and Snouts
+    >>Kill Battleboars outside the cave for their Flanks and Snouts
     .complete 780,2 --Battleboar Flank (8)
     .complete 780,1 --Battleboar Snout (8)
 step
+    .isOnQuest 757
     .goto Mulgore,59.7,83.2,40 >>Go through the cave
 step
     #sticky
-	#completewith nomoreboar
+	#completewith Sharptusk
     #label Belt
     >>Kill Bristlebacks for their Belts
+    >>Kill Bristleback Shaman and loot them for their Salves. << Shaman
     .complete 757,1 --Bristleback Belt (12)
-step << Shaman
-    #sticky
-    #label Salve
-    >>Kill Bristleback Shamans for their Salves
-    .complete 1519,1 --Ritual Salve (2)
+    .unitscan Bristleback Shaman << Shaman
+    .complete 1519,1 --Ritual Salve(2) << Shaman
 step
+    #label Sharptusk
     >>Kill Sharptusk in the big hut
     .goto Mulgore,64.3,77.9
+    .unitscan Chief Sharptusk Thornmantle
     .complete 3376,1 --Chief Sharptusk Thornmantle's Head (1)
-step << !Shaman
+step
+    #completewith nomoreboar
+    >>Kill Bristlebacks and loot them for their Belts.
+    >>Kill Bristleback Shaman and loot them for their Salves. << Shaman
+    .goto Mulgore,63.0,77.8
+    .complete 757,1 --Bristleback Belt (12)
+    .unitscan Bristleback Shaman << Shaman
+    .complete 1519,1 --Ritual Salve (2) << Shaman
+step
     #requires Belt
-    >>Go into the cave. Loot the map on the ground then click it to accept the quest.
+    >>Go into the cave. Loot the Attack Plans in the center, and accept the quest.
     .goto Mulgore,63.2,82.7
-    .collect 4851,1,781 --Collect Dirt-Stained Map
-    .accept 781 >>Accept Attack on Camp Narache
-step << Shaman
-    #requires Belt
-step << Shaman
-    #requires Salve
-    >>Go into the cave. Loot the map on the ground then click it to accept the quest.
-    .goto Mulgore,63.2,82.7
-    .collect 4851,1,781 --Collect Dirt-Stained Map
-    .accept 781 >>Accept Attack on Camp Narache
+    .collect 4850,1,24857 --Collect Bristleback Attack Plans.
+    .accept 24857 >>Accept Attack on Camp Narache.
 step
 	#label nomoreboar
 	#completewith next
@@ -183,6 +192,10 @@ step
 step
     .goto Mulgore,44.9,77.0
     .turnin 780 >>Turn in The Battleboars
+step
+    #completewith next
+    .goto Mulgore,44.65,77.90
+    .vendor >>Vendor trash
 step << Shaman
     .goto Mulgore,44.7,76.2
     .turnin 1519 >>Turn in Call of Earth
@@ -198,11 +211,12 @@ step << Shaman
     .goto Mulgore,44.7,76.2
     .turnin 1521 >>Turn in Call of Earth
 step
+    >>Talk to Windfeather. She patrols around the camp
     .goto Mulgore,44.5,76.5
     .turnin 3376 >>Turn in Break Sharptusk!
 step
     .goto Mulgore,44.2,76.1
-    .turnin 781 >>Turn in Attack on Camp Narache
+    .turnin 24857 >>Turn in Attack on Camp Narache
     .turnin 757 >>Turn in Rite of Strength
     .accept 763 >>Accept Rites of the Earthmother
 step
@@ -214,7 +228,8 @@ step
 step
     #softcore
 	#completewith next
-    .goto Mulgore,46.5,55.5,300 >> Die and respawn at the Spirit Healer or run to Bloodhoof Village
+    .goto Mulgore,46.5,55.5,300 
+    .deathskip >>Die and respawn at the Spirit Healer or run to Bloodhoof Village
 step
 	#hardcore
 	#completewith next
@@ -309,28 +324,11 @@ step << Hunter
 step << Hunter
     .goto Mulgore,48.3,53.3
     .accept 11129 >>Accept Kyle's Gone Missing!
-step << Hunter
-    .goto Mulgore,49.3,56.2,15,0
-    .goto Mulgore,52.0,61.1,15,0
-    .goto Mulgore,50.0,66.4,15,0
-    .goto Mulgore,50.4,66.5
-    >>Collect the 'Acorn' looking items on the ground, below the trees
-    .complete 771,2 --Ambercorn (2)
-step << !Hunter
-    .goto Mulgore,49.3,56.2,15,0
-    .goto Mulgore,52.0,61.1,15,0
-    .goto Mulgore,50.0,66.4,15,0
-    .goto Mulgore,50.4,66.5
-    >>Collect the 'Acorn' looking items on the ground, below the trees
-    .complete 771,2 --Ambercorn (2)
 step
     #sticky
-    #completewith Well
-	.goto Mulgore,55.9,63.1,90,0
-    .goto Mulgore,51.1,66.5,90,0
-    .goto Mulgore,40.7,73.0,90,0
-    .goto Mulgore,55.9,63.1
-    >>Get the items for Mazzranache as you quest throughout the zone
+    #completewith Gnolls
+    >>Get the items for Mazzranache as you quest throughout the zone. Ambercorns can be found beneath trees.
+    .complete 771,2 --Ambercorn (2)
     .complete 766,1 --Prairie Wolf Heart (1)
     .complete 766,2 --Flatland Cougar Femur (1)
     .complete 766,3 --Plainstrider Scale (1)
@@ -340,13 +338,14 @@ step
     .goto Mulgore,51.1,66.5,90,0
     .goto Mulgore,40.7,73.0,90,0
     .goto Mulgore,55.9,63.1
-    >>Kill Wolves for Paws and Plainstriders for Talons. Kill a Plainstrider for Tender Strider Meat
+    >>Kill Wolves for Paws and Plainstriders for Talons. Kill a Plainstrider for Tender Strider Meat.
     .complete 748,1 --Prairie Wolf Paw (6)
     .complete 748,2 --Plainstrider Talon (4)
-   .collect 33009,1 --Collect Tender Strider Meat (1)
-step
-    #completewith Well
-    .use 33009 >>If you see Kyle the Frenzied. Go up to him and use the Tender Strider Meat
+    .collect 33009,1 --Collect Tender Strider Meat (1)
+step << Tauren
+    #completewith Gnolls
+    .itemcount 33009,1
+    .use 33009 >>If you see Kyle the Frenzied, go up to him and use the Tender Strider Meat. Don't worry about finishing this now.
     .complete 11129,1 --Kyle Fed (1)
 	.unitscan Kyle the Frenzied
 step << Tauren
@@ -354,14 +353,11 @@ step << Tauren
     .turnin 748 >>Turn in Poison Water
     .accept 754 >>Accept Winterhoof Cleansing
 step
-    #sticky
     #label Stones
-	#completewith gnolls
     .goto Mulgore,53.7,66.3
-    >>Loot the stones around the Well
+    >>Loot the stones around the well.
     .complete 771,1 --Well Stone (2)
 step << Tauren
-    #label Well
     .goto Mulgore,53.7,66.3
     .use 5411 >>Use the Winterhoof Cleansing Totem at the Well
     .complete 754,1 --Cleanse the Winterhoof Water Well (1)
@@ -374,15 +370,27 @@ step
     .goto Mulgore,48.3,72.0,90,0
     .goto Mulgore,53.5,73.0,90,0
     .goto Mulgore,48.3,72.0
-    >>Go back and forth between the two camps killing Gnolls. Be aware of Snagglespear (Level 9 rare). He's too difficult to kill.
+    >>Go back and forth between the two camps killing Gnolls. Be aware of Snagglespear, a level 9 rare that hits hard.
     .complete 745,1 --Palemane Tanner (10)
     .complete 745,2 --Palemane Skinner (8)
     .complete 745,3 --Palemane Poacher (5)
     .unitscan Snagglespear
 step
+    >>Collect two Ambercorns from beneath trees.
+    .goto Mulgore,49.3,56.2,15,0
+    .goto Mulgore,52.0,61.1,15,0
+    .goto Mulgore,50.0,66.4,15,0
+    .goto Mulgore,50.4,66.5
+    .complete 771,2 --Ambercorn (2)
+step
+    #completewith Vision
+    .use 33009 >>If you see Kyle the Frenzied, go up to him and use the Tender Strider Meat. Don't worry about finishing this now.
+    .complete 11129,1 --Kyle Fed (1)
+	.unitscan Kyle the Frenzied
+step
     .goto Mulgore,47.6,61.5
         #completewith next
-    .vendor >>vendor trash
+    .vendor >>Vendor trash.
 step << Tauren
     .goto Mulgore,48.5,60.4
     .turnin 754 >>Turn in Winterhoof Cleansing
@@ -390,15 +398,15 @@ step << Tauren
 step << Warrior
     #completewith next
     .goto Mulgore,49.5,60.6
-    .trainer >> Train your class spells if you still have to train some
+    .trainer >> Train any remaining class skills.
 step << Shaman
     #completewith next
     .goto Mulgore,48.4,59.2
-    .trainer >> Train your class spells if you still have to train some
+    .trainer >> Train any remaining class skills.
 step << Druid
     #completewith next
     .goto Mulgore,48.5,59.6
-    .trainer >> Train your class spells if you still have to train some
+    .trainer >> Train any remaining class skills.
 step
     .goto Mulgore,47.5,60.2
     .turnin 745 >>Turn in Sharing the Land
@@ -409,20 +417,20 @@ step << Warrior
     .trainer >> Train First Aid
 step << Shaman/Druid
     .goto Mulgore,45.7,58.6
-     >> vendor trash. Sell your weapon if it gives you enough money for Walking Stick (4s 80c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Walking Stick (4s 80c). Skip this step if you don't have enough
     .collect 2495,1 --Collect Walking Stick
 step << Warrior
     .goto Mulgore,45.7,58.6
-     >> vendor trash. Sell your weapon if it gives you enough money for Wooden Mallet (6s 66c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Wooden Mallet (6s 66c). Skip this step if you don't have enough
     .collect 2493,1 --Collect Wooden Mallet
 step << Hunter
     .goto Mulgore,45.5,58.5
     .money <0.0380
-     >> vendor trash. Sell your weapon if it gives you enough money for Ornate Blunderbuss (3s 80c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Ornate Blunderbuss (3s 80c). Skip this step if you don't have enough
     .collect 2509,1 --Collect Ornate Blunderbuss
 step
     #label Vision
-    >>Dont follow the wolf that spawns
+    >>Don't follow the wolf that spawns.
     .goto Mulgore,47.8,57.5
     .turnin 771 >>Turn in Rite of Vision
     .accept 772 >>Accept Rite of Vision
@@ -432,13 +440,13 @@ step
     .goto Mulgore,50.2,60.2,60,0
     .goto Mulgore,46.8,59.6,60,0
     .goto Mulgore,47.3,56.9
-    .use 33009 >>Look for Kyle the Frenzied. He patrols clockwise throughout the town (so go anti-clockwise). Go up to him and use the Tender Strider Meat
+    .use 33009 >>In a counter-clockwise route, look for Kyle the Frenzied. Use the Tender Strider Meat on him.
 	.complete 11129,1 --Kyle Fed (1)
 	.unitscan Kyle the Frenzied
 step << Hunter
 	#completewith next
     .goto Mulgore,47.8,55.7
-    .trainer >> Train your class spells if you still have to train some
+    .trainer >> Train any remaining class skills.
 step
     .goto Mulgore,48.2,53.3
     .turnin 11129 >>Turn in Kyle's Gone Missing!
@@ -450,18 +458,18 @@ step
     .accept 749 >>Accept The Ravaged Caravan
 	.unitscan Morin Cloudstalker
 step
-    .goto Mulgore,53.8,48.3
-	>> Grind cougars and wolves en route, then click on the crate in the middle of the caravan.
-    .turnin 749 >>Turn in The Ravaged Caravan
-    .accept 751 >>Accept The Ravaged Caravan
-step
     #label Mazzranache
     #completewith Clawsx
-    >>Get the items for Mazzranache as you quest throughout the zone
+    >>Get the items for Mazzranache as you quest throughout the zone.
     .complete 766,1 --Prairie Wolf Heart (1)
     .complete 766,2 --Flatland Cougar Femur (1)
     .complete 766,3 --Plainstrider Scale (1)
     .complete 766,4 --Swoop Gizzard (1)
+step
+    .goto Mulgore,53.8,48.3
+	>> Grind cougars and wolves en route, then click on the crate in the middle of the caravan.
+    .turnin 749 >>Turn in The Ravaged Caravan
+    .accept 751 >>Accept The Ravaged Caravan
 step
 	#completewith Burial
     .goto Mulgore,54.15,27.81,0
@@ -476,10 +484,11 @@ step
     .goto Mulgore,58.1,48.6
     .complete 756,1 --Stalker Claws (6)
     .complete 756,2 --Cougar Claws (6)
-step
+--step
     #softcore
     #completewith TotemW
-    .goto Mulgore,46.5,55.5,200 >> Die and respawn at the Spirit Healer or run to Bloodhoof Village
+    .goto Mulgore,46.5,55.5,200
+    .deathskip >>Die and respawn at the Spirit Healer or run to Bloodhoof Village
 step
     #hardcore
     #completewith TotemW
@@ -491,7 +500,7 @@ step
 step
     #completewith next
     .goto Mulgore,46.2,58.2
-    .vendor >>vendor trash
+    .vendor >>Vendor trash.
 step
 	#label TotemW
     .goto Mulgore,48.5,60.4
@@ -515,22 +524,22 @@ step << Warrior
     .trainer >> Train your class spells
 step << Shaman/Druid
     .goto Mulgore,45.7,58.6
-     >> vendor trash. Sell your weapon if it gives you enough money for Walking Stick (4s 80c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Walking Stick (4s 80c). Skip this step if you don't have enough
     .collect 2495,1 --Collect Walking Stick
 step << Warrior
     .goto Mulgore,45.7,58.6
-     >> vendor trash. Sell your weapon if it gives you enough money for Wooden Mallet (6s 66c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Wooden Mallet (6s 66c). Skip this step if you don't have enough
     .collect 2493,1 --Collect Wooden Mallet
 step << Hunter
     .goto Mulgore,45.5,58.5
-     >> vendor trash. Sell your weapon if it gives you enough money for Ornate Blunderbuss (3s 83c). Skip this step if you don't have enough
+     >> Vendor trash. Sell your weapon if it gives you enough money for Ornate Blunderbuss (3s 83c). Skip this step if you don't have enough
     .collect 2509,1 --Collect Ornate Blunderbuss
 step << Warrior
     .goto Mulgore,46.7,60.7
-    .vendor >> vendor trash. Buy as much Freshly Baked Bread as you can afford
+    .vendor >> Vendor trash. Buy as much Freshly Baked Bread as you can afford
 step << Druid/Shaman
     .goto Mulgore,46.7,60.7
-    .vendor >> vendor trash. Buy as much Ice Cold Milk as you can afford
+    .vendor >> Vendor trash. Buy as much Ice Cold Milk as you can afford
 step
     .goto Mulgore,44.5,45.3
     .use 5415 >>Use the Thunderhorn Cleansing Totem at the Well
@@ -560,7 +569,8 @@ step
     .turnin 772 >>Turn in Rite of Vision
     .accept 773 >>Accept Rite of Wisdom
 step
-	#completewith next
+    #completewith DeleteWater
+    .itemcount 4823,1
 	.goto Mulgore,54.15,27.81
 	.destroy 4823 >> You can destroy the Water of the Seers now
 step
@@ -581,6 +591,7 @@ step
 	>>Kill Swoops throughout Mulgore. Loot them for their Quills
     .complete 761,1 --Trophy Swoop Quill (8)
 step
+    #label DeleteWater
     .goto Mulgore,59.9,25.6
     .accept 833 >>Accept A Sacred Burial
 step
@@ -596,39 +607,36 @@ step
     .turnin 833 >>Turn in A Sacred Burial
 step
     .goto Mulgore,61.5,21.9
-    .xp 9+4400 >> Grind to 4400+/6500xp
+    .xp 9+4400 >> Grind to 4450+/6500xp
 step << !Druid
-    #completewith next
+    #completewith hsfailsafe3
     .hs >>Hearth to Bloodhoof Village
-    .cooldown item,6948,>0
-step << Druid
-    #softcore
+--step << Druid
     #completewith next
     .goto Mulgore,54.76,35.10
     .deathskip >> Die and respawn at the Spirit Healer, or run to Bloodhoof Village
-step << Druid
-    #hardcore
-    .goto Mulgore,46.5,55.5,300 >> Run back to Bloodhoof Village
 step << !Hunter
     .goto Mulgore,47.0,57.2
     .turnin 766 >>Turn in Mazzranache
 step
     .goto Mulgore,48.7,59.4
     .turnin 761 >>Turn in Swoop Hunting
+step
+    .goto Mulgore,48.5,60.4
+    .turnin 758 >>Turn in Thunderhorn Cleansing
+    .accept 759 >>Accept Wildmane Totem << !Hunter !Druid
+step << !Hunter
+    .goto Mulgore,47.5,60.2
+    .turnin 746 >>Turn in Dwarven Digging
 step << !Hunter !Druid
     .goto Mulgore,46.9,60.2
     .accept 861 >>Accept The Hunter's Way
 step
-    .goto Mulgore,48.5,60.4
-    .turnin 758 >>Turn in Thunderhorn Cleansing
-    .accept 759 >>Accept Wildmane Totem << !Hunter
-step << !Hunter
-    .goto Mulgore,47.5,60.2
-    .turnin 746 >>Turn in Dwarven Digging
-step
+    #label hsfailsafe3
     .goto Mulgore,47.4,62.0
     .turnin 743 >>Turn in Dangers of the Windfury
 step << Druid
+    .isOnQuest 759
     .goto Mulgore,48.5,59.6
     .abandon 759 >>Abandon Wildmane Totem
 step << Shaman
@@ -637,10 +645,12 @@ step << Shaman
     .accept 2984 >>Accept Call of Fire
      .trainer >> Train your class spells
 step << Druid
-        #completewith next
+     #completewith next
+     .goto Mulgore,48.5,59.6
+     .trainer >> Train your class spells
+step << Druid
     .goto Mulgore,48.5,59.6
     .accept 5928 >>Accept Heeding the Call
-     .trainer >> Train your class spells
 step << Warrior
         #completewith next
     .goto Mulgore,49.5,60.6
@@ -717,14 +727,18 @@ step << Druid/Hunter
     .turnin 751 >> Turn in The Ravaged Caravan
 	.unitscan Morin Cloudstalker
 step << Tauren Warrior/Tauren Shaman
-    >>Kill Wolves in the area. Loot them for teeth
-    .goto Mulgore,66.9,67.2
+    >>Kill Wolves in the area. Loot them for their teeth
+    .goto Mulgore,62.48,66.93,80,0
+    .goto Mulgore,66.9,67.2,80,0
+    .goto Mulgore,66.66,58.40,80,0
+    .goto Mulgore,62.38,57.56,80,0
     .complete 759,1 --Prairie Alpha Tooth (8)
-step << Warrior/Shaman
+step << Warrior tbc/Shaman tbc
     #sticky
     #completewith next
     .goto Mulgore,46.5,55.5,200 >> Die and respawn at the Spirit Healer, or run to Bloodhoof Village
 step << Tauren Warrior/Tauren Shaman
+    >>Run back to Bloodhoof Village << wotlk
     .goto Mulgore,48.5,60.4
     .turnin 759 >>Turn in Wildmane Totem
     .accept 760 >>Accept Wildmane Cleansing
@@ -740,6 +754,8 @@ step << Druid
 	#completewith next
     .goto The Barrens,44.5,59.1
     .fp Camp Taurajo >>Get the Camp Taurajo Flight Path
+step << Druid
+    .goto The Barrens,44.5,59.1
     .fly Thunder Bluff >>Fly to Thunder Bluff
 step << Druid
         #completewith next
@@ -756,8 +772,8 @@ step << Druid
     .accept 5922 >>Accept Moonglade
 step << Druid
     .cast 18960 >>Use your new spell to teleport to Moonglade
-    .goto Moonglade,56.2,30.7
     .turnin 5922 >>Turn in Moonglade
+    .goto Moonglade,56.2,30.7
     .accept 5930 >>Accept Great Bear Spirit
 step << Druid
     .goto Moonglade,39.2,27.5
@@ -765,8 +781,8 @@ step << Druid
     .skipgossip
 step << Druid
     .cast 18960 >> Teleport back to Moonglade
-.goto Moonglade,56.2,30.7
     .turnin 5930 >>Turn in Great Bear Spirit
+    .goto Moonglade,56.2,30.7
     .accept 5932 >>Accept Back to Thunder Bluff
 step << Druid
 	#completewith next
@@ -794,15 +810,15 @@ step << Druid
 step << !Druid
     .goto The Barrens,52.2,31.9
     .accept 870 >>Accept The Forgotten Pools
-step
-    .goto The Barrens,51.5,30.1
-    .accept 848 >>Accept Fungal Spores
 step << Tauren
     .goto The Barrens,51.5,30.8
     .turnin 854 >>Turn in Journey to the Crossroads
 step
     .goto The Barrens,51.5,30.4
     .fp The Crossroads >>Get the The Crossroads Flight Path
+step
+    .goto The Barrens,51.5,30.1
+    .accept 848 >>Accept Fungal Spores
 step
     .goto The Barrens,51.1,29.0
     .accept 6361 >>Accept A Bundle of Hides
@@ -826,10 +842,11 @@ step
     .goto The Barrens,44.6,22.5,40,0
     .goto The Barrens,43.9,24.4
     .complete 848,1 --Collect Fungal Spores (x4)
-step
+step << tbc
     .goto The Barrens,52.0,30.6,150 >> Die and respawn at the Spirit Healer, or run back
 step
     .goto The Barrens,52.3,31.9
+    >> Head back to The Crossroads
     .turnin 870 >>Turn in The Forgotten Pools
     .accept 877 >>Accept The Stagnant Oasis
 step
@@ -1018,10 +1035,11 @@ step << Warrior
     .train 5242 >>Train Battle Shout r2
     .train 7384 >>Train Overpower
 step
-    #sticky
     #completewith next
-    .cooldown item,6948,>0
-    .goto The Barrens,52.0,29.9,100 >>Hearth or fly back to Crossroads
+    .hs >> Hearth or fly back to Crossroads
+step
+    .goto The Barrens,52.0,30.3
+    .accept 869 >>Accept Raptor Thieves
 step
     .goto The Barrens,51.2,29.1
     .turnin 6364 >>Turn in Return to Jahan
@@ -1037,9 +1055,6 @@ step
     .goto The Barrens,52.2,31.0
     .turnin 860 >>Turn in Sergra Darkthorn
     .accept 844 >>Accept Plainstrider Menace
-step
-    .goto The Barrens,52.0,30.3
-    .accept 869 >>Accept Raptor Thieves
 step << Shaman
     .goto The Barrens,55.9,19.9
     .turnin 2984 >>Turn in Call of Fire
@@ -1052,11 +1067,20 @@ step << Shaman
     .accept 1525 >>Accept Call of Fire
 step << Warrior
     .goto The Barrens,61.4,21.1
-    .turnin 1505 >>Turn in ' Uzzek
+    .turnin 1505 >>Turn in Veteran Uzzek
     .accept 1498 >>Accept Path of Defense
 step << Warrior
-    >>Kill Lightning Hides for Singed Scales
+    .goto Durotar,39.2,32.3,40,0
+    .goto Durotar,39.62,28.10,40,0
+    .goto Durotar,40.20,24.13,40,0
+    .goto Durotar,43.33,24.32,40,0
+    .goto Durotar,39.2,32.3
+    >>Kill Thunder Lizards and Lightning Hides in Thunder Ridge for their Scales
     .complete 1498,1 --Singed Scale (5)
+step << Warrior
+    .isQuestComplete 1498
+    #completewith next
+.goto Durotar,39.2,32.3,30 >>Leave Thunder Ridge
 step << Warrior
     .goto The Barrens,61.4,21.1
     .turnin 1498 >>Turn in Path of Defense

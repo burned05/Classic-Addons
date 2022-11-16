@@ -1,0 +1,14 @@
+
+AtlasDB = {
+	["profileKeys"] = {
+		["Powertoast - Grobbulus"] = "Default",
+		["Powerbanker - Grobbulus"] = "Default",
+	},
+	["profiles"] = {
+		["Default"] = {
+			["minimap"] = {
+				["minimapPos"] = 240.8759494773123,
+			},
+		},
+	},
+}

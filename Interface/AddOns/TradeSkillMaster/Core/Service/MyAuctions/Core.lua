@@ -11,12 +11,12 @@ local Database = TSM.Include("Util.Database")
 local Event = TSM.Include("Util.Event")
 local TempTable = TSM.Include("Util.TempTable")
 local Log = TSM.Include("Util.Log")
+local DefaultUI = TSM.Include("Service.DefaultUI")
 local AuctionTracking = TSM.Include("Service.AuctionTracking")
 local ItemInfo = TSM.Include("Service.ItemInfo")
 local AuctionHouseWrapper = TSM.Include("Service.AuctionHouseWrapper")
 local private = {
 	pendingDB = nil,
-	ahOpen = false,
 	pendingHashes = {},
 	expectedCounts = {},
 	auctionInfo = { numPosted = 0, numSold = 0, postedGold = 0, soldGold = 0 },
@@ -43,9 +43,7 @@ function MyAuctions.OnInitialize()
 			tinsert(private.dbHashFields, field)
 		end
 	end
-
-	Event.Register("AUCTION_HOUSE_SHOW", private.AuctionHouseShowEventHandler)
-	Event.Register("AUCTION_HOUSE_CLOSED", private.AuctionHouseHideEventHandler)
+	DefaultUI.RegisterAuctionHouseVisibleCallback(private.AuctionHouseClosed, false)
 	if TSM.IsWowClassic() then
 		Event.Register("CHAT_MSG_SYSTEM", private.ChatMsgSystemEventHandler)
 		Event.Register("UI_ERROR_MESSAGE", private.UIErrorMessageEventHandler)
@@ -76,16 +74,12 @@ function MyAuctions.CancelAuction(auctionId)
 	assert(hash)
 
 	Log.Info("Canceling (auctionId=%d, hash=%d)", auctionId, hash)
-	if TSM.IsWowClassic() then
-		CancelAuction(auctionId)
-	else
-		private.pendingFuture = AuctionHouseWrapper.CancelAuction(auctionId)
-		if not private.pendingFuture then
-			Log.PrintUser(L["Failed to cancel auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
-			return
-		end
-		private.pendingFuture:SetScript("OnDone", private.PendingFutureOnDone)
+	private.pendingFuture = AuctionHouseWrapper.CancelAuction(auctionId)
+	if not private.pendingFuture then
+		Log.PrintUser(L["Failed to cancel auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
+		return
 	end
+	private.pendingFuture:SetScript("OnDone", private.PendingFutureOnDone)
 
 	if private.expectedCounts[hash] and private.expectedCounts[hash] > 0 then
 		private.expectedCounts[hash] = private.expectedCounts[hash] - 1
@@ -124,7 +118,7 @@ function MyAuctions.GetNumPending()
 end
 
 function MyAuctions.GetAuctionInfo()
-	if not private.ahOpen then
+	if not DefaultUI.IsAuctionHouseVisible() then
 		return
 	end
 	return private.auctionInfo.numPosted, private.auctionInfo.numSold, private.auctionInfo.postedGold, private.auctionInfo.soldGold
@@ -136,12 +130,7 @@ end
 -- Private Helper Functions
 -- ============================================================================
 
-function private.AuctionHouseShowEventHandler()
-	private.ahOpen = true
-end
-
-function private.AuctionHouseHideEventHandler()
-	private.ahOpen = false
+function private.AuctionHouseClosed()
 	if private.pendingFuture then
 		private.pendingFuture:Cancel()
 		private.pendingFuture = nil

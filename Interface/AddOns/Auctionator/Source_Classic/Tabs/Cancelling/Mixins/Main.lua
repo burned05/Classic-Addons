@@ -18,7 +18,7 @@ end
 local ConfirmBidPricePopup = "AuctionatorConfirmBidPricePopupDialog"
 
 StaticPopupDialogs[ConfirmBidPricePopup] = {
-  text = "Someone has bid on this auction so cancelling will cost you your deposit and:",
+  text = AUCTIONATOR_L_BID_EXISTING_ON_OWNED_AUCTION,
   button1 = ACCEPT,
   button2 = CANCEL,
   OnAccept = function(self)
@@ -56,12 +56,12 @@ function AuctionatorCancellingFrameMixin:ReceiveEvent(eventName, ...)
     local totalOnSale, totalPending = ...
 
     local text = AUCTIONATOR_L_TOTAL_ON_SALE:format(
-        Auctionator.Utilities.CreateMoneyString(totalOnSale)
+        GetMoneyString(totalOnSale, true)
       )
     if totalPending > 0 then
       text = text .. " " ..
       AUCTIONATOR_L_TOTAL_PENDING:format(
-        Auctionator.Utilities.CreateMoneyString(totalPending)
+        GetMoneyString(totalPending, true)
       )
     end
 

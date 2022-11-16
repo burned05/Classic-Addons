@@ -2,8 +2,15 @@ VER 3 0000000000000003 "mineherb" "INV_MISC_QUESTIONMARK"
 #showtooltip
 /castsequence Find Minerals, Find Herbs
 END
+VER 3 0000000000000008 "mount" "136103"
+/cast [flyable,nomod] Swift Purple Gryphon; Swift Brown Steed
+/dismount [mounted]
+END
 VER 3 0000000000000007 "noerr" "INV_MISC_QUESTIONMARK"
 /console scriptErrors 0
+END
+VER 3 0000000000000009 "RXPTargeting" "Ability_eyeoftheowl"
+//RestedXP Guides - current step has no configured targets
 END
 VER 3 0000000000000001 "trink1" "INV_MISC_QUESTIONMARK"
 /use 13

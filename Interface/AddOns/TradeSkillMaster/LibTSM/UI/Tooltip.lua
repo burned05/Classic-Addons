@@ -68,7 +68,7 @@ function Tooltip.Show(parent, data, noWrapping, xOffset)
 	elseif type(data) == "string" and data == "honor" then
 		GameTooltip:SetText(HONOR_POINTS, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
 		GameTooltip:AddLine(TOOLTIP_HONOR_POINTS, nil, nil, nil, 1)
-	elseif type(data) == "string" and strfind(data, "^currency:") then
+	elseif not TSM.IsWowClassic() and type(data) == "string" and strfind(data, "^currency:") then
 		GameTooltip:SetCurrencyByID(strmatch(data, "currency:(%d+)"))
 	elseif type(data) == "string" and strfind(data, "^r:") then
 		local spellId = RecipeString.GetSpellId(data)
@@ -88,11 +88,15 @@ function Tooltip.Show(parent, data, noWrapping, xOffset)
 			for _, slotId, itemId in RecipeString.OptionalMatIterator(data) do
 				local info = tremove(private.unusedOptionalMatTempTables) or {}
 				info.itemID = itemId
-				info.slot = slotId
-				info.count = 1
+				info.dataSlotIndex = slotId
+				info.quantity = 1
 				tinsert(private.optionalMatTable, info)
 			end
-			GameTooltip:SetRecipeResultItem(spellId, private.optionalMatTable, level)
+			if TSM.IsWowDragonflightPTR() then
+				GameTooltip:SetRecipeResultItem(spellId, private.optionalMatTable, nil, level)
+			else
+				C_TradeSkillUI.SetTooltipRecipeResultItem(spellId, private.optionalMatTable, nil, level)
+			end
 		end
 	elseif type(data) == "string" and (strfind(data, "^\124c.+\124Hitem:") or ItemString.IsItem(data)) then
 		GameTooltip:SetHyperlink(ItemInfo.GetLink(data))
@@ -162,7 +166,7 @@ end
 -- ============================================================================
 
 function private.UpdateCompareState()
-	if private.currentParent and GameTooltip:IsVisible() and IsShiftKeyDown() and not GameTooltip:IsEquippedItem() then
+	if private.currentParent and GameTooltip:IsVisible() and IsShiftKeyDown() then
 		GameTooltip_ShowCompareItem(GameTooltip)
 	else
 		GameTooltip_HideShoppingTooltips(GameTooltip)

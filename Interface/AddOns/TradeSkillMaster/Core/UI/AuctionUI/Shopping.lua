@@ -8,6 +8,7 @@ local _, TSM = ...
 local Shopping = TSM.UI.AuctionUI:NewPackage("Shopping")
 local ItemClass = TSM.Include("Data.ItemClass")
 local L = TSM.Include("Locale").GetTable()
+local Container = TSM.Include("Util.Container")
 local FSM = TSM.Include("Util.FSM")
 local Event = TSM.Include("Util.Event")
 local TempTable = TSM.Include("Util.TempTable")
@@ -17,6 +18,7 @@ local Log = TSM.Include("Util.Log")
 local Math = TSM.Include("Util.Math")
 local ItemString = TSM.Include("Util.ItemString")
 local Delay = TSM.Include("Util.Delay")
+local DefaultUI = TSM.Include("Service.DefaultUI")
 local ItemInfo = TSM.Include("Service.ItemInfo")
 local CustomPrice = TSM.Include("Service.CustomPrice")
 local AuctionTracking = TSM.Include("Service.AuctionTracking")
@@ -57,10 +59,10 @@ local private = {
 local MAX_ITEM_LEVEL = 500
 local PLAYER_NAME = UnitName("player")
 local ARMOR_TYPES = {
-	[GetItemSubClassInfo(LE_ITEM_CLASS_ARMOR, LE_ITEM_ARMOR_PLATE)] = true,
-	[GetItemSubClassInfo(LE_ITEM_CLASS_ARMOR, LE_ITEM_ARMOR_MAIL)] = true,
-	[GetItemSubClassInfo(LE_ITEM_CLASS_ARMOR, LE_ITEM_ARMOR_LEATHER)] = true,
-	[GetItemSubClassInfo(LE_ITEM_CLASS_ARMOR, LE_ITEM_ARMOR_CLOTH)] = true,
+	[GetItemSubClassInfo(Enum.ItemClass.Armor, Enum.ItemArmorSubclass.Plate)] = true,
+	[GetItemSubClassInfo(Enum.ItemClass.Armor, Enum.ItemArmorSubclass.Mail)] = true,
+	[GetItemSubClassInfo(Enum.ItemClass.Armor, Enum.ItemArmorSubclass.Leather)] = true,
+	[GetItemSubClassInfo(Enum.ItemClass.Armor, Enum.ItemArmorSubclass.Cloth)] = true,
 }
 local INVENTORY_TYPES = {
 	GetItemInventorySlotInfo(Enum.InventoryType.IndexHeadType),
@@ -80,7 +82,7 @@ local GENERIC_TYPES = {
 	GetItemInventorySlotInfo(Enum.InventoryType.IndexHoldableType),
 	GetItemInventorySlotInfo(Enum.InventoryType.IndexBodyType),
 }
-local MAX_LEVEL = TSM.IsWowBCClassic() and 70 or 60
+local MAX_LEVEL = TSM.IsWowWrathClassic() and 80 or 60
 
 
 
@@ -1189,7 +1191,7 @@ function private.ClassDropdownOnSelectionChanged(dropdown)
 		for _, v in pairs(ItemClass.GetSubClasses(selection)) do
 			tinsert(subClasses, v)
 		end
-		if dropdown:GetSelectedItem() == GetItemClassInfo(LE_ITEM_CLASS_ARMOR) then
+		if dropdown:GetSelectedItem() == GetItemClassInfo(Enum.ItemClass.Armor) then
 			for _, v in pairs(GENERIC_TYPES) do
 				tinsert(subClasses, v)
 			end
@@ -1211,7 +1213,7 @@ function private.SubClassDropdownOnSelectionChanged(dropdown)
 	local classDropdown = dropdown:GetElement("__parent.classDropdown")
 	local itemSlotDropdown = dropdown:GetElement("__parent.__parent.itemSlot.frame.dropdown")
 	local selection = dropdown:GetSelectedItem()
-	if selection and classDropdown:GetSelectedItem() == GetItemClassInfo(LE_ITEM_CLASS_ARMOR) and ARMOR_TYPES[selection] then
+	if selection and classDropdown:GetSelectedItem() == GetItemClassInfo(Enum.ItemClass.Armor) and ARMOR_TYPES[selection] then
 		itemSlotDropdown:SetItems(INVENTORY_TYPES)
 		itemSlotDropdown:SetDisabled(false)
 		itemSlotDropdown:SetSelectedItem(nil)
@@ -1722,7 +1724,7 @@ function private.UpdateDepositCostAndPostButton(frame)
 			buyout = buyout * stackSize
 		end
 		ClearCursor()
-		PickupContainerItem(postBag, postSlot)
+		Container.PickupItem(postBag, postSlot)
 		ClickAuctionSellItemButton(AuctionsItemButton, "LeftButton")
 		ClearCursor()
 		depositCost = GetAuctionDeposit(postTime, bid, buyout, stackSize, numAuctions)
@@ -1752,47 +1754,14 @@ function private.PostButtonOnClick(button)
 		:Select("bag", "slot")
 		:Equal("itemString", itemString)
 		:GetFirstResultAndRelease()
-	if postBag and postSlot then
-		local postTime = Table.GetDistinctKey(TSM.CONST.AUCTION_DURATIONS, frame:GetElement("duration.toggle"):GetValue())
-		if not TSM.IsWowClassic() then
-			bid = Math.Round(bid, COPPER_PER_SILVER)
-			buyout = Math.Round(buyout, COPPER_PER_SILVER)
-			private.itemLocation:Clear()
-			private.itemLocation:SetBagAndSlot(postBag, postSlot)
-			local commodityStatus = C_AuctionHouse.GetItemCommodityStatus(private.itemLocation)
-			local future = nil
-			if commodityStatus == Enum.ItemCommodityStatus.Item then
-				future = AuctionHouseWrapper.PostItem(private.itemLocation, postTime, stackSize, (buyout == 0 or bid < buyout) and bid or nil, buyout > 0 and buyout or nil)
-			elseif commodityStatus == Enum.ItemCommodityStatus.Commodity then
-				future = AuctionHouseWrapper.PostCommodity(private.itemLocation, postTime, stackSize, buyout)
-			else
-				error("Unknown commodity status: "..tostring(itemString))
-			end
-			if future then
-				-- TODO: wait for the future
-				future:Cancel()
-				AuctionTracking.QueryOwnedAuctions()
-			end
-		else
-			local num = tonumber(frame:GetElement("numStacks.input"):GetValue())
-			if strfind(button:GetContext(), "^p") then
-				stackSize = 1
-				num = 1
-			end
-			if private.perItem then
-				bid = bid * stackSize
-				buyout = buyout * stackSize
-			end
-			-- need to set the duration in the default UI to avoid Blizzard errors
-			AuctionFrameAuctions.duration = postTime
-			ClearCursor()
-			PickupContainerItem(postBag, postSlot)
-			ClickAuctionSellItemButton(AuctionsItemButton, "LeftButton")
-			PostAuction(bid, buyout, postTime, stackSize, num)
-			ClearCursor()
-		end
+	if not postBag or not postSlot then
+		frame:GetBaseElement():HideDialog()
+		return
 	end
+	local postTime = Table.GetDistinctKey(TSM.CONST.AUCTION_DURATIONS, frame:GetElement("duration.toggle"):GetValue())
+	local num = TSM.IsWowClassic() and tonumber(frame:GetElement("numStacks.input"):GetValue()) or 1
 	frame:GetBaseElement():HideDialog()
+	private.fsm:ProcessEvent("EV_DO_POST", itemString, postBag, postSlot, postTime, stackSize, bid, buyout, num)
 end
 
 function private.PostDialogCloseBtnOnClick(button)
@@ -1841,46 +1810,40 @@ function private.FSMCreate()
 		defaultBuyQuantity = 0,
 		numBought = 0,
 		lastBuyQuantity = 0,
+		lastBuyIndex = nil,
 		numBid = 0,
 		numConfirmed = 0,
 		searchContext = nil,
 		postContextTemp = {},
 		pausePending = nil,
-		cancelFuture = nil,
+		pendingFuture = nil,
+		canSendAuctionQuery = true,
 	}
-
-	if TSM.IsWowClassic() then
-		Event.Register("CHAT_MSG_SYSTEM", private.FSMMessageEventHandler)
-		Event.Register("UI_ERROR_MESSAGE", private.FSMMessageEventHandler)
-	else
-		Event.Register("AUCTION_HOUSE_SHOW_NOTIFICATION", private.FSMMessageEventHandler)
-		Event.Register("AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION", private.FSMMessageEventHandler)
-		Event.Register("AUCTION_HOUSE_SHOW_ERROR", private.FSMMessageErrorEventHandler)
-		Event.Register("COMMODITY_PURCHASE_SUCCEEDED", private.FSMBuyoutSuccess)
-	end
-	Event.Register("AUCTION_HOUSE_CLOSED", function()
-		private.fsm:ProcessEvent("EV_AUCTION_HOUSE_CLOSED")
-	end)
+	DefaultUI.RegisterAuctionHouseVisibleCallback(function() private.fsm:ProcessEvent("EV_AUCTION_HOUSE_CLOSED") end, false)
 	Event.Register("BAG_UPDATE_DELAYED", function()
 		private.fsm:ProcessEvent("EV_BAG_UPDATE_DELAYED")
 	end)
 	AuctionHouseWrapper.RegisterAuctionIdUpdateCallback(function(...)
 		private.fsm:ProcessEvent("EV_AUCTION_ID_UPDATE", ...)
 	end)
+	if TSM.IsWowClassic() then
+		AuctionHouseWrapper.RegisterCanSendAuctionQueryCallback(function(...)
+			private.fsm:ProcessEvent("EV_CAN_SEND_AUCTION_QUERY_UPDATE", ...)
+		end)
+	end
 	local function UpdateScanFrame(context)
 		if not context.scanFrame then
 			return
 		end
-		local isCanceling = context.cancelFuture and true or false
 		local bottom = context.scanFrame:GetElement("bottom")
-		bottom:GetElement("postBtn"):SetDisabled(isCanceling or context.postDisabled)
-		bottom:GetElement("bidBtn"):SetDisabled(isCanceling or context.bidDisabled)
-		bottom:GetElement("buyoutBtn"):SetDisabled(isCanceling or context.buyoutDisabled)
+		bottom:GetElement("postBtn"):SetDisabled(context.pendingFuture or context.postDisabled or not context.canSendAuctionQuery)
+		bottom:GetElement("bidBtn"):SetDisabled(context.pendingFuture or context.bidDisabled or not context.canSendAuctionQuery)
+		bottom:GetElement("buyoutBtn"):SetDisabled(context.pendingFuture or context.buyoutDisabled or not context.canSendAuctionQuery)
 		if context.cancelShown then
 			assert(context.buyoutDisabled)
 			bottom:GetElement("buyoutBtn"):Hide()
 			bottom:GetElement("cancelBtn")
-				:SetDisabled(isCanceling)
+				:SetDisabled(context.pendingFuture or not context.canSendAuctionQuery)
 				:Show()
 		else
 			bottom:GetElement("buyoutBtn"):Show()
@@ -1892,9 +1855,10 @@ function private.FSMCreate()
 		bottom:GetElement("pauseResumeBtn")
 			:SetDisabled((not isPaused and progress == 1) or context.pausePending ~= nil)
 			:SetHighlightLocked(context.pausePending ~= nil)
+		local processIconHidden = context.progress == 1 or (context.findResult and context.numBought + context.numBid == context.numConfirmed) or context.progressPaused
 		bottom:GetElement("progressBar"):SetProgress(context.progress)
-			:SetText(isCanceling and L["Cancelling..."] or context.progressText or "")
-			:SetProgressIconHidden(context.progress == 1 or (context.findResult and context.numBought + context.numBid == context.numConfirmed) or context.progressPaused)
+			:SetText((processIconHidden and not context.canSendAuctionQuery and L["Preparing..."]) or (context.pendingFuture and L["Confirming..."]) or context.progressText or "")
+			:SetProgressIconHidden(context.canSendAuctionQuery and processIconHidden)
 		local auctionList = context.scanFrame:GetElement("auctions")
 			:SetContext(context.auctionScan)
 			:SetAuctionScan(context.auctionScan)
@@ -1915,9 +1879,9 @@ function private.FSMCreate()
 					context.searchContext:OnStateChanged("DONE")
 					context.searchContext = nil
 				end
-				if context.cancelFuture then
-					context.cancelFuture:Cancel()
-					context.cancelFuture = nil
+				if context.pendingFuture then
+					context.pendingFuture:Cancel()
+					context.pendingFuture = nil
 				end
 				context.progress = 0
 				context.progressText = L["Starting Scan..."]
@@ -1935,6 +1899,7 @@ function private.FSMCreate()
 				context.defaultBuyQuantity = 0
 				context.numBought = 0
 				context.lastBuyQuantity = 0
+				context.lastBuyIndex = nil
 				context.numBid = 0
 				context.numConfirmed = 0
 				if context.auctionScan then
@@ -2077,6 +2042,7 @@ function private.FSMCreate()
 				context.defaultBuyQuantity = 0
 				context.numBought = 0
 				context.lastBuyQuantity = 0
+				context.lastBuyIndex = nil
 				context.numBid = 0
 				context.numConfirmed = 0
 				local postContext = context.searchContext:GetPostContext()
@@ -2119,8 +2085,10 @@ function private.FSMCreate()
 			end)
 			:AddTransition("ST_UPDATING_SCAN_PROGRESS")
 			:AddTransition("ST_FINDING_AUCTION")
+			:AddTransition("ST_POSTING")
 			:AddTransition("ST_INIT")
 			:AddEventTransition("EV_SCAN_PROGRESS_UPDATE", "ST_UPDATING_SCAN_PROGRESS")
+			:AddEventTransition("EV_DO_POST", "ST_POSTING")
 			:AddEvent("EV_AUCTION_SELECTION_CHANGED", function(context)
 				assert(context.scanFrame)
 				local selection = context.scanFrame:GetElement("auctions"):GetSelection()
@@ -2209,9 +2177,11 @@ function private.FSMCreate()
 			:AddTransition("ST_UPDATING_SCAN_PROGRESS")
 			:AddTransition("ST_AUCTION_FOUND")
 			:AddTransition("ST_AUCTION_NOT_FOUND")
+			:AddTransition("ST_POSTING")
 			:AddTransition("ST_INIT")
 			:AddEventTransition("EV_AUCTION_FOUND", "ST_AUCTION_FOUND")
 			:AddEventTransition("EV_AUCTION_NOT_FOUND", "ST_AUCTION_NOT_FOUND")
+			:AddEventTransition("EV_DO_POST", "ST_POSTING")
 			:AddEvent("EV_AUCTION_SELECTION_CHANGED", function(context)
 				assert(context.scanFrame)
 				local selection = context.scanFrame:GetElement("auctions"):GetSelection()
@@ -2375,7 +2345,7 @@ function private.FSMCreate()
 				context.progressText = progressText
 				context.progressPaused = false
 				context.postDisabled = not canPost
-				if numCanBuy == 0 or isAltPlayer or (not TSM.IsWowClassic() and numConfirming > 0) then
+				if numCanBuy == 0 or isAltPlayer or numConfirming > 0 then
 					context.bidDisabled = true
 					context.buyoutDisabled = true
 					context.cancelShown = isPlayer and not TSM.IsWowClassic()
@@ -2394,49 +2364,18 @@ function private.FSMCreate()
 			:AddTransition("ST_BUY_CONFIRMATION")
 			:AddTransition("ST_BID_CONFIRMATION")
 			:AddTransition("ST_CANCELING")
+			:AddTransition("ST_POSTING")
 			:AddTransition("ST_PLACING_BUY")
 			:AddTransition("ST_PLACING_BID")
-			:AddTransition("ST_CONFIRMING_BID_BUY")
 			:AddTransition("ST_RESULTS")
 			:AddTransition("ST_INIT")
 			:AddEventTransition("EV_AUCTION_SELECTION_CHANGED", "ST_BUYING")
 			:AddEventTransition("EV_BUYOUT_CLICKED", "ST_BUY_CONFIRMATION")
 			:AddEventTransition("EV_BID_CLICKED", "ST_BID_CONFIRMATION")
 			:AddEventTransition("EV_CANCEL_CLICKED", "ST_CANCELING")
+			:AddEventTransition("EV_DO_POST", "ST_POSTING")
 			:AddEvent("EV_CONFIRMED", function(context, isBuy, quantity)
 				return isBuy and "ST_PLACING_BUY" or "ST_PLACING_BID", quantity
-			end)
-			:AddEvent("EV_MSG", function(context, msg)
-				if not context.findAuction then
-					return
-				end
-				if TSM.IsWowClassic() then
-					local _, rawLink = context.findAuction:GetLinks()
-					if msg == LE_GAME_ERR_AUCTION_HIGHER_BID or msg == LE_GAME_ERR_ITEM_NOT_FOUND or msg == LE_GAME_ERR_AUCTION_BID_OWN or msg == LE_GAME_ERR_NOT_ENOUGH_MONEY or msg == LE_GAME_ERR_ITEM_MAX_COUNT then
-						-- failed to buy an auction
-						return "ST_CONFIRMING_BID_BUY", false
-					elseif msg == format(ERR_AUCTION_WON_S, ItemInfo.GetName(rawLink)) or (context.numBid > 0 and msg == ERR_AUCTION_BID_PLACED) then
-						-- bought an auction
-						return "ST_CONFIRMING_BID_BUY", true
-					end
-				else
-					if msg == Enum.AuctionHouseNotification.AuctionWon or (context.numBid > 0 and msg == Enum.AuctionHouseNotification.BidPlaced) then
-						-- bought an auction
-						return "ST_CONFIRMING_BID_BUY", true
-					end
-				end
-			end)
-			:AddEvent("EV_ERROR_MSG", function(context, msg)
-				if not context.findAuction then
-					return
-				end
-				return "ST_CONFIRMING_BID_BUY", false
-			end)
-			:AddEvent("EV_BUYOUT_SUCCESS", function(context)
-				if not context.findAuction then
-					return
-				end
-				return "ST_CONFIRMING_BID_BUY", true
 			end)
 			:AddEvent("EV_POST_BUTTON_CLICK", function(context)
 				wipe(context.postContextTemp)
@@ -2532,29 +2471,50 @@ function private.FSMCreate()
 				assert(not TSM.IsWowClassic() or index)
 				-- buy the auction
 				local buyout = context.findAuction:GetBuyouts()
-				local result = context.auctionScan:PlaceBidOrBuyout(index, buyout, context.findAuction, quantity)
-				if result then
-					MailTracking.RecordAuctionBuyout(ItemString.ToLevel(context.findAuction:GetItemString()), quantity)
-					context.numBought = context.numBought + (TSM.IsWowClassic() and 1 or quantity)
+				if TSM.IsWowClassic() and buyout ~= select(10, GetAuctionItemInfo("list", index)) then
+					-- The list of auctions changed, so rescan
+					local _, rawLink = context.findAuction:GetLinks()
+					Log.PrintfUser(L["Failed to buy auction of %s."], rawLink)
+					return "ST_RESULTS"
+				end
+				local future = context.auctionScan:PlaceBidOrBuyout(index, buyout, context.findAuction, quantity)
+				if future then
+					future:SetScript("OnDone", private.FSMFutureOnDone)
+					assert(not context.pendingFuture)
+					context.pendingFuture = future
 					context.lastBuyQuantity = quantity
+					context.lastBuyIndex = index
+					context.numBought = context.numBought + (TSM.IsWowClassic() and 1 or quantity)
+					UpdateScanFrame(context)
 				else
 					local _, rawLink = context.findAuction:GetLinks()
 					Log.PrintfUser(L["Failed to buy auction of %s."], rawLink)
+					return "ST_BUYING"
 				end
-				return "ST_BUYING"
 			end)
 			:AddTransition("ST_BUYING")
-		)
-		:AddState(FSM.NewState("ST_CONFIRMING_BID_BUY")
-			:SetOnEnter(function(context, success)
-				if not success then
+			:AddTransition("ST_RESULTS")
+			:AddTransition("ST_INIT")
+			:AddEvent("EV_FUTURE_DONE", function(context)
+				assert(context.pendingFuture)
+				local result = context.pendingFuture:GetValue()
+				context.pendingFuture = nil
+				if result then
+					MailTracking.RecordAuctionBuyout(ItemString.ToLevel(context.findAuction:GetItemString()), context.lastBuyQuantity)
+					context.numConfirmed = context.numConfirmed + (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
+					return "ST_BUYING", context.lastBuyQuantity
+				else
 					local _, rawLink = context.findAuction:GetLinks()
 					Log.PrintfUser(L["Failed to buy auction of %s."], rawLink)
+					context.numBought = context.numBought - (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
+					if TSM.IsWowClassic() then
+						tinsert(context.findResult, context.lastBuyIndex)
+					end
+					context.lastBuyQuantity = nil
+					context.lastBuyIndex = nil
+					return "ST_BUYING"
 				end
-				context.numConfirmed = context.numConfirmed + (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
-				return "ST_BUYING", context.lastBuyQuantity
 			end)
-			:AddTransition("ST_BUYING")
 		)
 		:AddState(FSM.NewState("ST_PLACING_BID")
 			:SetOnEnter(function(context, quantity)
@@ -2563,18 +2523,43 @@ function private.FSMCreate()
 				-- bid on the auction
 				local result, future = context.auctionScan:PrepareForBidOrBuyout(index, context.findAuction, false, quantity)
 				assert(not future)
-				result = result and context.auctionScan:PlaceBidOrBuyout(index, context.findAuction:GetRequiredBid(), context.findAuction, quantity)
-				if result then
-					MailTracking.RecordAuctionBuyout(ItemString.ToLevel(context.findAuction:GetItemString()), quantity)
-					context.numBid = context.numBid + (TSM.IsWowClassic() and 1 or quantity)
+				future = result and context.auctionScan:PlaceBidOrBuyout(index, context.findAuction:GetRequiredBid(), context.findAuction, quantity)
+				if future then
+					future:SetScript("OnDone", private.FSMFutureOnDone)
+					assert(not context.pendingFuture)
+					context.pendingFuture = future
 					context.lastBuyQuantity = quantity
+					context.lastBuyIndex = index
+					context.numBid = context.numBid + (TSM.IsWowClassic() and 1 or quantity)
+					UpdateScanFrame(context)
 				else
 					local _, rawLink = context.findAuction:GetLinks()
 					Log.PrintfUser(L["Failed to bid on auction of %s."], rawLink)
+					return "ST_BUYING"
 				end
-				return "ST_BUYING"
 			end)
 			:AddTransition("ST_BUYING")
+			:AddTransition("ST_INIT")
+			:AddEvent("EV_FUTURE_DONE", function(context)
+				assert(context.pendingFuture)
+				local result = context.pendingFuture:GetValue()
+				context.pendingFuture = nil
+				if result then
+					MailTracking.RecordAuctionBuyout(ItemString.ToLevel(context.findAuction:GetItemString()), context.lastBuyQuantity)
+					context.numConfirmed = context.numConfirmed + (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
+					return "ST_BUYING", context.lastBuyQuantity
+				else
+					local _, rawLink = context.findAuction:GetLinks()
+					Log.PrintfUser(L["Failed to buy auction of %s."], rawLink)
+					context.numBid = context.numBid - (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
+					if TSM.IsWowClassic() then
+						tinsert(context.findResult, context.lastBuyIndex)
+					end
+					context.lastBuyQuantity = nil
+					context.lastBuyIndex = nil
+					return "ST_BUYING"
+				end
+			end)
 		)
 		:AddState(FSM.NewState("ST_CANCELING")
 			:SetOnEnter(function(context)
@@ -2583,8 +2568,9 @@ function private.FSMCreate()
 				Log.Info("Canceling (auctionId=%d)", auctionId)
 				local future = AuctionHouseWrapper.CancelAuction(auctionId)
 				if future then
-					future:SetScript("OnDone", private.FSMCancelFutureOnDone)
-					context.cancelFuture = future
+					future:SetScript("OnDone", private.FSMFutureOnDone)
+					assert(not context.pendingFuture)
+					context.pendingFuture = future
 					UpdateScanFrame(context)
 				else
 					Log.PrintUser(L["Failed to cancel auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
@@ -2593,10 +2579,10 @@ function private.FSMCreate()
 			end)
 			:AddTransition("ST_BUYING")
 			:AddTransition("ST_INIT")
-			:AddEvent("EV_CANCEL_DONE", function(context)
-				assert(context.cancelFuture)
-				local result = context.cancelFuture:GetValue()
-				context.cancelFuture = nil
+			:AddEvent("EV_FUTURE_DONE", function(context)
+				assert(context.pendingFuture)
+				local result = context.pendingFuture:GetValue()
+				context.pendingFuture = nil
 				if result then
 					context.findAuction:GetResultRow():RemoveSubRow(context.findAuction)
 					context.scanFrame:GetElement("auctions"):UpdateData()
@@ -2604,6 +2590,57 @@ function private.FSMCreate()
 					Log.PrintUser(L["Failed to cancel auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
 				end
 				return "ST_BUYING"
+			end)
+		)
+		:AddState(FSM.NewState("ST_POSTING")
+			:SetOnEnter(function(context, itemString, postBag, postSlot, postTime, stackSize, bid, buyout, num)
+				local future = nil
+				if TSM.IsWowClassic() then
+					if ItemString.IsPet(itemString) then
+						stackSize = 1
+						num = 1
+					end
+					if private.perItem then
+						bid = bid * stackSize
+						buyout = buyout * stackSize
+					end
+					future = AuctionHouseWrapper.PostAuction(postBag, postSlot, bid, buyout, postTime, stackSize, num)
+				else
+					bid = Math.Round(bid, COPPER_PER_SILVER)
+					buyout = Math.Round(buyout, COPPER_PER_SILVER)
+					private.itemLocation:Clear()
+					private.itemLocation:SetBagAndSlot(postBag, postSlot)
+					local commodityStatus = C_AuctionHouse.GetItemCommodityStatus(private.itemLocation)
+					if commodityStatus == Enum.ItemCommodityStatus.Item then
+						future = AuctionHouseWrapper.PostItem(private.itemLocation, postTime, stackSize, (buyout == 0 or bid < buyout) and bid or nil, buyout > 0 and buyout or nil)
+					elseif commodityStatus == Enum.ItemCommodityStatus.Commodity then
+						future = AuctionHouseWrapper.PostCommodity(private.itemLocation, postTime, stackSize, buyout)
+					else
+						error("Unknown commodity status: "..tostring(itemString))
+					end
+				end
+				if future then
+					future:SetScript("OnDone", private.FSMFutureOnDone)
+					assert(not context.pendingFuture)
+					context.pendingFuture = future
+					UpdateScanFrame(context)
+				else
+					Log.PrintUser(L["Failed to post auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
+					return "ST_RESULTS"
+				end
+			end)
+			:AddTransition("ST_RESULTS")
+			:AddTransition("ST_INIT")
+			:AddEvent("EV_FUTURE_DONE", function(context)
+				assert(context.pendingFuture)
+				local result = context.pendingFuture:GetValue()
+				context.pendingFuture = nil
+				if result then
+					AuctionTracking.QueryOwnedAuctions()
+				else
+					Log.PrintUser(L["Failed to post auction due to the auction house being busy. Ensure no other addons are scanning the AH and try again."])
+				end
+				return "ST_RESULTS"
 			end)
 		)
 		:AddDefaultEvent("EV_START_SCAN", function(context, searchContext)
@@ -2620,25 +2657,15 @@ function private.FSMCreate()
 			context.scanFrame = nil
 			context.findAuction = nil
 		end)
+		:AddDefaultEvent("EV_CAN_SEND_AUCTION_QUERY_UPDATE", function(context, canSendAuctionQuery)
+			context.canSendAuctionQuery = canSendAuctionQuery
+			if context.scanFrame then
+				UpdateScanFrame(context)
+			end
+		end)
 		:AddDefaultEventTransition("EV_AUCTION_HOUSE_CLOSED", "ST_INIT")
 		:AddDefaultEventTransition("EV_SCAN_BACK_BUTTON_CLICKED", "ST_INIT")
 		:Init("ST_INIT", fsmContext)
-end
-
-function private.FSMMessageEventHandler(_, msg)
-	private.fsm:SetLoggingEnabled(false)
-	private.fsm:ProcessEvent("EV_MSG", msg)
-	private.fsm:SetLoggingEnabled(true)
-end
-
-function private.FSMMessageErrorEventHandler(_, msg)
-	private.fsm:SetLoggingEnabled(false)
-	private.fsm:ProcessEvent("EV_ERROR_MSG", msg)
-	private.fsm:SetLoggingEnabled(true)
-end
-
-function private.FSMBuyoutSuccess()
-	private.fsm:ProcessEvent("EV_BUYOUT_SUCCESS")
 end
 
 function private.FSMAuctionScanOnProgressUpdate(auctionScan)
@@ -2676,6 +2703,6 @@ function private.PopulatePostContextFromRow(postContext, row)
 	postContext.quantity = row:GetQuantities()
 end
 
-function private.FSMCancelFutureOnDone()
-	private.fsm:ProcessEvent("EV_CANCEL_DONE")
+function private.FSMFutureOnDone()
+	private.fsm:ProcessEvent("EV_FUTURE_DONE")
 end

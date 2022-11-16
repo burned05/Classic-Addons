@@ -7,6 +7,7 @@
 local _, TSM = ...
 local Destroying = TSM:NewPackage("Destroying")
 local DisenchantInfo = TSM.Include("Data.DisenchantInfo")
+local Container = TSM.Include("Util.Container")
 local Database = TSM.Include("Util.Database")
 local Event = TSM.Include("Util.Event")
 local SlotId = TSM.Include("Util.SlotId")
@@ -34,6 +35,7 @@ local private = {
 	destroyInfoDB = nil,
 	disenchantSkillLevel = nil,
 	jewelcraftSkillLevel = nil,
+	inscriptionSkillLevel = nil,
 	combineFuture = Future.New("DESTROYING_COMBINE_FUTURE"),
 	destroyFuture = Future.New("DESTROYING_DESTROY_FUTURE"),
 }
@@ -218,8 +220,8 @@ function private.CombineThread()
 	while Destroying.CanCombine() do
 		for _, combineSlotId in ipairs(private.pendingCombines) do
 			local sourceBag, sourceSlot, targetBag, targetSlot = private.CombineSlotIdToBagSlot(combineSlotId)
-			PickupContainerItem(sourceBag, sourceSlot)
-			PickupContainerItem(targetBag, targetSlot)
+			Container.PickupItem(sourceBag, sourceSlot)
+			Container.PickupItem(targetBag, targetSlot)
 		end
 		-- wait for the bagDB to change
 		private.newBagUpdate = false
@@ -352,9 +354,10 @@ function private.UpdateBagDB()
 		query:Equal("isBoP", false)
 			:Equal("isBoA", false)
 	end
-	if TSM.IsWowBCClassic() then
+	if TSM.IsWowWrathClassic() then
 		private.disenchantSkillLevel = TSM.Crafting.PlayerProfessions.GetProfessionSkill(UnitName("player"), GetSpellInfo(7411))
 		private.jewelcraftSkillLevel = TSM.Crafting.PlayerProfessions.GetProfessionSkill(UnitName("player"), GetSpellInfo(28897))
+		private.inscriptionSkillLevel = TSM.Crafting.PlayerProfessions.GetProfessionSkill(UnitName("player"), GetSpellInfo(45357))
 	end
 	for _, slotId, itemString, quantity in query:Iterator() do
 		local minQuantity = nil
@@ -416,7 +419,7 @@ function private.IsDestroyable(itemString)
 	local quality = ItemInfo.GetQuality(itemString)
 	if ItemInfo.IsDisenchantable(itemString) and quality <= private.settings.deMaxQuality then
 		local hasSourceItem = true
-		if TSM.IsWowBCClassic() then
+		if TSM.IsWowWrathClassic() then
 			local classId = ItemInfo.GetClassId(itemString)
 			local itemLevel = ItemInfo.GetItemLevel(ItemString.GetBase(itemString))
 			hasSourceItem = false
@@ -438,10 +441,11 @@ function private.IsDestroyable(itemString)
 	local conversionMethod, destroySpellId = nil, nil
 	local classId = ItemInfo.GetClassId(itemString)
 	local subClassId = ItemInfo.GetSubClassId(itemString)
-	if classId == LE_ITEM_CLASS_TRADEGOODS and subClassId == ITEM_SUB_CLASS_HERB then
+	-- Workaround for Fire Leaf (i:39970) not being treated as an herb (at least in classsic)
+	if (classId == Enum.ItemClass.Tradegoods and subClassId == ITEM_SUB_CLASS_HERB) or itemString == "i:39970" then
 		conversionMethod = Conversions.METHOD.MILL
 		destroySpellId = SPELL_IDS.milling
-	elseif classId == LE_ITEM_CLASS_TRADEGOODS and subClassId == ITEM_SUB_CLASS_METAL_AND_STONE then
+	elseif classId == Enum.ItemClass.Tradegoods and subClassId == ITEM_SUB_CLASS_METAL_AND_STONE then
 		conversionMethod = Conversions.METHOD.PROSPECT
 		destroySpellId = SPELL_IDS.prospect
 	else
@@ -452,7 +456,7 @@ function private.IsDestroyable(itemString)
 
 	local hasSourceItem = false
 	for _, _, _, _, _, skillRequired in Conversions.TargetItemsByMethodIterator(itemString, conversionMethod) do
-		if not skillRequired or (private.jewelcraftSkillLevel and skillRequired and private.jewelcraftSkillLevel >= skillRequired) then
+		if not skillRequired or (conversionMethod == Conversions.METHOD.PROSPECT and private.jewelcraftSkillLevel and skillRequired and private.jewelcraftSkillLevel >= skillRequired) or (conversionMethod == Conversions.METHOD.MILL and private.inscriptionSkillLevel and skillRequired and private.inscriptionSkillLevel >= skillRequired) then
 			hasSourceItem = true
 		end
 	end

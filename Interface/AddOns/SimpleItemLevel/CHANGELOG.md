@@ -1,6 +1,6 @@
 # Simple Item Level
 
-## [v17](https://github.com/kemayo/wow-simpleitemlevel/tree/v17) (2022-02-26)
-[Full Changelog](https://github.com/kemayo/wow-simpleitemlevel/compare/v16...v17) [Previous Releases](https://github.com/kemayo/wow-simpleitemlevel/releases)
+## [v19.1](https://github.com/kemayo/wow-simpleitemlevel/tree/v19.1) (2022-10-26)
+[Full Changelog](https://github.com/kemayo/wow-simpleitemlevel/compare/v19...v19.1) [Previous Releases](https://github.com/kemayo/wow-simpleitemlevel/releases)
 
-- Support Void Storage  
+- Fix Inventorian integration  

@@ -16,3 +16,7 @@ Auctionator: enabled
 AuctionFaster: disabled
 Auc-Advanced: disabled
 WoWPro: disabled
+Leatrix_Plus: enabled
+TradeSkillMaster: disabled
+weizPVP: disabled
+ElvUI_UnitFramePlugin: disabled

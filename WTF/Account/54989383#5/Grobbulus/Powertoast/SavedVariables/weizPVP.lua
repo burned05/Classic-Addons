@@ -7,14 +7,14 @@ _weizpvp_chardb = {
 		["Default"] = {
 			["Options"] = {
 				["Database"] = {
-					["LastCleaned"] = 1659593151,
+					["LastCleaned"] = 1664987972,
 					["VERSION"] = 3,
 				},
 				["Window"] = {
 					["Visible"] = false,
 				},
 				["LDB"] = {
-					["minimapPos"] = 268.1522562262892,
+					["minimapPos"] = 321.1964183613511,
 				},
 				["Frames"] = {
 					["Point"] = "TOPLEFT",
@@ -22,7 +22,7 @@ _weizpvp_chardb = {
 					["Y"] = 426.2781982421875,
 					["X"] = 5.610885143280029,
 					["List"] = {
-						["Height"] = 360.0000305175781,
+						["Height"] = 360.0000915527344,
 					},
 					["Height"] = 216,
 				},

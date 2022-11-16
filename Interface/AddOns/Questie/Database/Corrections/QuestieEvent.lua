@@ -48,8 +48,11 @@ Harvest Festival history:         lunar calendar 15/8 in gregorian calendar:
 ]] --
 
 ---@class QuestieEvent
+---@field public private QuestieEventPrivate
 local QuestieEvent = QuestieLoader:CreateModule("QuestieEvent")
+---@class QuestieEventPrivate
 local _QuestieEvent = QuestieEvent.private
+
 QuestieEvent.activeQuests = {}
 _QuestieEvent.eventNamesForQuests = {}
 
@@ -73,7 +76,7 @@ function QuestieEvent:Load()
     QuestieEvent.eventDates["Lunar Festival"] = QuestieEvent.lunarFestival[year]
     local activeEvents = {}
 
-    local eventCorrections = Questie.IsTBC and QuestieEvent.eventDateCorrections["TBC"] or QuestieEvent.eventDateCorrections["CLASSIC"]
+    local eventCorrections = (Questie.IsTBC or Questie.IsWotlk) and QuestieEvent.eventDateCorrections["TBC"] or QuestieEvent.eventDateCorrections["CLASSIC"]
     for eventName,dates in pairs(eventCorrections) do
         if dates then
             QuestieEvent.eventDates[eventName] = dates
@@ -113,8 +116,11 @@ function QuestieEvent:Load()
         _QuestieEvent.eventNamesForQuests[questId] = eventName
 
         if activeEvents[eventName] == true and _WithinDates(startDay, startMonth, endDay, endMonth) then
-            QuestieCorrections.hiddenQuests[questId] = nil
-            QuestieEvent.activeQuests[questId] = true
+
+            if ((not questData[5]) or (Questie.IsClassic and questData[5] == QuestieCorrections.CLASSIC_ONLY)) then
+                QuestieCorrections.hiddenQuests[questId] = nil
+                QuestieEvent.activeQuests[questId] = true
+            end
         end
     end
 
@@ -187,10 +193,10 @@ _LoadDarkmoonFaire = function()
 end
 
 --- Checks wheather the current date is within the given date range
----@param startDay number
----@param startMonth number
----@param endDay number
----@param endMonth number
+---@param startDay number?
+---@param startMonth number?
+---@param endDay number?
+---@param endMonth number?
 ---@return boolean @True if the current date is between the given, false otherwise
 _WithinDates = function(startDay, startMonth, endDay, endMonth)
     if (not startDay) and (not startMonth) and (not endDay) and (not endMonth) then
@@ -212,11 +218,7 @@ end
 
 ---@return string
 function QuestieEvent:GetEventNameFor(questId)
-    local eventName = ""
-    if _QuestieEvent.eventNamesForQuests[questId] then
-        eventName = _QuestieEvent.eventNamesForQuests[questId]
-    end
-    return eventName
+    return _QuestieEvent.eventNamesForQuests[questId] or ""
 end
 
 function QuestieEvent:IsEventQuest(questId)
@@ -241,6 +243,10 @@ QuestieEvent.eventDates = {
         startDate = "17/9",
         endDate = "24/9"
     },
+    ["Pilgrim's Bounty"] = {
+        startDate = "5/9",
+        endDate = "11/9"
+    },
     ["Peon Day"] = {startDate = "30/9", endDate = "30/9"},
     ["Hallow's End"] = {startDate = "18/10", endDate = "1/11"},
     ["Winter Veil"] = {startDate = "15/12", endDate = "2/1"}
@@ -251,8 +257,10 @@ QuestieEvent.eventDates = {
 QuestieEvent.eventDateCorrections = {
     ["CLASSIC"] = {
         ["Brewfest"] = false,
+        ["Pilgrim's Bounty"] = false,
     },
     ["TBC"] = {
+        ["Harvest Festival"] = false,
     },
 }
 
@@ -601,14 +609,15 @@ tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12409}) -- Candy Bucket
 --tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12410}) -- Candy Bucket -- doesn't exist
 tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11392}) -- Call the Headless Horseman
 tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11401}) -- Call the Headless Horseman
-tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11403}) -- Free at Last!
-tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11242}) -- Free at Last!
-tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11404}) -- Call the Headless Horseman
-tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11405}) -- Call the Headless Horseman
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11403, nil, nil, QuestieCorrections.CLASSIC_ONLY}) -- Free at Last!
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11242, nil, nil, QuestieCorrections.CLASSIC_ONLY}) -- Free at Last!
+--tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11404}) -- Call the Headless Horseman
+--tinsert(QuestieEvent.eventQuests, {"Hallow's End", 11405}) -- Call the Headless Horseman
 
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11127}) -- <NYI>Thunderbrew Secrets
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 12022}) -- Chug and Chuck!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11117}) -- Catch the Wild Wolpertinger!
+tinsert(QuestieEvent.eventQuests, {"Brewfest", 11431}) -- Catch the Wild Wolpertinger!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11318}) -- Now This is Ram Racing... Almost.
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11409}) -- Now This is Ram Racing... Almost.
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11438}) -- [PH] Beer Garden B
@@ -629,10 +638,12 @@ tinsert(QuestieEvent.eventQuests, {"Brewfest", 11320}) -- [NYI] Now this is Ram 
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11441}) -- Brewfest!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11446}) -- Brewfest!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 12062}) -- Insult Coren Direbrew
-tinsert(QuestieEvent.eventQuests, {"Brewfest", 12194}) -- Say, There Wouldn't Happen to be a Souvenir This Year, Would There?
+--tinsert(QuestieEvent.eventQuests, {"Brewfest", 12194}) -- Say, There Wouldn't Happen to be a Souvenir This Year, Would There?
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 12191}) -- Chug and Chuck!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11293}) -- Bark for the Barleybrews!
 tinsert(QuestieEvent.eventQuests, {"Brewfest", 11294}) -- Bark for the Thunderbrews!
+tinsert(QuestieEvent.eventQuests, {"Brewfest", 11407}) -- Bark for Drohn's Distillery!
+tinsert(QuestieEvent.eventQuests, {"Brewfest", 11408}) -- Bark for T'chali's Voodoo Brewery!
 
 
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 9324}) -- Stealing Orgrimmar's Flame
@@ -658,6 +669,7 @@ tinsert(QuestieEvent.eventQuests, {"Midsummer", 11580}) -- Desecrate this Fire!
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11581}) -- Desecrate this Fire!
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11583}) -- Honor the Flame
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11584}) -- Honor the Flame
+tinsert(QuestieEvent.eventQuests, {"Midsummer", 11657}) -- Torch Catching
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11691}) -- Summon Ahune
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11696}) -- Ahune is Here!
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11731}) -- Torch Tossing
@@ -786,9 +798,9 @@ tinsert(QuestieEvent.eventQuests, {"Midsummer", 11886}) -- Unusual Activity
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11915}) -- Playing with Fire
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11921}) -- Midsummer
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11922}) -- Midsummer
-tinsert(QuestieEvent.eventQuests, {"Midsummer", 11923}) -- Midsummer
-tinsert(QuestieEvent.eventQuests, {"Midsummer", 11924}) -- Midsummer
-tinsert(QuestieEvent.eventQuests, {"Midsummer", 11925}) -- Midsummer
+tinsert(QuestieEvent.eventQuests, {"Midsummer", 11923}) -- Torch Catching
+tinsert(QuestieEvent.eventQuests, {"Midsummer", 11924}) -- More Torch Catching
+tinsert(QuestieEvent.eventQuests, {"Midsummer", 11925}) -- More Torch Catching
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11926}) -- Midsummer
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11933}) -- Stealing the Exodar's Flame
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11935}) -- Stealing Silvermoon's Flame
@@ -801,3 +813,74 @@ tinsert(QuestieEvent.eventQuests, {"Midsummer", 11970}) -- The Master of Summer 
 tinsert(QuestieEvent.eventQuests, {"Midsummer", 11971}) -- The Spinner of Summer Tales
 
 tinsert(QuestieEvent.eventQuests, {"Winter Veil", 11528, "25/12", "2/1"}) -- A Winter Veil Gift
+
+--- Wotlk event quests
+
+tinsert(QuestieEvent.eventQuests, {"Noblegarden", 13479}) -- The Great Egg Hunt
+tinsert(QuestieEvent.eventQuests, {"Noblegarden", 13480}) -- The Great Egg Hunt
+tinsert(QuestieEvent.eventQuests, {"Noblegarden", 13502}) -- A Tisket, a Tasket, a Noblegarden Basket
+tinsert(QuestieEvent.eventQuests, {"Noblegarden", 13503}) -- A Tisket, a Tasket, a Noblegarden Basket
+
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 14488}) -- You've Been Served
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24597}) -- A Gift for the King of Stormwind
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24609}) -- A Gift for the Lord of Ironforge
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24610}) -- A Gift for the High Priestess of Elune
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24611}) -- A Gift for the Prophet
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24612}) -- A Gift for the Warchief
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24613}) -- A Gift for the Banshee Queen
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24614}) -- A Gift for the High Chieftain
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24615}) -- A Gift for the Regent Lord of Quel'Thalas
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24629}) -- A Perfect Puff of Perfume
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24635}) -- A Cloudlet of Classy Cologne
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24636}) -- Bonbon Blitz
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24655}) -- Something Stinks
+tinsert(QuestieEvent.eventQuests, {"Love is in the Air", 24804}) -- Uncommon Scents
+
+tinsert(QuestieEvent.eventQuests, {"Children's Week", 13926}) -- Little Orphan Roo Of The Oracles
+tinsert(QuestieEvent.eventQuests, {"Children's Week", 13927}) -- Little Orphan Kekek Of The Wolvar
+
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12940}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12941}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12944}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12945}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12946}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12947}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 12950}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13433}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13434}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13435}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13436}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13437}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13438}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13439}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13448}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13452}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13456}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13459}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13460}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13461}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13462}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13463}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13464}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13465}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13466}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13467}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13468}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13469}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13470}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13471}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13472}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13473}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13474}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13501}) -- Candy Bucket
+tinsert(QuestieEvent.eventQuests, {"Hallow's End", 13548}) -- Candy Bucket
+
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 12784}) -- Desperate Research
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 12808}) -- A Desperate Alliance
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 13483}) -- Spring Gatherers
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 13484}) -- Spring Collectors
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 14036}) -- Pilgrim's Bounty
+tinsert(QuestieEvent.eventQuests, {"Pilgrim's Bounty", 14022}) -- Pilgrim's Bounty
+
+tinsert(QuestieEvent.eventQuests, {"Brewfest", 13931}) -- Another Year, Another Souvenir. -- Doesn't seem to be in the game
+tinsert(QuestieEvent.eventQuests, {"Brewfest", 13932}) -- Another Year, Another Souvenir. -- Doesn't seem to be in the game

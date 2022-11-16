@@ -3,6 +3,8 @@ local _, addon = ...
 local _G = _G
 
 local BackdropTemplate = BackdropTemplateMixin and "BackdropTemplate"
+local GetContainerNumSlots = C_Container and C_Container.GetContainerNumSlots or GetContainerNumSlots
+local GetContainerItemID = C_Container and C_Container.GetContainerItemID or GetContainerItemID
 local GameTooltip = _G.GameTooltip
 
 local function GetActiveItemList(ref)
@@ -37,6 +39,7 @@ local function GetActiveItemList(ref)
                 texture = itemTexture,
                 invSlot = i,
                 id = id,
+                spell = false,
             })
         end
     end
@@ -54,6 +57,7 @@ local function GetActiveItemList(ref)
                     bag = bag,
                     slot = slot,
                     id = id,
+                    spell = false,
                 })
             end
         end
@@ -96,14 +100,16 @@ local function UpdateCooldowns()
                                          not btn.cooldown:IsShown() then
                     btn.cooldown:SetCooldown(start,duration)
                 end
-            --else
-                --cd = ""
+            else
+                btn.cooldown:Clear()
             end
             -- print(cd)
             --[[if cd ~= btn.cd then
                 btn.cd = cd
                 btn.text:SetText(cd)
             end]]
+        else
+            btn.cooldown:Clear()
         end
     end
 end
@@ -128,13 +134,21 @@ function addon.CreateActiveItemFrame(self, anchor, enableText)
         f = self.activeItemFrame
     end
 
+    addon.enabledFrames["activeItemFrame"] = f
+    f.IsFeatureEnabled = function()
+        return not addon.settings.db.profile.disableItemWindow and next(GetActiveItemList()) ~= nil
+    end
+
     f:ClearBackdrop()
     f:SetBackdrop(addon.RXPFrame.backdropEdge)
     f:SetBackdropColor(unpack(addon.colors.background))
-    function f.onMouseDown() f:StartMoving() end
+    f.onMouseDown = function()
+        if addon.settings.db.profile.lockFrames and not IsAltKeyDown() then return end
+        f:StartMoving()
+    end
     function f.onMouseUp() f:StopMovingOrSizing() end
-    f:SetScript("OnMouseDown", f.StartMoving)
-    f:SetScript("OnMouseUp", f.StopMovingOrSizing)
+    f:SetScript("OnMouseDown", f.onMouseDown)
+    f:SetScript("OnMouseUp", f.onMouseUp)
     f.parent = self
     f.buttonList = {}
     f:SetPoint("CENTER", anchor, "CENTER", 0, 0)
@@ -151,7 +165,7 @@ function addon.CreateActiveItemFrame(self, anchor, enableText)
         f.title.text:SetJustifyH("CENTER")
         f.title.text:SetJustifyV("CENTER")
         f.title.text:SetTextColor(1, 1, 1)
-        f.title.text:SetFont(addon.font, 9)
+        f.title.text:SetFont(addon.font, 9, "")
         f.title.text:SetText("Active Items")
         f.title:EnableMouse(true)
         f.title:SetScript("OnMouseDown", f.onMouseDown)
@@ -216,8 +230,8 @@ function addon.UpdateItemFrame(itemFrame)
     local buttonList = itemFrame.buttonList
     local itemList = GetActiveItemList()
 
-    if itemFrame.hardcore ~= RXPCData.hardcore or not itemFrame.hardcore then
-        itemFrame.hardcore = RXPCData.hardcore
+    if itemFrame.hardcore ~= addon.settings.db.profile.hardcore or not itemFrame.hardcore then
+        itemFrame.hardcore = addon.settings.db.profile.hardcore
         itemFrame:ClearBackdrop()
         itemFrame:SetBackdrop(addon.RXPFrame.backdropEdge)
         local r, g, b = unpack(addon.colors.background)
@@ -237,6 +251,9 @@ function addon.UpdateItemFrame(itemFrame)
                               "SecureActionButtonTemplate")
             btn:SetAttribute("type", "item")
             btn:SetSize(25, 25)
+            if btn.RegisterForClick then
+                btn:RegisterForClick("AnyUp", "AnyDown")
+            end
             table.insert(buttonList, btn)
             local n = #buttonList
 
@@ -275,11 +292,14 @@ function addon.UpdateItemFrame(itemFrame)
 
         -- print(id,item.texture,item.name)
         local attribute = "item"
-        if btn.spell then
+        if item.spell then
             attribute = "spell"
         end
         btn:SetAttribute("type",attribute)
         btn:SetAttribute(attribute, item.name)
+        if btn.itemId ~= item.id and btn.cooldown then
+            btn.cooldown:Clear()
+        end
         btn.itemId = item.id
         btn.bag = item.bag
         btn.slot = item.slot
@@ -292,7 +312,7 @@ function addon.UpdateItemFrame(itemFrame)
     -- print("s:",i)
     if i > 0 then itemFrame:SetAlpha(1) end
 
-    if i == 0 then
+    if i == 0 or addon.settings.db.profile.disableItemWindow or not addon.settings.db.profile.showEnabled then
         itemFrame:Hide()
     else
         itemFrame:Show()

@@ -10,6 +10,11 @@ addon.linePoints = {}
 
 addon.arrowFrame = CreateFrame("Frame", "RXPG_ARROW", UIParent)
 local af = addon.arrowFrame
+addon.enabledFrames["arrowFrame"] = af
+af.IsFeatureEnabled = function ()
+    return not addon.settings.db.profile.disableArrow and (addon.hideArrow ~= nil and not addon.hideArrow)
+end
+
 af:SetMovable(true)
 af:EnableMouse(1)
 af:SetClampedToScreen(true)
@@ -20,7 +25,7 @@ af.texture:SetTexture(addon.GetTexture("rxp_navigation_arrow-1"))
 -- af.texture:SetScale(0.5)
 af.text = af:CreateFontString(nil, "OVERLAY")
 af.text:SetTextColor(1, 1, 1, 1)
-af.text:SetFont(addon.font, 9) -- ,"OUTLINE")
+af.text:SetFont(addon.font, 9,"OUTLINE")
 af.text:SetJustifyH("CENTER")
 af.text:SetJustifyV("CENTER")
 af.text:SetPoint("TOP", af, "BOTTOM", 0, -5)
@@ -33,13 +38,13 @@ af:SetPoint("TOP")
 af:Hide()
 
 af:SetScript("OnMouseDown", function(self, button)
-    if not RXPData.lockFrames and af:GetAlpha() ~= 0 then af:StartMoving() end
+    if not addon.settings.db.profile.lockFrames and af:GetAlpha() ~= 0 then af:StartMoving() end
 end)
 af:SetScript("OnMouseUp", function(self, button) af:StopMovingOrSizing() end)
 
 function addon.UpdateArrow(self)
 
-    if RXPData.disableArrow or not self then return end
+    if addon.settings.db.profile.disableArrow or not self then return end
     local element = self.element
     if element then
         local x, y, instance = HBD:GetPlayerWorldPosition()
@@ -152,7 +157,7 @@ MapPinPool.creationFunc = function(framePool)
             f.text:SetText(stepIndex)
         end
 
-        if RXPData.mapCircle and not isMiniMapPin then
+        if addon.settings.db.profile.mapCircle and not isMiniMapPin then
             local size = math.max(f.text:GetWidth(), f.text:GetHeight()) + 8
 
             if step.active then
@@ -160,7 +165,7 @@ MapPinPool.creationFunc = function(framePool)
                 f:SetWidth(size + 3)
                 f:SetHeight(size + 3)
                 f:SetBackdropColor(0.0, 0.0, 0.0,
-                                   RXPData.worldMapPinBackgroundOpacity)
+                                   addon.settings.db.profile.worldMapPinBackgroundOpacity)
                 f.inner:SetBackdropColor(1, 1, 1, 1)
                 f.inner:SetWidth(size + 3)
                 f.inner:SetHeight(size + 3)
@@ -168,7 +173,7 @@ MapPinPool.creationFunc = function(framePool)
                 f.text:SetFont(addon.font, 14, "OUTLINE")
             else
                 f:SetBackdropColor(0.1, 0.1, 0.1,
-                                   RXPData.worldMapPinBackgroundOpacity)
+                                   addon.settings.db.profile.worldMapPinBackgroundOpacity)
                 f:SetWidth(size)
                 f:SetHeight(size)
 
@@ -180,13 +185,13 @@ MapPinPool.creationFunc = function(framePool)
             f.inner:SetWidth(size)
             f.inner:SetHeight(size)
             f.text:SetPoint("CENTER", f, 0, 0)
-            f:SetScale(RXPData.worldMapPinScale)
+            f:SetScale(addon.settings.db.profile.worldMapPinScale)
             f:SetAlpha(pin.opacity)
         else
             if step.active and not isMiniMapPin then
                 f:SetAlpha(1)
                 f:SetBackdropColor(0.0, 0.0, 0.0,
-                                   RXPData.worldMapPinBackgroundOpacity)
+                                   addon.settings.db.profile.worldMapPinBackgroundOpacity)
                 f.inner:SetBackdropColor(1, 1, 1, 1)
                 f.inner:SetWidth(8 + 3)
                 f.inner:SetHeight(8 + 3)
@@ -194,7 +199,7 @@ MapPinPool.creationFunc = function(framePool)
                 f.text:SetFont(addon.font, 14, "OUTLINE")
             else
                 local bgAlpha = isMiniMapPin and 0 or
-                                    RXPData.worldMapPinBackgroundOpacity
+                                    addon.settings.db.profile.worldMapPinBackgroundOpacity
                 f:SetBackdropColor(0.1, 0.1, 0.1, bgAlpha)
 
                 f.inner:SetBackdropColor(0, 0, 0, 0)
@@ -208,7 +213,7 @@ MapPinPool.creationFunc = function(framePool)
             f.inner:SetWidth(1)
             f.inner:SetHeight(1)
             f.text:SetPoint("CENTER", f, 0, 0)
-            f:SetScale(RXPData.worldMapPinScale)
+            f:SetScale(addon.settings.db.profile.worldMapPinScale)
             f:SetAlpha(pin.opacity)
         end
 
@@ -325,7 +330,7 @@ MapLinePool.creationFunc = function(framePool)
         -- self:Show()
 
         f:SetScript("OnEnter", function(self)
-            if RXPData.debug and self.lineData then
+            if addon.settings.db.profile.debug and self.lineData then
                 local line = self.lineData
                 self:SetAlpha(0.5)
                 print("Line start point:", line.sX, ",", line.sY)
@@ -360,7 +365,7 @@ local lineMapFramePool = MapLinePool.create()
 
 -- Calculates if a given element is close to any other provided pins
 local function elementIsCloseToOtherPins(element, pins, isMiniMapPin)
-    local overlap = RXPData.distanceBetweenPins or 1
+    local overlap = addon.settings.db.profile.distanceBetweenPins or 1
     local pinDistanceMod, pinMaxDistance = 0, 0
     if isMiniMapPin then
         pinMaxDistance = 25
@@ -401,7 +406,7 @@ end
 local lsh = bit.lshift
 local function GetPinHash(x,y,instance,element)
     return (instance % 256) + lsh(math.floor(x*128),8) +
-            lsh(math.floor(y*1024),15) + lsh((element % 64),25)
+            lsh(math.floor(y*1024),15) + lsh((element % 128),25)
 end
 -- Creates a list of Pin data structures.
 --
@@ -605,10 +610,10 @@ local function generateLines(steps, numPins, startingIndex, isMiniMap)
                                 local yinc = (fY - sY) / length
                                 local xpos, ypos = sX, sY
 
-                                for n = 1, nSegments do
+                                for k = 1, nSegments do
                                     local endx = xpos + xinc
                                     local endy = ypos + yinc
-                                    local alpha = bit.band(n, 0x1)
+                                    local alpha = bit.band(k, 0x1)
                                     if alpha > 0 then
                                         InsertLine(element, xpos, ypos, endx,
                                                    endy, alpha)
@@ -671,7 +676,7 @@ end
 -- Generate pins using the current guide's steps, then add the pins to the world map
 local function addWorldMapPins()
     -- Calculate which pins should be on the world map
-    local pins = generatePins(addon.currentGuide.steps, RXPData.numMapPins,
+    local pins = generatePins(addon.currentGuide.steps, addon.settings.db.profile.numMapPins,
                               RXPCData.currentStep, false)
 
     -- Convert each "pin" data structure into a WoW frame. Then add that frame to the world map
@@ -689,7 +694,7 @@ local function addWorldMapPins()
 end
 
 local function addWorldMapLines()
-    local lineData = generateLines(addon.currentGuide.steps, RXPData.numMapPins,
+    local lineData = generateLines(addon.currentGuide.steps, addon.settings.db.profile.numMapPins,
                                    RXPCData.currentStep, false)
 
     for i = #lineData, 1, -1 do
@@ -706,9 +711,9 @@ end
 
 -- Generate pins using only the active steps, then add the pins to the Mini Map
 local function addMiniMapPins(pins)
-    if RXPData.hideMiniMapPins then return end
+    if addon.settings.db.profile.hideMiniMapPins then return end
     -- Calculate which pins should be on the mini map
-    local pins = generatePins(addon.currentGuide.steps, RXPData.numMapPins,
+    local pins = generatePins(addon.currentGuide.steps, addon.settings.db.profile.numMapPins,
                               RXPCData.currentStep, true)
 
     -- Convert each "pin" data structure into a WoW frame. Then add that frame to the mini map
@@ -740,7 +745,7 @@ local function updateArrow()
                 (element.parent.completed or element.parent.skip)) and
             not (element.text and (element.completed or isComplete) and
                 not isComplete)) then
-            af:SetShown(not RXPData.disableArrow and not addon.hideArrow)
+            af:SetShown(not addon.settings.db.profile.disableArrow and not addon.hideArrow and addon.settings.db.profile.showEnabled)
             af.dist = 0
             af.orientation = 0
             af.element = element
@@ -751,9 +756,13 @@ local function updateArrow()
 
     if UnitIsGhost("player") and --Meet at the grave and the follow-up quest:
         not (addon.QuestAutoTurnIn(3912) or addon.QuestAutoAccept(3913)) then
+        local skip
+        for i,element in pairs(addon.activeWaypoints) do
+            skip = skip or (not element.textOnly and addon.currentGuide.name == "41-43 Badlands")
+        end
         local zone = HBD:GetPlayerZone()
         local corpse = C_DeathInfo.GetCorpseMapPosition(zone)
-        if corpse and corpse.x then
+        if not skip and corpse and corpse.x then
             corpseWP.wx, corpseWP.wy, corpseWP.instance =
                              HBD:GetWorldCoordinatesFromZone(corpse.x,corpse.y,zone)
             ProcessWaypoint(corpseWP)
@@ -774,6 +783,16 @@ local function updateArrow()
     end
 
     af:Hide()
+end
+
+function addon.ResetArrowPosition()
+    addon.settings.db.profile.disableArrow = false
+    if not addon.settings.db.profile.showEnabled then
+        addon.settings.ToggleActive()
+    end
+    af:ClearAllPoints()
+    af:SetPoint("CENTER", 0, 200)
+    updateArrow()
 end
 
 -- Removes all pins from the map and mini map and resets all data structrures
@@ -830,16 +849,18 @@ function addon.UpdateGotoSteps()
     local minDist
     local zone = C_Map.GetBestMapForUnit("player")
     local x, y, instance = HBD:GetPlayerWorldPosition()
-    if af.element and af.element.instance ~= instance then hideArrow = true end
+    if af.element and af.element.instance ~= instance and instance ~= -1 then hideArrow = true end
     for i, element in ipairs(addon.activeWaypoints) do
         if element.step and element.step.active then
 
-            if element.tag == "groundgoto" and
+            if element.tag == "groundgoto" and not element.skip and
                                  IsFlyableArea() and addon.GetSkillLevel("riding") >= 225 and
                                  zone == element.zone and (not addon.game == "WOTLK" or
                                  instance ~= addon.mapId["Northrend"] or IsPlayerSpell(54197)) then
-                forceArrowUpdate = forceArrowUpdate or not element.skip
+                --forceArrowUpdate = forceArrowUpdate or not element.skip
                 element.skip = true
+                addon.updateMap = true
+                return
             elseif (element.radius or element.dynamic) and element.arrow and
                 not (element.parent and
                     (element.parent.completed or element.parent.skip) and
@@ -868,7 +889,7 @@ function addon.UpdateGotoSteps()
                             if element.persistent then
                                 hideArrow = true
                             elseif not (element.textOnly and element.hidePin and
-                                                         element.wpHash ~= af.element.wpHash) then
+                                         element.wpHash ~= af.element.wpHash and not element.generated) then
                                 element.skip = true
                                 addon.updateMap = true
                                 addon.SetElementComplete(element.frame)
@@ -974,6 +995,14 @@ function addon.UpdateGotoSteps()
     if forceArrowUpdate then updateArrow() end
 end
 
+local function GetMapCoefficients(p1x,p1y,p1xb,p1yb,p2x,p2y,p2xb,p2yb)
+    local c11 = (p1xb-p2xb)/(p1x-p2x)
+    local c31 = p1xb-p1x*c11
+    local c22 = (p1yb-p2yb)/(p1y-p2y)
+    local c32 = p1yb-p1y*c22
+    return {c11,c31,c22,c32}
+end
+
 local p1 = {
     ["y"] = 25,
     ["x"] = 25,
@@ -987,16 +1016,25 @@ local p2 = 	{
     ["xb"] = 77.70637435364208,
 }
 
-local function GetMapCoefficients(p1x,p1y,p1xb,p1yb,p2x,p2y,p2xb,p2yb)
-    local c11 = (p1xb-p2xb)/(p1x-p2x)
-    local c31 = p1xb-p1x*c11
-    local c22 = (p1yb-p2yb)/(p1y-p2y)
-    local c32 = p1yb-p1y*c22
-    return {c11,c31,c22,c32}
-end
 
-addon.classicToWrath = GetMapCoefficients(p1.x,p1.y,p1.xb,p1.yb,p2.x,p2.y,p2.xb,p2.yb)
-addon.wrathToClassic = GetMapCoefficients(p1.xb,p1.yb,p1.x,p1.y,p2.xb,p2.yb,p2.x,p2.y)
+addon.classicToWrathSW = GetMapCoefficients(p1.x,p1.y,p1.xb,p1.yb,p2.x,p2.y,p2.xb,p2.yb)
+addon.wrathToClassicSW = GetMapCoefficients(p1.xb,p1.yb,p1.x,p1.y,p2.xb,p2.yb,p2.x,p2.y)
+
+p1 = {
+    ["x"] = 81.51690,
+    ["y"] = 59.23138,
+    ["xb"] = 75.75077,
+    ["yb"] = 53.32378,
+}
+p2 = {
+    ["x"] = 48.12616,
+    ["y"] = 21.96377,
+    ["xb"] = 43.67876,
+    ["yb"] = 17.52954,
+}
+
+addon.classicToWrathEPL = GetMapCoefficients(p1.x,p1.y,p1.xb,p1.yb,p2.x,p2.y,p2.xb,p2.yb)
+addon.wrathToClassicEPL = GetMapCoefficients(p1.xb,p1.yb,p1.x,p1.y,p2.xb,p2.yb,p2.x,p2.y)
 
 function addon.GetMapInfo(zone,x,y)
     x = tonumber(x)
@@ -1005,18 +1043,32 @@ function addon.GetMapInfo(zone,x,y)
         return
     elseif zone == "StormwindClassic" then
         if addon.gameVersion > 30000 then
-            local c = addon.classicToWrath
+            local c = addon.classicToWrathSW
             x = x*c[1]+c[2]
             y = y*c[3]+c[4]
         end
         return addon.mapId["Stormwind City"],x,y
+    elseif zone == "EPLClassic" then
+        if addon.gameVersion > 30000 then
+            local c = addon.classicToWrathEPL
+            x = x*c[1]+c[2]
+            y = y*c[3]+c[4]
+        end
+        return addon.mapId["Eastern Plaguelands"],x,y
     elseif zone == "StormwindNew" then
         if addon.gameVersion < 30000 then
-            local c = addon.wrathToClassic
+            local c = addon.wrathToClassicSW
             x = x*c[1]+c[2]
             y = y*c[3]+c[4]
         end
         return addon.mapId["Stormwind City"],x,y
+    elseif zone == "EPLNew" then
+        if addon.gameVersion < 30000 then
+            local c = addon.wrathToClassicEPL
+            x = x*c[1]+c[2]
+            y = y*c[3]+c[4]
+        end
+        return addon.mapId["Eastern Plaguelands"],x,y
     else
         return addon.mapId[zone] or tonumber(zone),x,y
     end
@@ -1024,3 +1076,5 @@ end
 
 addon.mapId["StormwindClassic"] = addon.mapId["Stormwind City"]
 addon.mapId["StormwindNew"] = addon.mapId["Stormwind City"]
+addon.mapId["EPLClassic"] = addon.mapId["Eastern Plaguelands"]
+addon.mapId["EPLNew"] = addon.mapId["Eastern Plaguelands"]

@@ -62,8 +62,9 @@ function ProfessionUtil.OnInitialize()
 
 		-- check if we need to update bank quantity manually
 		for _, itemString, quantity in TSM.Crafting.MatIterator(private.craftString) do
-			local bankUsed = quantity - (Inventory.GetBagQuantity(itemString) + Inventory.GetReagentBankQuantity(itemString))
-			if bankUsed > 0 and bankUsed <= Inventory.GetBankQuantity(itemString) then
+			local bankQuantity = Inventory.GetBagQuantity(itemString) + Inventory.GetReagentBankQuantity(itemString)
+			local bankUsed = quantity - bankQuantity
+			if bankUsed > 0 and bankUsed <= bankQuantity then
 				Log.Info("Used %d from bank", bankUsed)
 				BagTracking.ForceBankQuantityDeduction(itemString, bankUsed)
 			end
@@ -116,12 +117,12 @@ function ProfessionUtil.GetCurrentProfessionInfo()
 		local name = TSM.Crafting.ProfessionState.IsClassicCrafting() and GetCraftSkillLine(1) or GetTradeSkillLine()
 		return name
 	else
-		local skillId, name, _, _, _, _, parentName = C_TradeSkillUI.GetTradeSkillLine()
-		return parentName or name, skillId
+		local info = C_TradeSkillUI.GetBaseProfessionInfo()
+		return info.parentProfessionName or info.professionName, info.profession
 	end
 end
 
-function ProfessionUtil.GetResultInfo(craftString, level)
+function ProfessionUtil.GetResultInfo(craftString)
 	-- get the links
 	local spellId = CraftString.GetSpellId(craftString)
 	local itemLink = ProfessionUtil.GetRecipeInfo(craftString)
@@ -130,15 +131,30 @@ function ProfessionUtil.GetResultInfo(craftString, level)
 	end
 	if strfind(itemLink, "enchant:") then
 		-- result of craft is not an item
-		local itemString = ProfessionInfo.GetIndirectCraftResult(spellId)
-		if itemString and not TSM.IsWowClassic() then
+		local indirectSpellId = nil
+		if TSM.IsWowWrathClassic() then
+			indirectSpellId = strmatch(itemLink, "enchant:(%d+)")
+			indirectSpellId = indirectSpellId and tonumber(indirectSpellId)
+			if not indirectSpellId then
+				return true
+			end
+		else
+			indirectSpellId = spellId
+		end
+		local itemString = ProfessionInfo.GetIndirectCraftResult(indirectSpellId)
+		if itemString and (not TSM.IsWowClassic() or TSM.IsWowWrathClassic()) then
 			return TSM.UI.GetColoredItemName(itemString), itemString, ItemInfo.GetTexture(itemString)
 		elseif ProfessionInfo.IsEngineeringTinker(spellId) then
 			local name, _, icon = GetSpellInfo(spellId)
 			return name, nil, icon
 		else
-			local name, _, icon = GetSpellInfo(TSM.Crafting.ProfessionState.IsClassicCrafting() and GetCraftInfo(TSM.IsWowClassic() and TSM.Crafting.ProfessionScanner.GetIndexByCraftString(craftString) or spellId) or spellId)
-			return name, nil, icon
+			if TSM.IsWowWrathClassic() then
+				local name, _, icon = GetSpellInfo(indirectSpellId)
+				return name, nil, icon
+			else
+				local name, _, icon = GetSpellInfo(TSM.Crafting.ProfessionState.IsClassicCrafting() and GetCraftInfo(TSM.IsWowClassic() and TSM.Crafting.ProfessionScanner.GetIndexByCraftString(craftString) or spellId) or spellId)
+				return name, nil, icon
+			end
 		end
 	elseif strfind(itemLink, "item:") then
 		-- result of craft is an item
@@ -165,6 +181,38 @@ function ProfessionUtil.GetNumCraftable(craftString, level)
 		end
 		num = min(num, floor(bagQuantity / quantity))
 		numAll = min(numAll, floor(totalQuantity / quantity))
+	end
+	if num == math.huge or numAll == math.huge then
+		return 0, 0
+	end
+	return num, numAll
+end
+
+function ProfessionUtil.GetNumCraftableRecipeString(recipeString)
+	local num, numAll = math.huge, math.huge
+	local spellId = RecipeString.GetSpellId(recipeString)
+	local level = RecipeString.GetLevel(recipeString)
+	for i = 1, ProfessionUtil.GetNumMats(spellId, level) do
+		local matItemLink, _, _, quantity = ProfessionUtil.GetMatInfo(spellId, i, level)
+		local itemString = ItemString.Get(matItemLink)
+		local totalQuantity = CustomPrice.GetItemPrice(itemString, "NumInventory") or 0
+		if not itemString or not quantity or totalQuantity == 0 then
+			return 0, 0
+		end
+		local bagQuantity = Inventory.GetBagQuantity(itemString)
+		if not TSM.IsWowClassic() then
+			bagQuantity = bagQuantity + Inventory.GetReagentBankQuantity(itemString) + Inventory.GetBankQuantity(itemString)
+		end
+		num = min(num, floor(bagQuantity / quantity))
+		numAll = min(numAll, floor(totalQuantity / quantity))
+	end
+	for _, _, itemId in RecipeString.OptionalMatIterator(recipeString) do
+		local optionalMatItemString = ItemString.Get(itemId)
+		local bagQuantity = Inventory.GetBagQuantity(optionalMatItemString)
+		if not TSM.IsWowClassic() then
+			bagQuantity = bagQuantity + Inventory.GetReagentBankQuantity(optionalMatItemString) + Inventory.GetBankQuantity(optionalMatItemString)
+		end
+		num = min(num, bagQuantity)
 	end
 	if num == math.huge or numAll == math.huge then
 		return 0, 0
@@ -243,15 +291,23 @@ end
 function ProfessionUtil.IsEnchant(craftString)
 	local spellId = CraftString.GetSpellId(craftString)
 	local name = ProfessionUtil.GetCurrentProfessionInfo()
-	if name ~= GetSpellInfo(7411) or TSM.IsWowClassic() then
+	if name ~= GetSpellInfo(7411) then
 		return false
 	end
-	if not strfind(C_TradeSkillUI.GetRecipeItemLink(spellId), "enchant:") then
-		return false
+	if TSM.IsWowClassic() then
+		local itemLink = ProfessionUtil.GetRecipeInfo(craftString)
+		if not strfind(itemLink, "enchant:") then
+			return false, false
+		end
+		return true, not TSM.IsWowVanillaClassic()
+	else
+		if not strfind(C_TradeSkillUI.GetRecipeItemLink(spellId), "enchant:") then
+			return false, false
+		end
+		local recipeInfo = C_TradeSkillUI.GetRecipeInfo(spellId)
+		local altVerb = recipeInfo.alternateVerb
+		return altVerb and true or false, true
 	end
-	local recipeInfo = C_TradeSkillUI.GetRecipeInfo(spellId)
-	local altVerb = recipeInfo.alternateVerb
-	return altVerb and true or false
 end
 
 function ProfessionUtil.OpenProfession(profession, skillId)
@@ -271,30 +327,16 @@ end
 
 function ProfessionUtil.PrepareToCraft(craftString, recipeString, quantity, level)
 	local spellId = CraftString.GetSpellId(craftString)
-	quantity = min(quantity, ProfessionUtil.GetNumCraftable(craftString, level))
+	if recipeString then
+		quantity = min(quantity, ProfessionUtil.GetNumCraftableRecipeString(recipeString))
+	else
+		quantity = min(quantity, ProfessionUtil.GetNumCraftable(craftString, level))
+	end
 	if quantity == 0 then
 		return
 	end
-	if ProfessionUtil.IsEnchant(craftString) then
+	if ProfessionUtil.IsEnchant(craftString) or (recipeString and RecipeString.HasOptionalMats(recipeString)) then
 		quantity = 1
-	end
-
-	if not TSM.IsWowClassic() then
-		local optionalMats = TempTable.Acquire()
-		if recipeString then
-			for _, slotId, itemId in RecipeString.OptionalMatIterator(recipeString) do
-				local info = TempTable.Acquire()
-				info.itemID = itemId
-				info.slot = slotId
-				info.count = 1
-				tinsert(optionalMats, info)
-			end
-		end
-		C_TradeSkillUI.SetRecipeRepeatCount(spellId, quantity, recipeString and optionalMats)
-		for _, info in ipairs(optionalMats) do
-			TempTable.Release(info)
-		end
-		TempTable.Release(optionalMats)
 	end
 	private.preparedSpellId = spellId
 	private.preparedTime = GetTime()
@@ -303,11 +345,15 @@ end
 function ProfessionUtil.Craft(craftString, recipeId, quantity, useVellum, callback)
 	local spellId = nil
 	local level = nil
+	local hasOptionalMats = false
 	if type(recipeId) == "string" then
 		spellId = RecipeString.GetSpellId(recipeId)
 		level = RecipeString.GetLevel(recipeId)
+		hasOptionalMats = RecipeString.HasOptionalMats(recipeId)
+		quantity = min(quantity, ProfessionUtil.GetNumCraftableRecipeString(recipeId))
 	else
 		spellId = recipeId
+		quantity = min(quantity, ProfessionUtil.GetNumCraftable(craftString, level))
 	end
 	assert(TSM.Crafting.ProfessionScanner.HasCraftString(craftString))
 	if private.craftSpellId then
@@ -315,12 +361,11 @@ function ProfessionUtil.Craft(craftString, recipeId, quantity, useVellum, callba
 		private.DoCraftCallback(false, true)
 		return 0
 	end
-	quantity = min(quantity, ProfessionUtil.GetNumCraftable(craftString, level))
 	if quantity == 0 then
 		return 0
 	end
-	local isEnchant = ProfessionUtil.IsEnchant(craftString)
-	if isEnchant then
+	local isEnchant, vellumable = ProfessionUtil.IsEnchant(craftString)
+	if isEnchant or hasOptionalMats then
 		quantity = 1
 	elseif spellId ~= private.preparedSpellId or private.preparedTime == GetTime() then
 		-- We can only craft one of this item due to a bug on Blizzard's end
@@ -345,8 +390,8 @@ function ProfessionUtil.Craft(craftString, recipeId, quantity, useVellum, callba
 			for _, slotId, itemId in RecipeString.OptionalMatIterator(recipeId) do
 				local info = TempTable.Acquire()
 				info.itemID = itemId
-				info.slot = slotId
-				info.count = 1
+				info.dataSlotIndex = slotId
+				info.quantity = 1
 				tinsert(optionalMats, info)
 			end
 		end
@@ -356,8 +401,14 @@ function ProfessionUtil.Craft(craftString, recipeId, quantity, useVellum, callba
 		end
 		TempTable.Release(optionalMats)
 	end
-	if useVellum and isEnchant then
-		UseItemByName(ItemInfo.GetName(ProfessionInfo.GetVellumItemString()))
+	if useVellum and isEnchant and vellumable then
+		local indirectSpellId = nil
+		if TSM.IsWowWrathClassic() then
+			local itemLink = ProfessionUtil.GetRecipeInfo(craftString)
+			indirectSpellId = strmatch(itemLink, "enchant:(%d+)")
+			indirectSpellId = indirectSpellId and tonumber(indirectSpellId)
+		end
+		UseItemByName(ItemInfo.GetName(ProfessionInfo.GetVellumItemString(indirectSpellId)))
 	end
 	private.castingTimeout = nil
 	private.craftTimeout = nil
@@ -390,28 +441,48 @@ function ProfessionUtil.GetRemainingCooldown(craftString)
 end
 
 function ProfessionUtil.GetRecipeInfo(craftString)
-	local itemLink, lNum, hNum, toolsStr, hasTools = nil, nil, nil, nil, nil
+	local itemLink, lNum, hNum = nil, nil, nil
 	local spellId = CraftString.GetSpellId(craftString)
 	if TSM.IsWowClassic() then
 		local index = TSM.Crafting.ProfessionScanner.GetIndexByCraftString(craftString) or spellId
 		itemLink = TSM.Crafting.ProfessionState.IsClassicCrafting() and GetCraftItemLink(index) or GetTradeSkillItemLink(index)
+		local emptyLink = strfind(itemLink or "", "item::") and true or false
+		itemLink = not emptyLink and itemLink or nil
+		itemLink = itemLink or (TSM.IsWowWrathClassic() and GetTradeSkillRecipeLink(index)) or nil
 		if TSM.Crafting.ProfessionState.IsClassicCrafting() then
-			if TSM.IsWowBCClassic() then
-				lNum, hNum = GetCraftNumMade(index)
-			else
-				lNum, hNum = 1, 1
-			end
-			toolsStr, hasTools = GetCraftSpellFocus(index)
+			lNum, hNum = 1, 1
 		else
 			lNum, hNum = GetTradeSkillNumMade(index)
-			toolsStr, hasTools = GetTradeSkillTools(index)
 		end
 	else
 		itemLink = C_TradeSkillUI.GetRecipeItemLink(spellId)
-		lNum, hNum = C_TradeSkillUI.GetRecipeNumItemsProduced(spellId)
-		toolsStr, hasTools = C_TradeSkillUI.GetRecipeTools(spellId)
+		local level = CraftString.GetLevel(craftString) or 0
+		local info = C_TradeSkillUI.GetRecipeSchematic(spellId, false, level)
+		lNum, hNum = info.quantityMin, info.quantityMax
 	end
-	return itemLink, lNum, hNum, toolsStr, hasTools
+	return itemLink, lNum, hNum
+end
+
+function ProfessionUtil.GetRecipeToolInfo(craftString)
+	local toolsStr, hasTools = nil, nil
+	local spellId = CraftString.GetSpellId(craftString)
+	if TSM.IsWowClassic() then
+		local index = TSM.Crafting.ProfessionScanner.GetIndexByCraftString(craftString) or spellId
+		if TSM.Crafting.ProfessionState.IsClassicCrafting() then
+			toolsStr, hasTools = GetCraftSpellFocus(index)
+		else
+			toolsStr, hasTools = GetTradeSkillTools(index)
+		end
+	else
+		if TSM.IsWowDragonflightPTR() then
+			local requirements = C_TradeSkillUI.GetRecipeRequirements(spellId)
+			local toolName, hasTool = private.HasRequiredTool(requirements)
+			toolsStr, hasTools = toolName, hasTool
+		else
+			toolsStr, hasTools = C_TradeSkillUI.GetRecipeTools(spellId)
+		end
+	end
+	return toolsStr, hasTools
 end
 
 function ProfessionUtil.GetRecipeLink(craftString)
@@ -430,7 +501,15 @@ function ProfessionUtil.GetNumMats(spellId, level)
 		spellId = TSM.Crafting.ProfessionScanner.GetIndexByCraftString(CraftString.Get(spellId)) or spellId
 		numMats = TSM.Crafting.ProfessionState.IsClassicCrafting() and GetCraftNumReagents(spellId) or GetTradeSkillNumReagents(spellId)
 	else
-		numMats = C_TradeSkillUI.GetRecipeNumReagents(spellId, level)
+		local reagentType = Enum.CraftingReagentType.Basic
+		local info = C_TradeSkillUI.GetRecipeSchematic(spellId, false, level)
+		local num = 0
+		for _, data in pairs(info.reagentSlotSchematics) do
+			if data.reagentType == reagentType then
+				num = num + 1
+			end
+		end
+		numMats = num
 	end
 	return numMats
 end
@@ -446,8 +525,11 @@ function ProfessionUtil.GetMatInfo(spellId, index, level)
 			name, texture, quantity = GetTradeSkillReagentInfo(spellId, index)
 		end
 	else
-		itemLink = C_TradeSkillUI.GetRecipeReagentItemLink(spellId, index)
-		name, texture, quantity = C_TradeSkillUI.GetRecipeReagentInfo(spellId, index, level)
+		local info = C_TradeSkillUI.GetRecipeSchematic(spellId, false, level)
+		local reagentSlotInfo = info.reagentSlotSchematics[index]
+		local reagentDataInfo = reagentSlotInfo.reagents[1]
+		itemLink = C_TradeSkillUI.GetRecipeFixedReagentItemLink(spellId, reagentSlotInfo.dataSlotIndex)
+		name, texture, quantity = ItemInfo.GetName(reagentDataInfo.itemID), ItemInfo.GetTexture(reagentDataInfo.itemID), reagentSlotInfo.quantityRequired
 		if itemLink then
 			name = name or ItemInfo.GetName(itemLink)
 			texture = texture or ItemInfo.GetTexture(itemLink)
@@ -479,8 +561,10 @@ function ProfessionUtil.IsNPCProfession()
 end
 
 function ProfessionUtil.IsLinkedProfession()
-	if TSM.IsWowClassic() then
+	if TSM.IsWowVanillaClassic() then
 		return nil, nil
+	elseif TSM.IsWowWrathClassic() then
+		return IsTradeSkillLinked()
 	else
 		return C_TradeSkillUI.IsTradeSkillLinked()
 	end
@@ -498,12 +582,18 @@ function ProfessionUtil.GetCategoryInfo(categoryId)
 		parentCategoryId = nil
 	else
 		C_TradeSkillUI.GetCategoryInfo(categoryId, private.categoryInfoTemp)
-		assert(private.categoryInfoTemp.numIndents)
 		name = private.categoryInfoTemp.name
-		numIndents = private.categoryInfoTemp.numIndents
 		parentCategoryId = private.categoryInfoTemp.numIndents ~= 0 and private.categoryInfoTemp.parentCategoryID or nil
 		currentSkillLevel = private.categoryInfoTemp.skillLineCurrentLevel
 		maxSkillLevel = private.categoryInfoTemp.skillLineMaxLevel
+		if parentCategoryId then
+			C_TradeSkillUI.GetCategoryInfo(parentCategoryId, private.categoryInfoTemp)
+			if private.categoryInfoTemp.type == "subheader" then
+				numIndents = parentCategoryId == private.categoryInfoTemp.parentCategoryID and 0 or 1
+			end
+		else
+			numIndents = 0
+		end
 		wipe(private.categoryInfoTemp)
 	end
 	return name, numIndents, parentCategoryId, currentSkillLevel, maxSkillLevel
@@ -519,7 +609,7 @@ end
 
 function ProfessionUtil.GetCraftResultTooltipFromRecipeString(recipeString)
 	local craftString = CraftString.FromRecipeString(recipeString)
-	local _, itemString, texture = TSM.Crafting.ProfessionUtil.GetResultInfo(craftString)
+	local _, itemString, texture = ProfessionUtil.GetResultInfo(craftString)
 	local tooltip = nil
 	itemString = itemString or TSM.Crafting.GetItemString(craftString)
 	if not itemString or itemString == "" then
@@ -531,7 +621,8 @@ function ProfessionUtil.GetCraftResultTooltipFromRecipeString(recipeString)
 	else
 		texture = ItemInfo.GetTexture(itemString) or texture
 		local level = RecipeString.GetLevel(recipeString)
-		if level or RecipeString.HasOptionalMats(recipeString) then
+		local rank = RecipeString.GetRank(recipeString)
+		if level or rank or RecipeString.HasOptionalMats(recipeString) then
 			local levelItemString = level and TSM.Crafting.Cost.GetLevelItemString(recipeString)
 			tooltip = levelItemString or recipeString
 		else
@@ -612,4 +703,18 @@ function private.GetPlayerCastingInfo()
 	else
 		return UnitCastingInfo("player")
 	end
+end
+
+function private.HasRequiredTool(requirements)
+	local toolName, hasTool = nil, true
+	for _, recipeRequirement in ipairs(requirements) do
+		if recipeRequirement.type == Enum.RecipeRequirementType.Totem then
+			toolName = recipeRequirement.name
+			if not recipeRequirement.met then
+				hasTool = false
+				return toolName, hasTool
+			end
+		end
+	end
+	return toolName, hasTool
 end

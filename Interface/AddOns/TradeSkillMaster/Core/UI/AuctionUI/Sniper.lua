@@ -14,6 +14,7 @@ local Sound = TSM.Include("Util.Sound")
 local Money = TSM.Include("Util.Money")
 local Log = TSM.Include("Util.Log")
 local ItemString = TSM.Include("Util.ItemString")
+local DefaultUI = TSM.Include("Service.DefaultUI")
 local ItemInfo = TSM.Include("Service.ItemInfo")
 local AuctionScan = TSM.Include("Service.AuctionScan")
 local MailTracking = TSM.Include("Service.MailTracking")
@@ -293,9 +294,7 @@ function private.FSMCreate()
 		Event.Register("AUCTION_HOUSE_SHOW_ERROR", private.FSMMessageErrorEventHandler)
 		Event.Register("COMMODITY_PURCHASE_SUCCEEDED", private.FSMBuyoutSuccess)
 	end
-	Event.Register("AUCTION_HOUSE_CLOSED", function()
-		private.fsm:ProcessEvent("EV_AUCTION_HOUSE_CLOSED")
-	end)
+	DefaultUI.RegisterAuctionHouseVisibleCallback(function() private.fsm:ProcessEvent("EV_AUCTION_HOUSE_CLOSED") end, false)
 	AuctionHouseWrapper.RegisterAuctionIdUpdateCallback(function(...)
 		private.fsm:ProcessEvent("EV_AUCTION_ID_UPDATE", ...)
 	end)
@@ -647,7 +646,7 @@ function private.FSMCreate()
 				end
 				context.progress = context.numConfirmed / context.numFound
 				context.progressText = L["Scan Paused"].." - "..progressText
-				if numCanAction == 0 or isPlayer or (not TSM.IsWowClassic() and numConfirming > 0) then
+				if numCanAction == 0 or isPlayer or numConfirming > 0 then
 					context.buttonsDisabled = true
 				else
 					if context.searchContext:IsBuyoutScan() then
@@ -691,7 +690,7 @@ function private.FSMCreate()
 				end
 				if TSM.IsWowClassic() then
 					local _, rawLink = context.findAuction:GetLinks()
-					if msg == LE_GAME_ERR_AUCTION_HIGHER_BID or msg == LE_GAME_ERR_ITEM_NOT_FOUND or msg == LE_GAME_ERR_AUCTION_BID_OWN or msg == LE_GAME_ERR_NOT_ENOUGH_MONEY or msg == LE_GAME_ERR_ITEM_MAX_COUNT then
+					if msg == LE_GAME_ERR_AUCTION_DATABASE_ERROR or msg == LE_GAME_ERR_AUCTION_HIGHER_BID or msg == LE_GAME_ERR_ITEM_NOT_FOUND or msg == LE_GAME_ERR_AUCTION_BID_OWN or msg == LE_GAME_ERR_NOT_ENOUGH_MONEY or msg == LE_GAME_ERR_ITEM_MAX_COUNT then
 						-- failed to bid/buy an auction
 						return "ST_CONFIRMING_BID_BUY", false
 					elseif context.searchContext:IsBidScan() and msg == ERR_AUCTION_BID_PLACED then
@@ -793,7 +792,7 @@ function private.FSMCreate()
 				end
 				context.numConfirmed = context.numConfirmed + (TSM.IsWowClassic() and 1 or context.lastBuyQuantity)
 				context.findAuction = context.scanFrame and context.scanFrame:GetElement("auctions"):GetSelection()
-				return "ST_BIDDING_BUYING", context.lastBuyQuantity
+				return "ST_BIDDING_BUYING", success and context.lastBuyQuantity or nil
 			end)
 			:AddTransition("ST_BIDDING_BUYING")
 		)

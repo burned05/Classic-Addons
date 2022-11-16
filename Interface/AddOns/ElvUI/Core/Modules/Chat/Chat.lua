@@ -57,7 +57,7 @@ local UnitName = UnitName
 
 local C_Club_GetInfoFromLastCommunityChatLine = C_Club.GetInfoFromLastCommunityChatLine
 local C_DateAndTime_GetCurrentCalendarTime = C_DateAndTime.GetCurrentCalendarTime
-local C_LFGList_GetActivityInfo = C_LFGList.GetActivityInfo
+local C_LFGList_GetActivityInfoTable = C_LFGList.GetActivityInfoTable
 local C_LFGList_GetSearchResultInfo = C_LFGList.GetSearchResultInfo
 local C_SocialGetLastItem = C_Social.GetLastItem
 local C_SocialIsSocialEnabled = C_Social.IsSocialEnabled
@@ -75,6 +75,8 @@ local C_ChatInfo_GetChannelRuleset = E.Retail and C_ChatInfo.GetChannelRuleset
 local C_ChatInfo_GetChannelRulesetForChannelID = E.Retail and C_ChatInfo.GetChannelRulesetForChannelID
 local C_ChatInfo_GetChannelShortcutForChannelID = E.Retail and C_ChatInfo.GetChannelShortcutForChannelID
 local C_ChatInfo_IsChannelRegionalForChannelID = E.Retail and C_ChatInfo.IsChannelRegionalForChannelID
+
+local GetClientTexture = _G.BNet_GetClientEmbeddedAtlas or _G.BNet_GetClientEmbeddedTexture
 
 local RecruitLinkType = E.Retail and Enum.RafLinkType.Recruit
 local CHATCHANNELRULESET_MENTOR = E.Retail and Enum.ChatChannelRuleset.Mentor
@@ -131,6 +133,7 @@ local hyperlinkTypes = {
 local tabTexs = {
 	'',
 	'Selected',
+	'Active',
 	'Highlight'
 }
 
@@ -155,7 +158,7 @@ local historyTypes = { -- most of these events are set in FindURL_Events, this i
 	CHAT_MSG_EMOTE			= 'EMOTE' -- this never worked, check it sometime
 }
 
-if not E.Retail then
+if not (E.Retail or E.Wrath) then
 	CH.BNGetFriendInfo = _G.BNGetFriendInfo
 	CH.BNGetFriendInfoByID = _G.BNGetFriendInfoByID
 	CH.BNGetFriendGameAccountInfo = _G.BNGetFriendGameAccountInfo
@@ -272,6 +275,7 @@ do --this can save some main file locals
 	local Hibiscus		= E:TextureString(E.Media.ChatLogos.Hibiscus,x)
 	local Gem			= E:TextureString(E.Media.ChatLogos.Gem,x)
 	local Beer			= E:TextureString(E.Media.ChatLogos.Beer,x)
+	local PalmTree		= E:TextureString(E.Media.ChatLogos.PalmTree,x)
 	local TyroneBiggums = E:TextureString(E.Media.ChatLogos.TyroneBiggums,x)
 	local SuperBear		= E:TextureString(E.Media.ChatLogos.SuperBear,x)
 
@@ -280,7 +284,7 @@ do --this can save some main file locals
 		(a = a - (b and 1 or -1) if (b and a == 1 or a == 0) or a == #c then b = not b end return c[a])
 	]]
 
-	local itsElv, itsMis, itsMel, itsSimpy
+	local itsElv, itsMis, itsSimpy, itsMel, itsThradex, itsNihilistzsche
 	do	--Simpy Chaos: super cute text coloring function that ignores hyperlinks and keywords
 		local e, f, g = {'||','|Helvmoji:.-|h.-|h','|[Cc].-|[Rr]','|[TA].-|[ta]','|H.-|h.-|h'}, {}, {}
 		local prettify = function(t,...) return gsub(gsub(E:TextGradient(gsub(gsub(t,'%%%%','\27'),'\124\124','\26'),...),'\27','%%%%'),'\26','||') end
@@ -289,19 +293,25 @@ do --this can save some main file locals
 			if next(g) then if #g > 1 then sort(g) end for n in gmatch(t, '\24') do local _, v = next(g) t = gsub(t, n, f[v], 1) tremove(g, 1) f[v] = nil end end return t
 		end
 
-		--Simpys: maximum blue (44b7db), slate blue (825bcc), electric purple (af47ef), rose bonbon (ef47a0), orange (ff8200), spring green (44f46d)
-		local SimpyColors = function(t) return specialText(t, 0.27,0.72,0.86, 0.51,0.36,0.80, 0.69,0.28,0.94, 0.94,0.28,0.63, 1.00,0.51,0.00, 0.27,0.96,0.43) end
+		--Simpys: original rainbow
+		local SimpyColors = function(t) return specialText(t, 0.99,0.24,0.26, 0.99,0.59,0.28, 1,0.87,0.29, 0.42,0.99,0.39, 0.32,0.76,0.98, 0.63,0.36,0.98, 0.77,0.47,0.98) end
 		--Detroit Lions: Honolulu Blue to Silver [Elv: I stoles it @Simpy]
 		local ElvColors = function(t) return specialText(t, 0,0.42,0.69, 0.61,0.61,0.61) end
 		--Rainbow: FD3E44, FE9849, FFDE4B, 6DFD65, 54C4FC, A35DFA, C679FB, FE81C1
 		local MisColors = function(t) return specialText(t, 0.99,0.24,0.26, 0.99,0.59,0.28, 1,0.87,0.29, 0.42,0.99,0.39, 0.32,0.76,0.98, 0.63,0.36,0.98, 0.77,0.47,0.98, 0.99,0.5,0.75) end
 		--Mels: fiery rose (f94f6d), saffron (f7c621), emerald (4fc16d), medium slate blue (7c7af7), cyan process (11afea)
 		local MelColors = function(t) return specialText(t, 0.98,0.31,0.43, 0.97,0.78,0.13, 0.31,0.76,0.43, 0.49,0.48,0.97, 0.07,0.69,0.92) end
+		--Thradex: summer without you
+		local ThradexColors = function(t) return specialText(t, 0.00,0.60,0.09, 0.22,0.65,0.90, 0.22,0.65,0.90, 1.00,0.74,0.27, 1.00,0.66,0.00, 1.00,0.50,0.20, 0.92,0.31,0.23) end
+		--Nihilistzsche: Class Normal to Negative (Orange->Blue, Red->Cyan, etc)
+		local NihiColors = function(class) local c = E:ClassColor(class, true); local n = E:InverseClassColor(class, true, true); local c1,c2,c3, n1,n2,n3 = c.r,c.g,c.b, n.r,n.g,n.b; return function(t) return specialText(t, c1,c2,c3, n1,n2,n3, c1,c2,c3, n1,n2,n3) end end
 
 		itsSimpy = function() return ElvSimpy, SimpyColors end
 		itsElv = function() return ElvBlue, ElvColors end
 		itsMel = function() return Hibiscus, MelColors end
 		itsMis = function() return Rainbow, MisColors end
+		itsThradex = function() return PalmTree, ThradexColors end
+		itsNihilistzsche = function(class) local icon, prettyText = E:TextureString(E.Media.ChatLogos['Fox'..class],x), NihiColors(strupper(class)) return function() return icon, prettyText end end
 	end
 
 	local z = {}
@@ -310,25 +320,24 @@ do --this can save some main file locals
 	if E.Classic then
 		-- Simpy
 		z['Simpy-Myzrael']			= itsSimpy -- Warlock
-		-- Luckyone Classic Era
-		z['Luckyone-Shazzrah']		= ElvGreen -- Hunter
-		z['Luckydruid-Shazzrah']	= ElvGreen -- Druid
-		-- Luckyone Season of Mastery
-		z['Luckyone-Dreadnaught']	= ElvGreen -- Hunter
-	elseif E.TBC then
+	elseif E.Wrath then
 		-- Simpy
 		z['Cutepally-Myzrael']		= itsSimpy -- Paladin
+		z['Kalline-Myzrael']		= itsSimpy -- Shaman
+		z['Imsojelly-Myzrael']		= itsSimpy -- [Horde] DK
 		-- Luckyone
-		z['Luckyone-Shazzrah']		= ElvGreen -- Hunter 1
-		z['Luckyfear-Shazzrah']		= ElvGreen -- Warlock
-		z['Luckydruid-Shazzrah']	= ElvGreen -- Druid
-		z['Luckypriest-Shazzrah']	= ElvGreen -- Priest
-		z['Luckyshaman-Shazzrah']	= ElvGreen -- Shaman
-		z['Luckyone-Gehennas']		= ElvGreen -- Hunter 2
-		z['Luckydruid-Gehennas']	= ElvGreen -- Druid
-		z['Luckypriest-Gehennas']	= ElvGreen -- Priest
-		z['Luckyshaman-Gehennas']	= ElvGreen -- Shaman
-		z['Luckyhunter-Gehennas']	= ElvGreen -- Hunter 3
+		z['Luckyone-Gehennas']		= ElvOrange -- [Horde] Hunter
+		z['Luckygrip-Gehennas']		= ElvOrange -- [Horde] DK
+		z['Luckyone-Everlook']		= ElvOrange -- [Alliance] Druid
+		z['Luckypriest-Everlook']	= ElvOrange -- [Alliance] Priest
+		z['Luckyrogue-Everlook']	= ElvOrange -- [Alliance] Rogue
+		z['Luckyhunter-Everlook']	= ElvOrange -- [Alliance] Hunter
+		z['Luckydk-Everlook']		= ElvOrange -- [Alliance] DK
+		z['Luckykek-Everlook']		= ElvOrange -- [Alliance] Shaman
+		z['Luckyone-Giantstalker']	= ElvOrange -- [Alliance] Paladin
+		-- Repooc
+		z['Poocsdk-Mankrik']		= ElvBlue -- [Horde] DK
+		z['Repooc-Mankrik']			= ElvBlue
 	elseif E.Retail then
 		-- Elv
 		z['Elv-Spirestone']			= itsElv
@@ -357,18 +366,26 @@ do --this can save some main file locals
 		z['Merathilîs-Shattrath']	= ElvBlue	-- [Alliance] Shaman
 		z['Róhal-Shattrath']		= ElvGreen	-- [Alliance] Hunter
 		-- Luckyone
-		z['Luckyone-LaughingSkull']		= ElvGreen -- Druid
-		z['Luckypriest-LaughingSkull']	= ElvGreen -- Priest
-		z['Luckymonkas-LaughingSkull']	= ElvGreen -- Monk
-		z['Luckydk-LaughingSkull']		= ElvGreen -- DK
-		z['Luckyhunter-LaughingSkull']	= ElvGreen -- Hunter
-		z['Unluckyone-LaughingSkull']	= ElvGreen -- Shaman
-		z['Notlucky-LaughingSkull']		= ElvGreen -- Warrior
-		z['Luckymage-LaughingSkull']	= ElvGreen -- Mage
-		z['Luckydh-LaughingSkull']		= ElvGreen -- DH
-		z['Luckywl-LaughingSkull']		= ElvGreen -- Warlock
-		z['Luckyrogue-LaughingSkull']	= ElvGreen -- Rogue
-		z['Luckypala-LaughingSkull']	= ElvGreen -- Paladin
+		z['Luckyone-LaughingSkull']		= ElvOrange -- [Horde] Druid
+		z['Luckypriest-LaughingSkull']	= ElvOrange -- [Horde] Priest
+		z['Luckymonkas-LaughingSkull']	= ElvOrange -- [Horde] Monk
+		z['Luckyhunter-LaughingSkull']	= ElvOrange -- [Horde] Hunter
+		z['Luckydh-LaughingSkull']		= ElvOrange -- [Horde] DH
+		z['Luckymage-LaughingSkull']	= ElvOrange -- [Horde] Mage
+		z['Luckypala-LaughingSkull']	= ElvOrange -- [Horde] Paladin
+		z['Luckyrogue-LaughingSkull']	= ElvOrange -- [Horde] Rogue
+		z['Luckywl-LaughingSkull']		= ElvOrange -- [Horde] Warlock
+		z['Luckydk-LaughingSkull']		= ElvOrange -- [Horde] DK
+		z['Luckyevoker-LaughingSkull']	= ElvOrange -- [Horde] Evoker
+		z['Notlucky-LaughingSkull']		= ElvOrange -- [Horde] Warrior
+		z['Unluckyone-LaughingSkull']	= ElvOrange -- [Horde] Shaman
+		z['Luckydruid-LaughingSkull']	= ElvOrange -- [Alliance] Druid
+		-- Repooc
+		z['Sifpooc-Stormrage']			= ElvBlue	-- DH
+		z['Fragmented-Stormrage']		= ElvBlue	-- Warlock
+		z['Dapooc-Stormrage']			= ElvOrange	-- Druid
+		z['Sifupooc-Spirestone']		= ElvBlue	-- Monk
+		z['Repooc-Spirestone']			= ElvBlue	-- Paladin
 		-- Simpy
 		z['Arieva-Cenarius']			= itsSimpy -- Hunter
 		z['Buddercup-Cenarius']			= itsSimpy -- Rogue
@@ -417,6 +434,8 @@ do --this can save some main file locals
 		z['Alyrage-Cenarius']		= itsMel -- [Horde] Warrior
 		z['Alysneaks-Cenarius']		= itsMel -- [Horde] Rogue
 		z['Alytotes-Cenarius']		= itsMel -- [Horde] Shaman
+		-- Thradex (Simpys Buddy)
+		z['Foam-Area52']			= itsThradex
 		-- AcidWeb
 		z['Livarax-BurningLegion']		= Gem
 		z['Filevandrel-BurningLegion']	= Gem
@@ -434,12 +453,11 @@ do --this can save some main file locals
 		z['Teepac-Area52']		= TyroneBiggums
 		z['Teekettle-Area52']	= TyroneBiggums
 		-- Mis (NOTE: I will forever have the picture you accidently shared of the manikin wearing a strapon burned in my brain)
+		z['Twunk-Area52']			= itsMis
+		z['Twunkie-Area52']			= itsMis
+		z['Misoracle-Area52']		= itsMis
+		z['Mismayhem-Area52']		= itsMis
 		z['Misdîrect-Spirestone']	= itsMis
-		z['Misoracle-Spirestone']	= itsMis
-		z['MisLight-Spirestone']	= itsMis
-		z['MisDivine-Spirestone']	= itsMis
-		z['MisMayhem-Spirestone']	= itsMis
-		z['Mismonk-Spirestone']		= itsMis
 		z['Misillidan-Spirestone']	= itsMis
 		z['Mispel-Spirestone']		= itsMis
 		z['Misdecay-Spirestone']	= itsMis
@@ -452,6 +470,30 @@ do --this can save some main file locals
 		z['Rollerblade-Spirestone']	= SuperBear
 		--Bozaum
 		z['Bozaum-Spirestone']	= Beer
+		-- Nihilistzsche
+		z['Dirishia-WyrmrestAccord']	= itsNihilistzsche('Warlock')
+		z['Xanikani-WyrmrestAccord']	= itsNihilistzsche('Mage')
+		z['Rikanza-WyrmrestAccord']		= itsNihilistzsche('Monk')
+		z['Onaguda-WyrmrestAccord']		= itsNihilistzsche('Druid')
+		z['Cerishia-WyrmrestAccord']	= itsNihilistzsche('Priest')
+		z['Vellilara-WyrmrestAccord']	= itsNihilistzsche('DemonHunter')
+		z['Sayalia-WyrmrestAccord']		= itsNihilistzsche('DeathKnight')
+		z['Alledarisa-WyrmrestAccord']	= itsNihilistzsche('Paladin')
+		z['Orlyrala-WyrmrestAccord']	= itsNihilistzsche('Shaman')
+		z['Scerila-WyrmrestAccord']		= itsNihilistzsche('Rogue')
+		z['Ralaniki-WyrmrestAccord']	= itsNihilistzsche('Hunter')
+		z['Moyanza-WyrmrestAccord']		= itsNihilistzsche('Warrior')
+		z['Erasaya-WyrmrestAccord']		= itsNihilistzsche('DeathKnight')
+		z['Linabla-WyrmrestAccord']		= itsNihilistzsche('Druid')
+		z['Dirikoa-WyrmrestAccord']		= itsNihilistzsche('Hunter')
+		z['Elaedarel-WyrmrestAccord']	= itsNihilistzsche('Warlock')
+		z['Alydrer-WyrmrestAccord']		= itsNihilistzsche('Warlock')
+		z['Issia-WyrmrestAccord']		= itsNihilistzsche('Priest')
+		z['Leitara-WyrmrestAccord']		= itsNihilistzsche('Warrior')
+		z['Cherlyth-WyrmrestAccord']	= itsNihilistzsche('Druid')
+		z['Tokashami-WyrmrestAccord']	= itsNihilistzsche('Shaman')
+		z['Millop-WyrmrestAccord']		= itsNihilistzsche('Hunter')
+		z['Aeondalew-WyrmrestAccord']	= itsNihilistzsche('DeathKnight')
 	end
 end
 
@@ -549,12 +591,9 @@ function CH:CopyButtonOnEnter()
 end
 
 function CH:CopyButtonOnLeave()
-	local chat = self:GetParent()
-	if _G[chat:GetName()..'TabText']:IsShown() then
-		self:SetAlpha(0.35)
-	else
-		self:SetAlpha(0)
-	end
+	local chatName = self:GetParent():GetName()
+	local tabText = _G[chatName..'TabText'] or _G[chatName..'Tab'].Text
+	self:SetAlpha(tabText:IsShown() and 0.35 or 0)
 end
 
 function CH:ChatFrameTab_SetAlpha(_, skip)
@@ -780,16 +819,25 @@ function CH:StyleChat(frame)
 	editbox.characterCount = charCount
 
 	for _, texName in pairs(tabTexs) do
-		_G[name..'Tab'..texName..'Left']:SetTexture()
-		_G[name..'Tab'..texName..'Middle']:SetTexture()
-		_G[name..'Tab'..texName..'Right']:SetTexture()
+		local t, l, m, r = name..'Tab', texName..'Left', texName..'Middle', texName..'Right'
+		local main = _G[t]
+		local left = _G[t..l] or (main and main[l])
+		local middle = _G[t..m] or (main and main[m])
+		local right = _G[t..r] or (main and main[r])
+
+		if left then left:SetTexture() end
+		if middle then middle:SetTexture() end
+		if right then right:SetTexture() end
 	end
 
 	hooksecurefunc(tab, 'SetAlpha', CH.ChatFrameTab_SetAlpha)
 
-	if not tab.left then tab.left = _G[name..'TabLeft'] end
+	if not tab.Left then
+		tab.Left = _G[name..'TabLeft'] or _G[name..'Tab'].Left
+	end
+
 	tab.Text:ClearAllPoints()
-	tab.Text:Point('LEFT', tab, 'LEFT', tab.left:GetWidth(), 0)
+	tab.Text:Point('LEFT', tab, 'LEFT', tab.Left:GetWidth(), 0)
 	tab:Height(22)
 
 	if tab.conversationIcon then
@@ -811,20 +859,21 @@ function CH:StyleChat(frame)
 	editbox:SetAltArrowKeyMode(CH.db.useAltKey)
 	editbox:SetAllPoints(_G.LeftChatDataPanel)
 	editbox:HookScript('OnTextChanged', CH.EditBoxOnTextChanged)
-	CH:SecureHook(editbox, 'AddHistoryLine', 'ChatEdit_AddHistory')
+	editbox:HookScript('OnEditFocusGained', CH.EditBoxFocusGained)
+	editbox:HookScript('OnEditFocusLost', CH.EditBoxFocusLost)
+	editbox:HookScript('OnKeyDown', CH.EditBoxOnKeyDown)
+	editbox:Hide()
 
 	--Work around broken SetAltArrowKeyMode API
 	editbox.historyLines = ElvCharacterDB.ChatEditHistory
 	editbox.historyIndex = 0
-	editbox:HookScript('OnKeyDown', CH.EditBoxOnKeyDown)
-	editbox:Hide()
 
-	editbox:HookScript('OnEditFocusGained', CH.EditBoxFocusGained)
-	editbox:HookScript('OnEditFocusLost', CH.EditBoxFocusLost)
+	--[[ Don't need to do this since SetAltArrowKeyMode is broken, keep before AddHistory hook
+	for _, text in ipairs(editbox.historyLines) do
+			editbox:AddHistoryLine(text)
+	end]]
 
-	for _, text in pairs(editbox.historyLines) do
-		editbox:AddHistoryLine(text)
-	end
+	CH:SecureHook(editbox, 'AddHistoryLine', 'ChatEdit_AddHistory')
 
 	--copy chat button
 	local copyButton = CreateFrame('Frame', format('ElvUI_CopyChatButton%d', id), frame)
@@ -853,8 +902,8 @@ function CH:GetChatTime()
 	local realm = not CH.db.timeStampLocalTime and C_DateAndTime_GetCurrentCalendarTime()
 	if realm then -- blizzard is weird
 		realm.day = realm.monthDay
-		realm.min = date('%M', unix)
-		realm.sec = date('%S', unix)
+		realm.min = realm.minute
+		realm.sec = date('%S', unix) -- no seconds from CalendarTime
 		realm = time(realm)
 	end
 
@@ -943,7 +992,7 @@ end
 function CH:CopyChat(frame)
 	if not _G.CopyChatFrame:IsShown() then
 		local _, fontSize = _G.FCF_GetChatWindowInfo(frame:GetID())
-		if fontSize < 10 then fontSize = 12 end
+
 		_G.FCF_SetChatWindowFontSize(frame, frame, 0.01)
 		_G.CopyChatFrame:Show()
 		local lineCt = CH:GetLines(frame)
@@ -1249,6 +1298,16 @@ function CH:SnappingChanged(chat)
 	end
 end
 
+function CH:ResnapDock(event, arg1, arg2)
+	if event == 'PLAYER_SPECIALIZATION_CHANGED' then
+		if arg1 ~= 'player' then return end -- only update on player
+	elseif event == 'PLAYER_ENTERING_WORLD' then
+		if arg1 or arg2 then return end -- initLogin or isReload
+	end
+
+	CH:SnappingChanged(_G.GeneralDockManager.primary)
+end
+
 function CH:ShowBackground(background, show)
 	if not background then return end
 
@@ -1358,6 +1417,11 @@ function CH:PrintURL(url)
 	return '|cFFFFFFFF[|Hurl:'..url..'|h'..url..'|h]|r '
 end
 
+function CH:ReplaceProtocol(arg1, arg2)
+	local str = self..'://'..arg1
+	return (self == 'Houtfit') and str..arg2 or CH:PrintURL(str)
+end
+
 function CH:FindURL(event, msg, author, ...)
 	if not CH.db.url then
 		msg = CH:CheckKeyword(msg, author)
@@ -1371,8 +1435,9 @@ function CH:FindURL(event, msg, author, ...)
 	end
 
 	text = gsub(gsub(text, '(%S)(|c.-|H.-|h.-|h|r)', '%1 %2'), '(|c.-|H.-|h.-|h|r)(%S)', '%1 %2')
+
 	-- http://example.com
-	local newMsg, found = gsub(text, '(%a+)://(%S+)%s?', CH:PrintURL('%1://%2'))
+	local newMsg, found = gsub(text, '(%a+)://(%S+)(%s?)', CH.ReplaceProtocol)
 	if found > 0 then return false, CH:GetSmileyReplacementText(CH:CheckKeyword(newMsg, author)), author, ... end
 	-- www.example.com
 	newMsg, found = gsub(text, 'www%.([_A-Za-z0-9-]+)%.(%S+)%s?', CH:PrintURL('www.%1.%2'))
@@ -1976,7 +2041,7 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 				if clientProgram and clientProgram ~= '' then
 					local name = _G.BNet_GetValidatedCharacterName(characterName, battleTag, clientProgram) or ''
-					local characterNameText = _G.BNet_GetClientEmbeddedTexture(clientProgram, 14)..name
+					local characterNameText = GetClientTexture(clientProgram, 14)..name
 					local linkDisplayText = format('[%s] (%s)', arg2, characterNameText)
 					local playerLink = GetBNPlayerLink(arg2, linkDisplayText, arg13, arg11, chatGroup, 0)
 					message = format(globalstring, playerLink)
@@ -2014,7 +2079,7 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 				showLink = nil
 
 				-- fix blizzard formatting errors from localization strings
-				arg1 = gsub(arg1, '%%%d', '%%s') -- replace %1 to %s (russian client specific?) [broken since BFA?]
+				-- arg1 = gsub(arg1, '%%%d', '%%s') -- replace %1 to %s (russian client specific?) [broken since BFA?]
 				arg1 = gsub(arg1, '(%d%%)([^%%%a])', '%1%%%2') -- escape percentages that need it [broken since SL?]
 				arg1 = gsub(arg1, '(%d%%)$', '%1%%') -- escape percentages on the end
 			else
@@ -2173,7 +2238,7 @@ function CH:ChatFrame_MessageEventHandler(frame, event, arg1, arg2, arg3, arg4, 
 
 		if notChatHistory and (chatType == 'WHISPER' or chatType == 'BN_WHISPER') then
 			_G.ChatEdit_SetLastTellTarget(arg2, chatType)
-			FlashClientIcon()
+			if CH.db.flashClientIcon then FlashClientIcon() end
 		end
 
 		if notChatHistory and not frame:IsShown() then
@@ -2525,7 +2590,7 @@ function CH:UpdateChatKeywords()
 
 	for stringValue in gmatch(keywords, '[^,]+') do
 		if stringValue ~= '' then
-			CH.Keywords[stringValue] = true
+			CH.Keywords[stringValue == "%MYNAME%" and E.myname or stringValue] = true
 		end
 	end
 end
@@ -2672,7 +2737,7 @@ function CH:FCFDock_ScrollToSelectedTab(dock)
 	local logchat, logchattab = CH:GetCombatLog()
 	dock.scrollFrame:ClearAllPoints()
 	dock.scrollFrame:Point('RIGHT', dock.overflowButton, 'LEFT')
-	dock.scrollFrame:Point('TOPLEFT', (logchat.isDocked and logchattab) or CH:GetTab(dock.primary), 'TOPRIGHT')
+	dock.scrollFrame:Point('TOPLEFT', (logchat and logchat.isDocked and logchattab) or CH:GetTab(dock.primary), 'TOPRIGHT')
 end
 
 function CH:FCF_SetWindowAlpha(frame, alpha)
@@ -2783,7 +2848,7 @@ function CH:SocialQueueEvent(_, guid, numAddedItems) -- event, guid, numAddedIte
 	local isLFGList = firstQueue and firstQueue.queueData and firstQueue.queueData.queueType == 'lfglist'
 
 	if isLFGList and firstQueue and firstQueue.eligible then
-		local activityID, name, leaderName, fullName, isLeader
+		local activityID, activityInfo, name, leaderName, isLeader
 
 		if firstQueue.queueData.lfgListID then
 			local searchResultInfo = C_LFGList_GetSearchResultInfo(firstQueue.queueData.lfgListID)
@@ -2794,13 +2859,13 @@ function CH:SocialQueueEvent(_, guid, numAddedItems) -- event, guid, numAddedIte
 		end
 
 		if activityID or firstQueue.queueData.activityID then
-			fullName = C_LFGList_GetActivityInfo(activityID or firstQueue.queueData.activityID)
+			activityInfo = C_LFGList_GetActivityInfoTable(activityID or firstQueue.queueData.activityID)
 		end
 
 		if name then
-			CH:SocialQueueMessage(guid, format('%s %s: [%s] |cff00CCFF%s|r', coloredName, (isLeader and L["is looking for members"]) or L["joined a group"], fullName or UNKNOWN, name))
+			CH:SocialQueueMessage(guid, format('%s %s: [%s] |cff00CCFF%s|r', coloredName, (isLeader and L["is looking for members"]) or L["joined a group"], activityInfo and activityInfo.fullName or UNKNOWN, name))
 		else
-			CH:SocialQueueMessage(guid, format('%s %s: |cff00CCFF%s|r', coloredName, (isLeader and L["is looking for members"]) or L["joined a group"], fullName or UNKNOWN))
+			CH:SocialQueueMessage(guid, format('%s %s: |cff00CCFF%s|r', coloredName, (isLeader and L["is looking for members"]) or L["joined a group"], activityInfo and activityInfo.fullName or UNKNOWN))
 		end
 	elseif firstQueue then
 		local output, outputCount, queueCount = '', '', 0
@@ -3132,7 +3197,6 @@ function CH:BuildCopyChatFrame()
 	frame:SetMovable(true)
 	frame:EnableMouse(true)
 	frame:SetResizable(true)
-	frame:SetMinResize(350, 100)
 	frame:SetScript('OnMouseDown', function(copyChat, button)
 		if button == 'LeftButton' and not copyChat.isMoving then
 			copyChat:StartMoving()
@@ -3238,7 +3302,7 @@ function CH:FCFTab_UpdateColors(tab, selected)
 			tab.whisperName = gsub(E:StripMyRealm(name), '([%S]-)%-[%S]+', '%1|cFF999999*|r')
 		end
 
-		if selected then
+		if selected then -- color tables are class updated in UpdateMedia
 			if CH.db.tabSelector == 'NONE' then
 				tab:SetFormattedText(CH.TabStyles.NONE, tab.whisperName or name)
 			else
@@ -3528,6 +3592,7 @@ function CH:Initialize()
 	CH:SecureHook('UIDropDownMenu_AddButton')
 	CH:SecureHook('GetPlayerInfoByGUID')
 
+	CH:RegisterEvent('PLAYER_ENTERING_WORLD', 'ResnapDock')
 	CH:RegisterEvent('UPDATE_CHAT_WINDOWS', 'SetupChat')
 	CH:RegisterEvent('UPDATE_FLOATING_CHAT_WINDOWS', 'SetupChat')
 	CH:RegisterEvent('GROUP_ROSTER_UPDATE', 'CheckLFGRoles')
@@ -3537,6 +3602,8 @@ function CH:Initialize()
 
 	if E.Retail then
 		CH:RegisterEvent('SOCIAL_QUEUE_UPDATE', 'SocialQueueEvent')
+		CH:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED', 'ResnapDock')
+		CH:SecureHook(_G.GeneralDockManager.primary, 'OnEditModeExit', 'ResnapDock')
 
 		if E.private.general.voiceOverlay then
 			CH:RegisterEvent('VOICE_CHAT_CHANNEL_MEMBER_SPEAKING_STATE_CHANGED', 'VoiceOverlay')
